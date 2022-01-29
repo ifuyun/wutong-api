@@ -1,0 +1,56 @@
+<? if(pageBar && pageBar.paginator) { ?>
+<div class="m-pagination m-content-box">
+    <ul class="x-pc">
+        <? if(pageBar.paginator.curPage > 1){ ?><li class="u-page u-page-prev"><a href="<?= pageBar.linkUrl + pageBar.paginator.prevPage + pageBar.linkParam ?>" title="上一页">&lt;</a></li><? } ?>
+        <? if(pageBar.paginator.totalPage < 10) { ?>
+            <? for(var p1 = 1; p1 <= pageBar.paginator.totalPage; p1 += 1) { ?>
+                <? if(p1 === pageBar.paginator.curPage) { ?>
+                    <li class="u-page u-page-num active"><span><?= p1 ?></span></li>
+                <? } else { ?>
+                    <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + p1 + pageBar.linkParam ?>" title="第<?= p1 ?>页"><?= p1 ?></a></li>
+                <? } ?>
+            <? } ?>
+        <? } else { ?>
+            <? if(pageBar.paginator.curPage <= 5) { ?>
+                <? for(var p2 = 1; p2 <= 5; p2 += 1) { ?>
+                    <? if(p2 === pageBar.paginator.curPage){ ?>
+                        <li class="u-page u-page-num active"><span><?= p2 ?></span></li>
+                    <? } else { ?>
+                        <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + p2 + pageBar.linkParam ?>" title="第<?= p2 ?>页"><?= p2 ?></a></li>
+                    <? } ?>
+                <? } ?>
+                <li class="u-page-split"><span>...</span></li>
+                <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + pageBar.paginator.totalPage + pageBar.linkParam ?>" title="第<?= pageBar.paginator.totalPage ?>页"><?= pageBar.paginator.totalPage ?></a></li>
+            <? } else if(pageBar.paginator.curPage >= pageBar.paginator.totalPage - 4) { ?>
+                <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + 1 + pageBar.linkParam ?>" title="第1页">1</a></li>
+                <li class="u-page-split"><span>...</span></li>
+                <? for(var p3 = pageBar.paginator.totalPage - 4; p3 <= pageBar.paginator.totalPage; p3 += 1) { ?>
+                    <? if(p3 === pageBar.paginator.curPage) { ?>
+                        <li class="u-page u-page-num active"><span><?= p3 ?></span></li>
+                    <? } else { ?>
+                        <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + p3 + pageBar.linkParam ?>" title="第<?= p3 ?>页"><?= p3 ?></a></li>
+                    <? } ?>
+                <? } ?>
+            <? } else { ?>
+                <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + 1 + pageBar.linkParam ?>" title="第1页">1</a></li>
+                <li class="u-page-split"><span>...</span></li>
+                <? for(var p4 = pageBar.paginator.curPage - 2; p4 <= pageBar.paginator.curPage + 2; p4 += 1) { ?>
+                    <? if(p4 === pageBar.paginator.curPage) { ?>
+                        <li class="u-page u-page-num active"><span><?= p4 ?></span></li>
+                    <? } else { ?>
+                        <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + p4 + pageBar.linkParam ?>" title="第<?= p4 ?>页"><?= p4 ?></a></li>
+                    <? } ?>
+                <? } ?>
+                <li class="u-page-split"><span>...</span></li>
+                <li class="u-page u-page-num"><a href="<?= pageBar.linkUrl + pageBar.paginator.totalPage + pageBar.linkParam ?>" title="第<?= pageBar.paginator.totalPage ?>页"><?= pageBar.paginator.totalPage ?></a></li>
+            <? } ?>
+        <? } ?>
+        <? if(pageBar.paginator.curPage < pageBar.paginator.endPage) { ?><li class="u-page u-page-next"><a href="<?= pageBar.linkUrl + pageBar.paginator.nextPage + pageBar.linkParam ?>" title="下一页">&gt;</a></li><? } ?>
+    </ul>
+    <ul class="x-wap">
+        <? if(pageBar.paginator.curPage > 1){ ?><li class="u-page-prev"><a href="<?= pageBar.linkUrl + pageBar.paginator.prevPage + pageBar.linkParam ?>" title="上一页">&lt; 上一页</a></li><? } ?>
+        <li class="active"><span><?= pageBar.paginator.curPage ?></span></li>
+        <? if(pageBar.paginator.curPage < pageBar.paginator.endPage) { ?><li class="u-page-next"><a href="<?= pageBar.linkUrl + pageBar.paginator.nextPage + pageBar.linkParam ?>" title="下一页">下一页 &gt;</a></li><? } ?>
+    </ul>
+</div>
+<? } ?>

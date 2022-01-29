@@ -1,0 +1,19 @@
+{
+  "apps": [
+    {
+      "name": "IFuyun",
+      "script": "./index.js",
+      "watch": false,
+      "env": {
+        "ENV": "production"
+      },
+      "env_production": {
+        "ENV": "production"
+      },
+      "env_development": {
+        "ENV": "development"
+      },
+      "instance_var": "NEST_APP_INSTANCE"
+    }
+  ]
+}
