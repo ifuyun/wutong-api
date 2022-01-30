@@ -8,6 +8,7 @@ import redisConfig from './config/redis.config';
 import CaptchaController from './controllers/captcha.controller';
 import CommentController from './controllers/comment.controller';
 import PostController from './controllers/post.controller';
+import PostStandaloneController from './controllers/post-standalone.controller';
 import UserController from './controllers/user.controller';
 import VoteController from './controllers/vote.controller';
 import AllExceptionsFilter from './filters/all-exceptions.filter';
@@ -77,7 +78,7 @@ import VotesService from './services/votes.service';
       VTagVisibleTaxonomyModel
     ])
   ],
-  controllers: [PostController, CaptchaController, UserController, CommentController, VoteController],
+  controllers: [PostController, CaptchaController, UserController, CommentController, VoteController, PostStandaloneController],
   providers: [
     AppService,
     PostsService,

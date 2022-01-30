@@ -35,7 +35,7 @@ export default class PostController {
   ) {
   }
 
-  @Get(['', 'post/page-:page'])
+  @Get(['', '/+', 'post/page-:page'])
   @Render('home/pages/post-list')
   async showPosts(
     @Req() req,
@@ -185,20 +185,21 @@ export default class PostController {
       from: 'post',
       isAdmin
     });
-    const crumbs = await this.taxonomiesService.getTaxonomyPath({
-      taxonomyData: commonData.taxonomies.taxonomyData,
-      taxonomyId: crumbTaxonomyId
-    });
-    const { comments, prevPost, nextPost } = await Promise.all([
+    const { comments, prevPost, nextPost, crumbs } = await Promise.all([
       this.commentsService.getCommentsByPostId(postId),
+      this.taxonomiesService.getTaxonomyPath({
+        taxonomyData: commonData.taxonomies.taxonomyData,
+        taxonomyId: crumbTaxonomyId
+      }),
       this.postsService.getPrevPost(postId),
       this.postsService.getNextPost(postId),
       this.postsService.incrementPostView(postId)
     ]).then((results) => {
       return Promise.resolve({
         comments: results[0],
-        prevPost: results[1],
-        nextPost: results[2]
+        crumbs: results[1],
+        prevPost: results[2],
+        nextPost: results[3]
       });
     });
 
@@ -218,9 +219,9 @@ export default class PostController {
       showCrumb: true,
       meta: {
         title: this.utilService.getTitle([post.postTitle, options.site_name.value]),
+        description: post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_DESCRIPTION_LENGTH),
         author: options.site_author.value,
-        keywords: options.site_keywords.value,
-        description: post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_DESCRIPTION_LENGTH)
+        keywords: options.site_keywords.value
       },
       token: req.csrfToken(),
       ...commonData,
@@ -290,9 +291,9 @@ export default class PostController {
       showCrumb: true,
       meta: {
         title: '',
+        description: `「${curTaxonomyName}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
         author: options.site_author.value,
-        keywords: uniqueTags(curTaxonomyName + ',' + options.site_keywords.value),
-        description: `「${curTaxonomyName}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc
+        keywords: uniqueTags(curTaxonomyName + ',' + options.site_keywords.value)
       },
       token: req.csrfToken(),
       ...commonData,
@@ -354,9 +355,9 @@ export default class PostController {
       showCrumb: true,
       meta: {
         title: '',
+        description: `「${tag}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
         author: options.site_author.value,
-        keywords: uniqueTags(tag + ',' + options.site_keywords.value),
-        description: `「${tag}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc
+        keywords: uniqueTags(tag + ',' + options.site_keywords.value)
       },
       token: req.csrfToken(),
       ...commonData,
@@ -382,7 +383,8 @@ export default class PostController {
     'archive/:year',
     'archive/:year/page-:page',
     'archive/:year/:month',
-    'archive/:year/:month/page-:page'])
+    'archive/:year/:month/page-:page'
+  ])
   @Render('home/pages/post-list')
   async showPostsByDate(
     @Req() req,
@@ -437,9 +439,9 @@ export default class PostController {
       showCrumb: true,
       meta: {
         title: '',
+        description: `${options.site_name.value}${title}文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
         author: options.site_author.value,
-        keywords: options.site_keywords.value,
-        description: `${options.site_name.value}${title}文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc
+        keywords: options.site_keywords.value
       },
       token: req.csrfToken(),
       ...commonData,
@@ -489,9 +491,9 @@ export default class PostController {
       showCrumb: true,
       meta: {
         title: this.utilService.getTitle(['文章归档', options.site_name.value]),
+        description: `${options.site_name.value}文章归档，查看${options.site_name.value}全部历史文章。` + siteDesc,
         author: options.site_author.value,
-        keywords: options.site_keywords.value,
-        description: `${options.site_name.value}文章归档，查看${options.site_name.value}全部历史文章。` + siteDesc
+        keywords: options.site_keywords.value
       },
       token: req.csrfToken(),
       ...commonData,

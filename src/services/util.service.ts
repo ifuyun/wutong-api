@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OptionData } from '../interfaces/options.interface';
+import { PostSlugPrefixBlacklist } from '../common/enums';
 
 @Injectable()
 export default class UtilService {
@@ -24,6 +25,30 @@ export default class UtilService {
 
   getSiteDescription(options: Record<string, OptionData>): string {
     return options.site_name.value + '：' + options.site_description.value;
+  }
+
+  getPostSlugPrefixBlacklist(): string[] {
+    const blacklist: string[] = [];
+    Object.keys(PostSlugPrefixBlacklist).forEach((key) => {
+      blacklist.push(PostSlugPrefixBlacklist[key]);
+    });
+    return blacklist;
+  }
+
+  isReqPathLikePostSlug(reqPath: string): boolean {
+    if (!reqPath.startsWith('/')) {
+      reqPath = '/' + reqPath;
+    }
+    if (!reqPath || /^\/+$/i.test(reqPath)) {
+      return false;
+    }
+    const blacklist = this.getPostSlugPrefixBlacklist();
+    for (let i = 0; i < blacklist.length; i += 1) {
+      if (reqPath.indexOf(blacklist[i]) >= 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -59,9 +84,9 @@ export default class UtilService {
    * @version 1.0.0
    * @since 1.0.0
    */
-  static trim(str) {
-    return str ? str.trim() : '';
-  }
+  // static trim(str) {
+  //   return str ? str.trim() : '';
+  // }
 
   /**
    * 判断是否已登录

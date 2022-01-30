@@ -1,3 +1,17 @@
+/* 定义独立页面slug前缀黑名单，除了post外，已定义路由全部禁止，用于校验 */
+export enum PostSlugPrefixBlacklist {
+  CATEGORY = '/category/',
+  TAG = '/tag/',
+  ARCHIVE = '/archive/',
+  COMMENT = '/comment/',
+  VOTE = '/vote/',
+  CAPTCHA = '/captcha/',
+  USER = '/user/',
+  ADMIN = '/admin/',
+  WECHAT = '/wechat/',
+  API = '/api/'
+}
+
 export enum LogLevel {
   TRACE = 'TRACE',
   DEBUG = 'DEBUG',

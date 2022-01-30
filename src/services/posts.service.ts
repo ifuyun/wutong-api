@@ -350,8 +350,8 @@ export default class PostsService {
     return this.postModel.findByPk(postId, {
       attributes: [
         'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
-        'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified', 'postCreated',
-        'postGuid', 'commentCount', 'postViewCount'
+        'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified',
+        'postCreated', 'postGuid', 'commentCount', 'postViewCount'
       ],
       include: [{
         model: UserModel,
@@ -367,6 +367,39 @@ export default class PostsService {
         as: 'postMeta',
         attributes: ['metaKey', 'metaValue']
       }]
+    }).then((post) => {
+      if (post) {
+        post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
+        post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
+      }
+      return Promise.resolve(post);
+    });
+  }
+
+  async getPostBySlug(postSlug: string): Promise<PostModel> {
+    return this.postModel.findOne({
+      attributes: [
+        'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
+        'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified',
+        'postCreated', 'postGuid', 'commentCount', 'postViewCount'
+      ],
+      include: [{
+        model: UserModel,
+        as: 'author',
+        attributes: ['userNiceName']
+      }, {
+        model: PostMetaModel,
+        as: 'postMeta',
+        attributes: ['metaKey', 'metaValue']
+      }],
+      where: {
+        postGuid: {
+          [Op.eq]: decodeURIComponent(postSlug)
+        },
+        postType: {
+          [Op.in]: ['post', 'page']
+        }
+      }
     }).then((post) => {
       if (post) {
         post.postDateText = moment(post.postDate).format('YYYY-MM-DD');

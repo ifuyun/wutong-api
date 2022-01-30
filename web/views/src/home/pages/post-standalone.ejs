@@ -31,7 +31,7 @@
                         </svg>
                     </div>
                     <div class="m-meta-time">
-                        <span title="更新于: <?= moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm') ?>">最后更新：<?= moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm') ?></span>
+                        <span title="更新于: <?= post.postModifiedText ?>">最后更新：<?= post.postModifiedText ?></span>
                     </div>
                 </div>
             </footer>
