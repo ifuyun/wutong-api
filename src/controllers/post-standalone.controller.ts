@@ -11,6 +11,7 @@ import PaginatorService from '../services/paginator.service';
 import PostsService from '../services/posts.service';
 import TaxonomiesService from '../services/taxonomies.service';
 import UtilService from '../services/util.service';
+import ReqPath from '../decorators/req-path.decorator';
 
 @Controller()
 export default class PostStandaloneController {
@@ -25,11 +26,11 @@ export default class PostStandaloneController {
   ) {
   }
 
-  @Get(':reqPath(*)')
+  @Get('*')
   @Render('home/pages/post-standalone')
   async showPostBySlug(
     @Req() req,
-    @Param('reqPath') reqPath,
+    @ReqPath() reqPath,
     @User() user,
     @IsAdmin() isAdmin
   ) {
@@ -37,7 +38,7 @@ export default class PostStandaloneController {
     if (!isLikePost) {
       throw new HttpException(ResponseMessage.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
-    const post = await this.postsService.getPostBySlug('/' + reqPath);
+    const post = await this.postsService.getPostBySlug(reqPath);
     if (!post) {
       throw new HttpException(ResponseMessage.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
