@@ -5,7 +5,6 @@ import CommentModel from './comment.model';
 import TaxonomyRelationshipModel from './taxonomy-relationship.model';
 import TaxonomyModel from './taxonomy.model';
 import PostMetaModel from './post-meta.model';
-import VTagVisibleTaxonomyModel from './v-tag-visible-taxonomy.model';
 import VoteModel from './vote.model';
 
 @Table({
@@ -36,10 +35,6 @@ export default class PostModel extends Model {
 
   @HasMany(() => TaxonomyRelationshipModel)
   taxonomyRelationships: TaxonomyRelationshipModel[];
-
-  // todo: is unnecessary
-  @HasMany(() => VTagVisibleTaxonomyModel)
-  tagVisibleTaxonomies: VTagVisibleTaxonomyModel[];
 
   @ForeignKey(() => UserModel)
   @Column({
@@ -98,6 +93,8 @@ export default class PostModel extends Model {
     defaultValue: 'publish'
   })
   postStatus: string;
+
+  postStatusDesc: string;
 
   @Column({
     field: 'comment_flag',
@@ -159,6 +156,8 @@ export default class PostModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
   postCreated: Date;
+
+  postCreatedText: string;
 
   @Column({
     field: 'post_parent',

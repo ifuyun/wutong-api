@@ -18,9 +18,7 @@ export default class PostStandaloneController {
   constructor(
     private readonly postsService: PostsService,
     private readonly commonService: CommonService,
-    private readonly taxonomiesService: TaxonomiesService,
     private readonly loggerService: LoggerService,
-    private readonly paginatorService: PaginatorService,
     private readonly utilService: UtilService,
     private readonly commentsService: CommentsService
   ) {

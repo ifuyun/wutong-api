@@ -263,6 +263,7 @@ export default class PostController {
     @Param('category') category,
     @IsAdmin() isAdmin
   ) {
+    // todo: should check if category is exist
     const commonData = await this.commonService.getCommonData({
       from: 'category',
       isAdmin
@@ -390,7 +391,7 @@ export default class PostController {
     @Req() req,
     @Param('page', new ParseIntPipe(1)) page,
     @Param('year', new ParseIntPipe(new Date().getFullYear())) year,
-    @Param('month', new ParseIntPipe(new Date().getMonth() + 1)) month,
+    @Param('month', new ParseIntPipe()) month,
     @IsAdmin() isAdmin
   ) {
     year = year.toString();

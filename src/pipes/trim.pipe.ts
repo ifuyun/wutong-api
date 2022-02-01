@@ -3,6 +3,9 @@ import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 @Injectable()
 export default class TrimPipe implements PipeTransform {
   transform(data: string | Record<string, any>, metadata: ArgumentMetadata): string | Record<string, any> {
+    if (!data) {
+      return '';
+    }
     if (typeof data === 'string') {
       return data.trim();
     }

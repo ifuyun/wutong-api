@@ -95,3 +95,13 @@ export enum VoteType {
   LIKE = 'like',
   DISLIKE = 'dislike'
 }
+
+export enum PostStatus {
+  'publish' = '公开',
+  'private' = '私密',
+  // 'pending' = '待定',
+  'draft' = '草稿',
+  'auto-draft' = '自动保存草稿',
+  // 'inherit' = '子文章',
+  'trash' = '已删除'
+}

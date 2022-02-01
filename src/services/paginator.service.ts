@@ -17,14 +17,13 @@ export default class PaginatorService {
   /**
    * 获取分页数据
    * @param {number} page 请求页
-   * @param {number} count 总记录数
+   * @param {number} pages 总页数
    * @param {number} paginationSize 每页显示页数
    * @return {Object} 分页数据对象
    * @version 1.0.0
    * @since 1.0.0
    */
-  getPageData(page, count, paginationSize) {
-    let pages = Math.ceil(count / this.pageSize);// 总页数
+  getPageData(page, pages, paginationSize) {
     let pageData = {
       start: 1,
       end: 1
@@ -70,7 +69,7 @@ export default class PaginatorService {
     paginationSize = paginationSize || this.paginationSize;
     page = Math.min(pages, page);
 
-    const pageData = this.getPageData(page, count, paginationSize);
+    const pageData = this.getPageData(page, pages, paginationSize);
 
     return {
       startPage: pageData.start,

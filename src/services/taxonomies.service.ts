@@ -177,8 +177,12 @@ export default class TaxonomiesService {
         const curNode = nodes[key];
         if (checked || curNode.slug === slug) {
           subTaxonomyIds.push(key);
-          if (Object.keys(curNode.children).length > 0) {
+          if (curNode.hasChildren) {
             iterator(curNode.children, true);
+          }
+        } else {
+          if (curNode.hasChildren) {
+            iterator(curNode.children, false, slug);
           }
         }
       });

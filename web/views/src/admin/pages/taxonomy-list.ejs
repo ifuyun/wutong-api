@@ -1,0 +1,82 @@
+<?- include('../common/header.ejs') -?>
+<div id="body-wrapper">
+    <?- include('../elements/left-nav.ejs') -?>
+    <div id="content">
+        <?- include('../elements/top-bar.ejs') -?>
+        <div id="control-panel">
+            <h2><?= title ?></h2>
+            <div class="split-line"><div class="split-corner">&nbsp;</div></div>
+            <div id="search-bar">
+                <form id="form-search" method="get" action="/admin/taxonomy?type=<?= type ?>">
+                    <label><input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." /></label>
+                    <input type="submit" class="button" value="搜索<?= title ?>" />
+                </form>
+            </div>
+            <div class="clear-right">
+                <div class="table-nav">
+                    <span><a class="button button-spacing" href="javascript:">删除</a></span>
+                    <span><a class="button" href="/admin/taxonomy/item?action=create&type=<?= type ?>"><?= type === 'tag' ? '新增标签' : '新增一级分类' ?></a></span>
+                </div>
+                <div>
+                    <table class="list-table">
+                        <thead>
+                            <tr>
+                                <th width="2%" class="column-check"><input type="checkbox" class="checkAll" /></th>
+                                <th width="14%">名称</th>
+                                <th width="14%">别名</th>
+                                <th width="20%">描述</th>
+                                <th width="10%">排序</th>
+                                <th width="10%">状态</th>
+                                <th width="10%" class="column-count">总数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <? if(categories && categories.length > 0) { ?>
+                            <? categories.forEach(function(cat, rowIdx){ ?>
+                            <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
+                                <td class="column-check"><input type="checkbox" class="checkRow" /></td>
+                                <td>
+                                    <? if(type === 'tag') { ?>
+                                    <a rel="category" href="/admin/post?tag=<?= encodeURIComponent(cat.slug ? cat.slug : cat.name) ?>"><?= util.cutStr(cat.name, 20) ?></a>
+                                    <? } else if(type === 'post') { ?>
+                                    <a rel="category" href="/admin/post?category=<?= cat.slug ? cat.slug : cat.name ?>"><?= util.cutStr(cat.name, 20) ?></a>
+                                    <? } else { ?>
+                                    <?= util.cutStr(cat.name, 20) ?>
+                                    <? } ?>
+                                </td>
+                                <td>
+                                    <? if(type === 'tag') { ?>
+                                    <a rel="category" href="/admin/post?tag=<?= encodeURIComponent(cat.slug ? cat.slug : cat.name) ?>"><?= cat.slug ?></a>
+                                    <? } else if(type === 'post') { ?>
+                                    <a rel="category" href="/admin/post?category=<?= cat.slug ? cat.slug : cat.name ?>"><?= cat.slug ?></a>
+                                    <? } else { ?>
+                                    <?= cat.slug ?>
+                                    <? } ?>
+                                </td>
+                                <td><?= util.cutStr(cat.description, 20) ?></td>
+                                <td><?= cat.termOrder ?></td>
+                                <td><?= formatter.taxonomyStatus(cat.status) ?></td>
+                                <td class="column-count"><?= cat.count ?></td>
+                                <td class="m-col-operate">
+                                    <? if(type !== 'tag') { ?><a href="/admin/taxonomy/item?action=create&type=<?= type ?>&parent=<?= cat.taxonomyId ?>">新增子类</a><? } ?><a href="/admin/taxonomy/item?action=edit&type=<?= type ?>&taxonomyId=<?= cat.taxonomyId ?>">编辑</a><a class="btn-delete" href="javascript:" data-type="<?= type ?>" data-taxonomy="<?= cat.taxonomyId ?>">删除</a><? if(type !== 'link') { ?><a href="/admin/post?<?- type === 'post' ? 'category' : 'tag' ?>=<?- cat.slug ?>">查看</a><? } ?>
+                                </td>
+                            </tr>
+                            <? }) ?>
+                            <? } else { ?>
+                                <tr class="alternate">
+                                    <td colspan="6">无记录</td>
+                                </tr>
+                            <? } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?- include('../elements/pagination.ejs') -?>
+            </div>
+        </div>
+    </div>
+    <?- include('../elements/page-footer.ejs') -?>
+</div>
+<script type="text/javascript" src="/js/common.js"></script>
+<script type="text/javascript" src="/js/admin/taxonomy.js"></script>
+<?- include('../common/footer.ejs') -?>

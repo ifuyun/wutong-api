@@ -1,0 +1,66 @@
+<?- include('../common/header.ejs') -?>
+<div id="body-wrapper">
+    <?- include('../elements/left-nav.ejs') -?>
+    <div id="content">
+        <?- include('../elements/top-bar.ejs') -?>
+        <div id="control-panel">
+            <h2>链接</h2>
+            <div class="split-line"><div class="split-corner">&nbsp;</div></div>
+                <form method="get" action="#">
+                    <input type="hidden" name="_csrf" id="csrfToken" value="<?- token ?>" />
+                </form>
+            <div class="clear-right">
+                <div class="table-nav">
+                    <span><a class="button button-spacing" href="javascript:">删除</a></span>
+                    <span><a class="button button-spacing" href="/admin/link/item?action=create">新增链接</a></span>
+                    <span><a class="button" href="/admin/taxonomy?type=link">链接分类</a></span>
+                </div>
+                <div>
+                    <table class="list-table">
+                        <thead>
+                            <tr>
+                                <th width="2%" class="column-check"><input type="checkbox" class="checkAll" /></th>
+                                <th width="10%">名称</th>
+                                <th width="20%">URL</th>
+                                <th width="15%">描述</th>
+                                <th width="8%">可见性</th>
+                                <th width="10%">打开方式</th>
+                                <th width="8%">排序</th>
+                                <th width="10%">添加时间</th>
+                                <th width="17%">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <? if(links && links.length > 0) { ?>
+                            <? links.forEach(function(link, rowIdx){ ?>
+                            <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
+                                <td class="column-check"><input type="checkbox" class="checkRow" /></td>
+                                <td title="<?- link.link_name ?>"><?= util.cutStr(link.linkName, 20) ?></td>
+                                <td title="<?- link.link_url ?>"><?= util.cutStr(link.linkUrl, 20) ?></td>
+                                <td title="<?- link.link_description ?>"><?= util.cutStr(link.linkDescription, 20) ?></td>
+                                <td><?= formatter.linkVisible(link.linkVisible) ?></td>
+                                <td><?= link.linkTarget ?></td>
+                                <td><?= link.linkRating ?></td>
+                                <td><?= moment(link.linkCreated).format('YYYY-MM-DD') ?></td>
+                                <td class="m-col-operate">
+                                    <a href="/admin/link/item?action=edit&linkId=<?= link.linkId ?>">编辑</a><a class="btn-delete" href="javascript:" data-id="<?= link.linkId ?>">删除</a>
+                                </td>
+                            </tr>
+                            <? }) ?>
+                            <? } else { ?>
+                                <tr class="alternate">
+                                    <td colspan="6">无记录</td>
+                                </tr>
+                            <? } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?- include('../elements/pagination.ejs') -?>
+            </div>
+        </div>
+    </div>
+    <?- include('../elements/page-footer.ejs') -?>
+</div>
+<script type="text/javascript" src="/js/common.js"></script>
+<script type="text/javascript" src="/js/admin/link.js"></script>
+<?- include('../common/footer.ejs') -?>

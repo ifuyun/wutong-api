@@ -1,0 +1,111 @@
+<?- include('../common/header.ejs') -?>
+<div id="body-wrapper">
+    <?- include('../elements/left-nav.ejs') -?>
+    <div id="content">
+        <?- include('../elements/top-bar.ejs') -?>
+        <div id="control-panel">
+            <div id="control-body">
+                <? if(postType === 'post') { ?>
+                <h2>文章<a class="button button-add-h2" href="/admin/post/item?action=create">写文章</a></h2>
+                <? } else { ?>
+                <h2>页面<a class="button button-add-h2" href="/admin/post/item?action=create&type=page">撰写新页面</a></h2>
+                <? } ?>
+                <div class="split-line"><div class="split-corner">&nbsp;</div></div>
+                <div id="search-bar">
+                    <form id="form-search" method="get" action="/admin/post?type=<?= postType ?>">
+                        <label><input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." value="<?= curKeyword ?>" /></label>
+                        <input type="submit" class="button" value="<?= postType === 'post' ? '搜索文章' : '搜索页面' ?>" />
+                    </form>
+                </div>
+                <div class="table-nav clear-both">
+                    <form id="form-filter" method="get" action="/admin/post?type=<?= postType ?>">
+                        <label><input type="button" class="button" value="编辑" /></label>
+                        <label><input type="button" class="button button-spacing" value="删除" /></label>
+                        <label><select class="input" name="date">
+                            <option value="">全部日期</option>
+                            <? archiveDates.forEach(function(archive){ archive = archive.get(); ?><option value="<?= archive.dateText ?>"<? if(archive.dateText === curDate){?> selected="selected"<? } ?>><?= archive.dateTitle ?></option><? }) ?>
+                        </select></label>
+                        <label><select class="input" name="category">
+                            <option value="">所有分类</option>
+                            <? taxonomyList.forEach(function (cat){ ?>
+                                <option value="<?= cat.slug || cat.name ?>"<? if(cat.slug === curTaxonomy || cat.name === curTaxonomy){?> selected="selected"<? } ?>><? for(var idx = 1; idx < cat.level; idx += 1){ ?>&nbsp;&nbsp;&nbsp;&nbsp;<? } ?><?= cat.name ?></option>
+                            <? }) ?>
+                        </select></label>
+                        <label><select class="input" name="status">
+                            <option value="">所有状态</option>
+                            <? postStatus.forEach(function (status){ ?>
+                                <option value="<?= status.name ?>"<? if(curStatus === status.name){?> selected="selected"<? } ?>><?= status.desc ?></option>
+                            <? }) ?>
+                        </select></label>
+                        <label><input type="submit" class="button" value="筛选" /></label>
+                    </form>
+                </div>
+                <div>
+                    <table class="list-table">
+                        <thead>
+                            <tr>
+                                <th width="2%" class="column-check"><input type="checkbox" class="checkAll" /></th>
+                                <th width="15%">标题</th>
+                                <th width="8%">日期</th>
+                                <th width="8%">分类目录</th>
+                                <th width="16%">标签</th>
+                                <th width="8%">修改时间</th>
+                                <th width="8%">创建时间</th>
+                                <th width="5%" class="column-count">访问</th>
+                                <th width="5%" class="column-count">评论</th>
+                                <th width="5%">作者</th>
+                                <th width="5%">发布者</th>
+                                <th width="5%">状态</th>
+                                <th width="10%">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <? if(posts && posts.length > 0) { ?>
+                            <? posts.forEach(function(postItem, rowIdx){ ?>
+                            <? var post = postItem.post ?>
+                            <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
+                                <td class="column-check"><input type="checkbox" class="checkRow" /></td>
+                                <td><a rel="bookmark" title="<?- post.postTitle ?>" href="<?= post.postGuid ?>" target="_blank"><?- post.postTitle ?></a></td>
+                                <td><?= post.postDateText ?></td>
+                                <td>
+                                    <? postItem.categories.forEach(function(category){ ?>
+                                        <a rel="category" href="/admin/post?category=<?= category.slug ? category.slug : category.name ?>"><?= category.name ?></a>
+                                    <? }) ?>
+                                </td>
+                                <td>
+                                    <? postItem.tags.forEach(function(tag){ ?>
+                                        <a rel="category" href="/admin/post?tag=<?= encodeURIComponent(tag.slug ? tag.slug : tag.name) ?>"><?= tag.name ?></a>
+                                    <? }) ?>
+                                </td>
+                                <td title="<?= post.postModifiedText ?>"><?= post.postModifiedText ?></td>
+                                <td title="<?= post.postCreatedText ?>"><?= post.postCreatedText ?></td>
+                                <td class="column-count"><?= post.postViewCount ?></td>
+                                <td class="column-count"><?= comments[post.postId] ?></td>
+                                <td><?- postItem.meta.postAuthor ?></td>
+                                <td><a rel="author" href="/admin/post?author=<?= post.postAuthor ?>"><?- post.author.userNiceName ?></a></td>
+                                <td><a href="/admin/post?status=<?= post.postStatusDesc ?>"><?= post.postStatusDesc ?></a></td>
+                                <td class="m-col-operate">
+                                    <a href="/admin/post/item?action=edit&type=<?= postType ?>&postId=<?= post.postId ?>">编辑</a><a class="btn-delete" href="javascript:">删除</a>
+                                </td>
+                            </tr>
+                            <? }) ?>
+                            <? } else { ?>
+                                <tr class="alternate">
+                                    <td colspan="12">无记录</td>
+                                </tr>
+                            <? } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?- include('../elements/pagination.ejs') -?>
+            </div>
+        </div>
+    </div>
+    <?- include('../elements/page-footer.ejs') -?>
+</div>
+<!-- build:js /js/admin/vendor.min.js -->
+<script type="text/javascript" src="/js/admin/tinymce.min.js"></script>
+<!-- endbuild -->
+<script type="text/javascript" src="/js/common.js"></script>
+<script type="text/javascript" src="/js/admin/post.js"></script>
+<?- include('../common/footer.ejs') -?>

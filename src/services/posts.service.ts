@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
-import Sequelize, { CountOptions, FindOptions, IncludeOptions, Op } from 'sequelize';
+import Sequelize, { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import PaginatorService from './paginator.service';
 import PostMetaService from './post-meta.service';
 import TaxonomiesService from './taxonomies.service';
 import { POST_EXCERPT_LENGTH } from '../common/constants';
 import { cutStr, filterHtmlTag } from '../helpers/helper';
-import { PostListVo, PostVo } from '../interfaces/posts.interface';
+import { PostListVo, PostStatusMap, PostVo } from '../interfaces/posts.interface';
 import PostModel from '../models/post.model';
 import PostMetaModel from '../models/post-meta.model';
 import TaxonomyModel from '../models/taxonomy.model';
@@ -15,6 +15,7 @@ import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
+import { PostStatus } from '../common/enums';
 
 @Injectable()
 export default class PostsService {
@@ -141,8 +142,7 @@ export default class PostsService {
     };
   }
 
-  async getTaxonomiesAndPostMetaByPosts(param: { postIds: string[], isAdmin?: boolean }) {
-    const { postIds, isAdmin } = param;
+  async getTaxonomiesAndPostMetaByPosts(postIds: string[], isAdmin?: boolean) {
     return Promise.all([
       this.postMetaService.getPostMetaByPostIds(postIds),
       this.taxonomiesService.getTaxonomiesByPostIds({
@@ -200,24 +200,33 @@ export default class PostsService {
   async getPosts(param: {
     page: number,
     isAdmin: boolean,
-    keyword?: string,
     postType?: string,
     from?: string,
+    keyword?: string,
     subTaxonomyIds?: string[],
     tag?: string;
     year?: string;
     month?: string;
+    status?: string;
+    author?: string;
   }): Promise<PostListVo> {
-    const { isAdmin, keyword, postType, from, subTaxonomyIds, tag, year, month } = param;
+    const { isAdmin, keyword, postType, from, subTaxonomyIds, tag, year, month, status, author } = param;
     const pageSize = this.paginatorService.getPageSize();
     const where = {
       postStatus: {
-        [Op.eq]: 'publish'
+        [Op.in]: ['publish']
       },
       postType: {
-        [Op.eq]: 'post'
+        [Op.eq]: postType || 'post'
       }
     };
+    if (isAdmin && from === 'admin') {
+      if (status) {
+        where.postStatus[Op.in] = status === 'draft' ? ['draft', 'auto-draft'] : [status];
+      } else {
+        where.postStatus[Op.in] = ['publish', 'private', 'draft', 'auto-draft', 'trash'];
+      }
+    }
     if (keyword) {
       where[Op.or] = [{
         postTitle: {
@@ -233,12 +242,17 @@ export default class PostsService {
         }
       }];
     }
-    if (from == 'archive') {
+    if (year) {
       where[Op.and] = [
         Sequelize.where(
           Sequelize.fn('date_format', Sequelize.col('post_date'), month ? '%Y%m' : '%Y'), month ? year + month : year
         )
       ];
+    }
+    if (author) {
+      where['postAuthor'] = {
+        [Op.eq]: author
+      };
     }
     const includeOpt: IncludeOptions[] = [{
       model: TaxonomyModel,
@@ -252,7 +266,7 @@ export default class PostsService {
         }
       }
     }];
-    if (from === 'tag') {
+    if (tag) {
       includeOpt[0].where = {
         type: {
           [Op.eq]: 'tag'
@@ -311,13 +325,14 @@ export default class PostsService {
     const postIds: string[] = [];
     posts.forEach((post) => {
       postIds.push(post.postId);
+      // todo: time format changes to config
       post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
+      post.postCreatedText = moment(post.postCreated).format('YYYY-MM-DD HH:mm');
+      post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postExcerpt = post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
+      post.postStatusDesc = PostStatus[post.postStatus];
     });
-    const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts({
-      postIds,
-      isAdmin
-    });
+    const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts(postIds, isAdmin);
 
     return {
       posts: this.assemblePostData({ posts, postMeta, taxonomies }),
@@ -474,5 +489,16 @@ export default class PostsService {
       '2': 'CC-BY-NC-ND'
     };
     return copyrightMap[type];
+  }
+
+  getAllPostStatus(): PostStatusMap[] {
+    const status: PostStatusMap[] = [];
+    Object.keys(PostStatus).forEach((key) => {
+      status.push({
+        name: key,
+        desc: PostStatus[key]
+      });
+    });
+    return status;
   }
 }

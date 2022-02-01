@@ -1,0 +1,64 @@
+<?- include('../common/header.ejs') -?>
+<div id="body-wrapper">
+    <?- include('../elements/left-nav.ejs') -?>
+    <div id="content">
+        <?- include('../elements/top-bar.ejs') -?>
+        <div id="control-panel">
+            <div id="control-body">
+                <h2>常规选项</h2>
+                <div class="split-line"><div class="split-corner">&nbsp;</div></div>
+                <form id="form-settings" method="post" action="/admin/settings">
+                    <div class="form-wrap">
+                        <form>
+                            <div class="form-field">
+                                <label class="form-label-left" for="siteName">站点标题</label>
+                                <input type="text" class="input form-input" id="siteName" name="siteName" value="<?= options.site_name.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="siteDescription">站点描述</label>
+                                <input type="text" class="input form-input" id="siteDescription" name="siteDescription" value="<?= options.site_description.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="siteSlogan">口号</label>
+                                <input type="text" class="input form-input" id="siteSlogan" name="siteSlogan" value="<?= options.site_slogan.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="siteUrl">站点地址</label>
+                                <input type="text" class="input form-input" id="siteUrl" name="siteUrl" value="<?= options.site_url.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="siteKeywords">关键词</label>
+                                <input type="text" class="input form-input" id="siteKeywords" name="siteKeywords" value="<?= options.site_keywords.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="copyNotice">版权信息</label>
+                                <input type="text" class="input form-input" id="copyNotice" name="copyNotice" value="<?= options.copyright_notice.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="icpNum">ICP备案号</label>
+                                <input type="text" class="input form-input" id="icpNum" name="icpNum" value="<?= options.icp_num.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="adminEmail">电子邮件地址</label>
+                                <input type="text" class="input form-input" id="adminEmail" name="adminEmail" value="<?= options.admin_email.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left" for="uploadPath">上传路径</label>
+                                <input type="text" class="input form-input" id="uploadPath" name="uploadPath" value="<?= options.upload_path.value ?>" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label-left">&nbsp;</label>
+                                <input type="submit" class="submit" value="保存" />
+                                <input type="hidden" name="_csrf" id="csrfToken" value="<?- token ?>" />
+                            </div>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?- include('../elements/page-footer.ejs') -?>
+</div>
+<script type="text/javascript" src="/js/common.js"></script>
+<script type="text/javascript" src="/js/admin/settings.js"></script>
+<?- include('../common/footer.ejs') -?>

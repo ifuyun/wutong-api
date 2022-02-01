@@ -14,3 +14,8 @@ export interface PostListVo {
   count: number;
   postIds?: string[];
 }
+
+export interface PostStatusMap {
+  name: string;
+  desc: string;
+}
