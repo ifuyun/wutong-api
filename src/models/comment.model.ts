@@ -50,6 +50,8 @@ export default class CommentModel extends Model {
   })
   commentStatus: string;
 
+  commentStatusDesc: string;
+
   @Column({
     type: DataType.TEXT,
     allowNull: false,

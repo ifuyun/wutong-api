@@ -7,27 +7,26 @@
             <div id="control-body">
                 <h2>评论</h2>
                 <div class="split-line"><div class="split-corner">&nbsp;</div></div>
-                <div id="status-type">
-                    <ul>
-                        <li><a href="/admin/comment"<? if(!curStatus){ ?> class="font-bold"<? } ?>>全部 (<?= typeCount.all || 0 ?>)</a> | </li>
-                        <li><a href="/admin/comment?status=pending"<? if(curStatus === 'pending'){ ?> class="font-bold"<? } ?>>待审 (<?= typeCount.pending || 0 ?>)</a> | </li>
-                        <li><a href="/admin/comment?status=normal"<? if(curStatus === 'normal'){ ?> class="font-bold"<? } ?>>获准 (<?= typeCount.normal || 0 ?>)</a> | </li>
-                        <li><a href="/admin/comment?status=spam"<? if(curStatus === 'spam'){ ?> class="font-bold"<? } ?>>垃圾评论 (<?= typeCount.spam || 0 ?>)</a> | </li>
-                        <li><a href="/admin/comment?status=trash"<? if(curStatus === 'trash'){ ?> class="font-bold"<? } ?>>回收站 (<?= typeCount.trash || 0 ?>)</a> | </li>
-                        <li><a href="/admin/comment?status=reject"<? if(curStatus === 'reject'){ ?> class="font-bold"<? } ?>>驳回 (<?= typeCount.reject || 0 ?>)</a></li>
-                    </ul>
-                </div>
                 <div id="search-bar">
                     <form method="get" action="/admin/comment">
-                        <input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." />
+                        <input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." value="<?= curKeyword ?>" />
                         <input type="submit" class="button" value="搜索评论" />
                     </form>
                 </div>
                 <div class="table-nav clear-both">
-                    <span><input type="button" class="button" value="批准" /></span>
-                    <span><input type="button" class="button" value="驳回" /></span>
-                    <span><input type="button" class="button" value="标记垃圾评论" /></span>
-                    <span><input type="button" class="button button-spacing" value="删除" /></span>
+                    <form id="form-filter" method="get" action="/admin/comment">
+                        <label><input type="button" class="button" value="批准" /></label>
+                        <label><input type="button" class="button" value="驳回" /></label>
+                        <label><input type="button" class="button" value="标记垃圾评论" /></label>
+                        <label><input type="button" class="button button-spacing" value="删除" /></label>
+                        <label><select class="input" name="status">
+                            <option value="">所有状态</option>
+                            <? commentStatus.forEach(function (status){ ?>
+                            <option value="<?= status.name ?>"<? if(curStatus === status.name){?> selected="selected"<? } ?>><?= status.desc ?></option>
+                            <? }) ?>
+                        </select></label>
+                        <label><input type="submit" class="button" value="筛选" /></label>
+                    </form>
                 </div>
                 <div>
                     <table class="list-table">
@@ -48,12 +47,12 @@
                             <? comments.forEach(function(comment, rowIdx){ ?>
                             <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
                                 <td class="column-check"><input type="checkbox" class="checkRow" /></td>
-                                <td><?= util.cutStr(comment.commentContent, 20) ?></td>
-                                <td><a href="<?= comment.Post.postGuid ?>"><?= comment.Post.postTitle ?></a></td>
+                                <td><?= comment.commentContent ?></td>
+                                <td><a href="<?= comment.post.postGuid ?>"><?= comment.post.postTitle ?></a></td>
                                 <td><?= comment.commentAuthorEmail ?></td>
-                                <td><?= moment(comment.commentCreated).format('YYYY-MM-DD HH:mm:ss') ?></td>
+                                <td><?= comment.commentCreatedText ?></td>
                                 <td><?= comment.commentAuthor ?></td>
-                                <td><a href="/admin/comment?status=<?= comment.commentStatus ?>"><?= formatter.commentStatus(comment.commentStatus) ?></a></td>
+                                <td><a href="/admin/comment?status=<?= comment.commentStatus ?>"><?= comment.commentStatusDesc ?></a></td>
                                 <td class="m-col-operate">
                                     <? if(comment.commentStatus === 'pending'){ ?><a class="btn-approve" data-id="<?= comment.commentId ?>" href="javascript:">批准</a><a class="btn-reject" data-id="<?= comment.commentId ?>" href="javascript:">驳回</a><a class="btn-spam" data-id="<?= comment.commentId ?>" href="javascript:">垃圾评论</a><? } ?><a class="btn-reply" href="/admin/comment/<?= comment.commentId ?>?action=reply">回复</a><a class="btn-edit" href="/admin/comment/<?= comment.commentId ?>?action=edit">编辑</a><a class="btn-delete" data-id="<?= comment.commentId ?>" href="javascript:">删除</a>
                                 </td>
@@ -70,6 +69,7 @@
                 <?- include('../elements/pagination.ejs') -?>
             </div>
         </div>
+        <input type="hidden" name="_csrf" id="csrfToken" value="<?- token ?>" />
     </div>
     <?- include('../elements/page-footer.ejs') -?>
 </div>

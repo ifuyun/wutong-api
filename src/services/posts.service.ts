@@ -16,6 +16,7 @@ import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
 import { PostStatus, PostStatusLang, PostType } from '../common/enums';
+import UtilService from './util.service';
 
 @Injectable()
 export default class PostsService {
@@ -28,7 +29,8 @@ export default class PostsService {
     private readonly postArchiveView: typeof VPostDateArchiveModel,
     private readonly paginatorService: PaginatorService,
     private readonly postMetaService: PostMetaService,
-    private readonly taxonomiesService: TaxonomiesService
+    private readonly taxonomiesService: TaxonomiesService,
+    private readonly utilService: UtilService
   ) {
   }
 
@@ -231,15 +233,15 @@ export default class PostsService {
     if (keyword) {
       where[Op.or] = [{
         postTitle: {
-          [Op.like]: `%${param.keyword}%`
+          [Op.like]: `%${keyword}%`
         }
       }, {
         postContent: {
-          [Op.like]: `%${param.keyword}%`
+          [Op.like]: `%${keyword}%`
         }
       }, {
         postExcerpt: {
-          [Op.like]: `%${param.keyword}%`
+          [Op.like]: `%${keyword}%`
         }
       }];
     }
@@ -255,30 +257,33 @@ export default class PostsService {
         [Op.eq]: author
       };
     }
-    const includeOpt: IncludeOptions[] = [{
-      model: TaxonomyModel,
-      attributes: ['taxonomyId', 'status'],
-      where: {
-        type: {
-          [Op.eq]: 'post'
-        },
-        status: {
-          [Op.in]: isAdmin ? [0, 1] : [1]
+    const includeOpt: IncludeOptions[] = [];
+    if (postType === PostType.POST) {
+      includeOpt.push({
+        model: TaxonomyModel,
+        attributes: ['taxonomyId', 'status'],
+        where: {
+          type: {
+            [Op.eq]: PostType.POST
+          },
+          status: {
+            [Op.in]: isAdmin ? [0, 1] : [1]
+          }
         }
+      });
+      if (tag) {
+        includeOpt[0].where = {
+          type: {
+            [Op.eq]: 'tag'
+          },
+          status: {
+            [Op.eq]: 1
+          },
+          slug: {
+            [Op.eq]: tag
+          }
+        };
       }
-    }];
-    if (tag) {
-      includeOpt[0].where = {
-        type: {
-          [Op.eq]: 'tag'
-        },
-        status: {
-          [Op.eq]: 1
-        },
-        slug: {
-          [Op.eq]: tag
-        }
-      };
     }
     if (subTaxonomyIds && subTaxonomyIds.length > 0) {
       includeOpt.push({
@@ -331,7 +336,7 @@ export default class PostsService {
       post.postCreatedText = moment(post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postExcerpt = post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
-      post.postStatusDesc = PostStatus[post.postStatus];
+      post.postStatusDesc = PostStatusLang[this.utilService.getEnumKeyByValue(PostStatus, post.postStatus)];
     });
     const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts(postIds, isAdmin);
 

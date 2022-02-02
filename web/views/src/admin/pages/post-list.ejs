@@ -7,14 +7,16 @@
             <div id="control-body">
                 <? if(postType === 'post') { ?>
                 <h2>文章<a class="button button-add-h2" href="/admin/post/item?action=create">写文章</a></h2>
-                <? } else { ?>
+                <? } else if(postType === 'page') { ?>
                 <h2>页面<a class="button button-add-h2" href="/admin/post/item?action=create&type=page">撰写新页面</a></h2>
+                <? } else { ?>
+                <h2>素材<a class="button button-add-h2" href="/admin/media/create">添加</a></h2>
                 <? } ?>
                 <div class="split-line"><div class="split-corner">&nbsp;</div></div>
                 <div id="search-bar">
                     <form id="form-search" method="get" action="/admin/post?type=<?= postType ?>">
                         <label><input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." value="<?= curKeyword ?>" /></label>
-                        <input type="submit" class="button" value="<?= postType === 'post' ? '搜索文章' : '搜索页面' ?>" />
+                        <input type="submit" class="button" value="<?= postType === 'post' ? '搜索文章' : postType === 'page' ? '搜索页面' : '搜索素材' ?>" />
                     </form>
                 </div>
                 <div class="table-nav clear-both">

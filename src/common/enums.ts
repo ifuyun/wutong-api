@@ -132,3 +132,19 @@ export enum PostStatusLang {
   // INHERIT = '子文章',
   TRASH = '已删除'
 }
+
+export enum CommentStatus {
+  NORMAL = 'normal',
+  PENDING = 'pending',
+  REJECT = 'reject',
+  SPAM = 'spam',
+  TRASH = 'trash'
+}
+
+export enum CommentStatusLang {
+  NORMAL = '正常',
+  PENDING = '待审',
+  REJECT = '驳回',
+  SPAM = '垃圾评论',
+  TRASH = '已删除'
+}

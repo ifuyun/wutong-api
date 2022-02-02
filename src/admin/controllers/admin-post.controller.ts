@@ -1,17 +1,17 @@
 import { Controller, Get, HttpStatus, Param, Query, Render } from '@nestjs/common';
 import { PostStatus, PostStatusLang, PostType, ResponseCode } from '../../common/enums';
 import IsAdmin from '../../decorators/is-admin.decorator';
-import OptionsService from '../../services/options.service';
+import Search from '../../decorators/search.decorator';
+import CustomException from '../../exceptions/custom.exception';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
 import CommentsService from '../../services/comments.service';
+import OptionsService from '../../services/options.service';
 import PaginatorService from '../../services/paginator.service';
 import PostsService from '../../services/posts.service';
 import TaxonomiesService from '../../services/taxonomies.service';
-import UtilService from '../../services/util.service';
-import Search from '../../decorators/search.decorator';
-import CustomException from '../../exceptions/custom.exception';
 import UsersService from '../../services/users.service';
+import UtilService from '../../services/util.service';
 
 @Controller('admin/post')
 export default class AdminPostController {
@@ -44,20 +44,20 @@ export default class AdminPostController {
     if (!Object.keys(PostType).map((key) => PostType[key]).includes(type)) {
       throw new CustomException(ResponseCode.POST_TYPE_INVALID, HttpStatus.FORBIDDEN, '查询参数有误');
     }
-    const searchParam = [];
+    const searchParams: string[] = [];
     if (category) {
       const taxonomy = await this.taxonomiesService.getTaxonomyBySlug(category);
       if (!taxonomy) {
         throw new CustomException(ResponseCode.TAXONOMY_NOT_FOUND, HttpStatus.NOT_FOUND, 'Taxonomy not found.');
       }
-      searchParam.push(taxonomy.name);
+      searchParams.push(taxonomy.name);
     }
     if (author) {
       const user = await this.usersService.getUserById(author);
       if (!user) {
         throw new CustomException(ResponseCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND, 'User not found.');
       }
-      searchParam.push(user.userNiceName);
+      searchParams.push(user.userNiceName);
     }
 
     const dateArr = date.split('/');
@@ -100,11 +100,11 @@ export default class AdminPostController {
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const titles = [type === PostType.PAGE ? '页面列表' : '文章列表', '管理后台', options.site_name.value];
 
-    keyword && searchParam.push(keyword);
-    tag && searchParam.push(tag);
-    year && searchParam.push(date);
-    status && searchParam.push(PostStatusLang[this.utilService.getEnumKeyByValue(PostStatus, status)]);
-    searchParam.length > 0 && titles.unshift(searchParam.join(' | '));
+    keyword && searchParams.push(keyword);
+    tag && searchParams.push(tag);
+    year && searchParams.push(date);
+    status && searchParams.push(PostStatusLang[this.utilService.getEnumKeyByValue(PostStatus, status)]);
+    searchParams.length > 0 && titles.unshift(searchParams.join(' | '));
     page > 1 && titles.unshift(`第${page}页`);
 
     return {
