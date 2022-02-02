@@ -54,7 +54,7 @@
                                 <td><?= comment.commentAuthor ?></td>
                                 <td><a href="/admin/comment?status=<?= comment.commentStatus ?>"><?= comment.commentStatusDesc ?></a></td>
                                 <td class="m-col-operate">
-                                    <? if(comment.commentStatus === 'pending'){ ?><a class="btn-approve" data-id="<?= comment.commentId ?>" href="javascript:">批准</a><a class="btn-reject" data-id="<?= comment.commentId ?>" href="javascript:">驳回</a><a class="btn-spam" data-id="<?= comment.commentId ?>" href="javascript:">垃圾评论</a><? } ?><a class="btn-reply" href="/admin/comment/<?= comment.commentId ?>?action=reply">回复</a><a class="btn-edit" href="/admin/comment/<?= comment.commentId ?>?action=edit">编辑</a><a class="btn-delete" data-id="<?= comment.commentId ?>" href="javascript:">删除</a>
+                                    <? if(comment.commentStatus === 'pending'){ ?><a class="btn-approve" data-id="<?= comment.commentId ?>" href="javascript:">批准</a><a class="btn-reject" data-id="<?= comment.commentId ?>" href="javascript:">驳回</a><a class="btn-spam" data-id="<?= comment.commentId ?>" href="javascript:">垃圾评论</a><? } ?><a class="btn-reply" href="/admin/comment/detail?id=<?= comment.commentId ?>&action=reply">回复</a><a class="btn-edit" href="/admin/comment/detail?id=<?= comment.commentId ?>&action=edit">编辑</a><a class="btn-delete" data-id="<?= comment.commentId ?>" href="javascript:">删除</a>
                                 </td>
                             </tr>
                             <? }) ?>

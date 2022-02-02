@@ -9,7 +9,7 @@ import User from '../decorators/user.decorator';
 import UserAgent from '../decorators/user-agent.decorator';
 import CustomException from '../exceptions/custom.exception';
 import { appendUrlRef, cutStr, filterHtmlTag, uniqueTags } from '../helpers/helper';
-import CheckPostIdInterceptor from '../interceptors/check-post-id.interceptor';
+import CheckIdInterceptor from '../interceptors/check-id.interceptor';
 import ParseIntPipe from '../pipes/parse-int.pipe';
 import CommentsService from '../services/comments.service';
 import CommonService from '../services/common.service';
@@ -20,6 +20,7 @@ import PostsService from '../services/posts.service';
 import TaxonomiesService from '../services/taxonomies.service';
 import UtilService from '../services/util.service';
 import { CrumbData } from '../interfaces/crumb.interface';
+import { IdParams } from '../decorators/id-params.decorator';
 
 @Controller()
 export default class PostController {
@@ -102,7 +103,8 @@ export default class PostController {
 
   @Get('post/:postId')
   @Render('home/pages/post')
-  @UseInterceptors(CheckPostIdInterceptor)
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams(['postId'], [])
   async showPost(
     @Req() req,
     @Param('postId') postId,

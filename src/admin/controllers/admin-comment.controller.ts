@@ -1,12 +1,16 @@
-import { Controller, Get, Param, Query, Render, Req } from '@nestjs/common';
-import CommentsService from '../../services/comments.service';
+import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import { CommentStatus, CommentStatusDesc, ResponseCode } from '../../common/enums';
+import Search from '../../decorators/search.decorator';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
-import Search from '../../decorators/search.decorator';
-import OptionsService from '../../services/options.service';
-import { CommentStatus, CommentStatusDesc } from '../../common/enums';
-import UtilService from '../../services/util.service';
+import CommentsService from '../../services/comments.service';
 import PaginatorService from '../../services/paginator.service';
+import OptionsService from '../../services/options.service';
+import UtilService from '../../services/util.service';
+import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
+import { IdParams } from '../../decorators/id-params.decorator';
+import CustomException from '../../exceptions/custom.exception';
+import Referer from '../../decorators/referer.decorator';
 
 @Controller('admin/comment')
 export class AdminCommentController {
@@ -51,13 +55,49 @@ export class AdminCommentController {
         linkUrl: '/admin/comment/page-',
         linkParam: search
       },
-      token: req.csrfToken(),
       curNav: 'comment',
+      token: req.csrfToken(),
       options,
       comments,
       commentStatus: this.commentsService.getAllCommentStatus(),
       curStatus: status,
       curKeyword: keyword
+    };
+  }
+
+  @Get('detail')
+  @Render('admin/pages/comment-form')
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams([], ['id'])
+  async editOrReplyComment(
+    @Req() req,
+    @Query('id', new TrimPipe()) commentId,
+    @Query('action', new TrimPipe()) action,
+    @Referer() referer,
+    @Session() session
+  ) {
+    if (!commentId) {
+      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, '请求参数错误。');
+    }
+    if (!['show', 'edit', 'reply'].includes(action)) {
+      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+    }
+    const options = await this.optionsService.getOptions();
+    const comment = await this.commentsService.getCommentById(commentId);
+    const title = action === 'edit' ? '编辑评论' : action === 'reply' ? '回复评论' : '查看评论';
+    session.commentReferer = referer;
+    return {
+      meta: {
+        title: this.utilService.getTitle([title, '管理后台', options.site_name.value]),
+        description: `${options.site_name.value}管理后台`,
+        author: options.site_author.value
+      },
+      curNav: 'comment',
+      token: req.csrfToken(),
+      options,
+      comment,
+      title,
+      action
     };
   }
 }

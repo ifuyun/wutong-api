@@ -78,7 +78,12 @@ export default class CommentsService {
   }
 
   async getCommentById(commentId: string): Promise<CommentModel> {
-    return this.commentModel.findByPk(commentId);
+    return this.commentModel.findByPk(commentId, {
+      include: [{
+        model: PostModel,
+        attributes: ['postId', 'postGuid', 'postTitle']
+      }]
+    });
   }
 
   getAllCommentStatus(): CommentStatusMap[] {
