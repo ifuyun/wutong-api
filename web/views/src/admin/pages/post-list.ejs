@@ -41,6 +41,7 @@
                     </form>
                 </div>
                 <div>
+                    <? if(postType === 'post' || postType === 'page'){ ?>
                     <table class="list-table">
                         <thead>
                             <tr>
@@ -96,6 +97,43 @@
                             <? } ?>
                         </tbody>
                     </table>
+                    <? } else { ?>
+                    <table class="list-table">
+                        <thead>
+                        <tr>
+                            <th width="2%" class="column-check"><input type="checkbox" class="checkAll" /></th>
+                            <th width="25%">标题</th>
+                            <th width="22%">文件路径</th>
+                            <th width="8%">修改时间</th>
+                            <th width="8%">创建时间</th>
+                            <th width="6%">状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <? if(posts && posts.length > 0) { ?>
+                            <? posts.forEach(function(postItem, rowIdx){ ?>
+                                <? var post = postItem.post ?>
+                                <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
+                                    <td class="column-check"><input type="checkbox" class="checkRow" /></td>
+                                    <td><a rel="bookmark" title="<?- post.postTitle ?>" href="<?= options.static_host.value + post.postGuid ?>" target="_blank"><?- post.postTitle ?></a></td>
+                                    <td><a href="<?= options.static_host.value + post.postGuid ?>" target="_blank"><?= post.postGuid ?></a></td>
+                                    <td title="<?= post.postModifiedText ?>"><?= post.postModifiedText ?></td>
+                                    <td title="<?= post.postCreatedText ?>"><?= post.postCreatedText ?></td>
+                                    <td><a href="/admin/media?status=<?= post.postStatus ?>"><?= post.postStatusDesc ?></a></td>
+                                    <td class="m-col-operate">
+                                        <a href="javascript:">编辑</a><a class="btn-delete" href="javascript:">删除</a>
+                                    </td>
+                                </tr>
+                            <? }) ?>
+                        <? } else { ?>
+                        <tr class="alternate">
+                            <td colspan="9">无记录</td>
+                        </tr>
+                        <? } ?>
+                        </tbody>
+                    </table>
+                    <? } ?>
                 </div>
                 <?- include('../elements/pagination.ejs') -?>
             </div>
