@@ -17,9 +17,7 @@ export default class CommonService {
   async getCommonData(param: { from: string, isAdmin: boolean, postType?: string, page?: number, archiveLimit?: number }) {
     return Promise.all([
       this.optionsService.getOptions(),
-      this.taxonomiesService.getTaxonomies({
-        status: param.isAdmin ? [0, 1] : [1]
-      }),
+      this.taxonomiesService.getAllTaxonomies(param.isAdmin ? [0, 1] : [1]),
       this.linksService.getFriendLinks({
         page: param.page,
         from: param.from

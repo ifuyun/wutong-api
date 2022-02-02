@@ -3,15 +3,21 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 import { isEmptyObject } from '../helpers/helper';
 import { CrumbData } from '../interfaces/crumb.interface';
-import { TaxonomyNode, TaxonomyTree } from '../interfaces/taxonomies.interface';
+import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyTree } from '../interfaces/taxonomies.interface';
 import TaxonomyModel from '../models/taxonomy.model';
 import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
+import PaginatorService from './paginator.service';
+import { CommentStatus, CommentStatusDesc, TaxonomyStatus, TaxonomyStatusDesc } from '../common/enums';
+import * as moment from 'moment';
+import UtilService from './util.service';
 
 @Injectable()
 export default class TaxonomiesService {
   constructor(
     @InjectModel(TaxonomyModel)
-    private readonly taxonomyModel: typeof TaxonomyModel
+    private readonly taxonomyModel: typeof TaxonomyModel,
+    private readonly utilService: UtilService,
+    private readonly paginatorService: PaginatorService
   ) {
   }
 
@@ -99,21 +105,19 @@ export default class TaxonomiesService {
     return crumbs;
   }
 
-  async getTaxonomies(param: { type?: string, status?: number[] } = {}): Promise<TaxonomyNode[]> {
+  async getAllTaxonomies(status?: number[], type: string = 'post'): Promise<TaxonomyNode[]> {
     let where: WhereOptions = {
       type: {
-        [Op.eq]: param.type || 'post'
+        [Op.eq]: type
       }
     };
-    if (param.status && param.status.length > 0) {
-      where.status = param.status;
+    if (status && status.length > 0) {
+      where.status = status;
     }
     return this.taxonomyModel.findAll({
-      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'status', 'count'],
+      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'status', 'count', 'termOrder'],
       where,
-      order: [
-        ['termOrder', 'asc']
-      ]
+      order: [['termOrder', 'asc']]
     }).then((taxonomies) => {
       const treeData: TaxonomyNode[] = taxonomies.map((taxonomy) => {
         const nodeData: TaxonomyNode = {
@@ -210,5 +214,61 @@ export default class TaxonomiesService {
         }
       }
     });
+  }
+
+  async getTaxonomies(param: { page: number, type: string, status?: number, keyword?: string }): Promise<TaxonomyListVo> {
+    const { type, status, keyword } = param;
+    let where = {
+      type: {
+        [Op.eq]: type
+      }
+    };
+    if (typeof status === 'number' && /^\d+$/i.test(status.toString())) {
+      where['status'] = status;
+    }
+    if (keyword) {
+      where[Op.or] = [{
+        name: {
+          [Op.like]: `%${keyword}%`
+        }
+      }, {
+        slug: {
+          [Op.like]: `%${keyword}%`
+        }
+      }, {
+        description: {
+          [Op.like]: `%${keyword}%`
+        }
+      }];
+    }
+    const pageSize = this.paginatorService.getPageSize();
+    const count = await this.taxonomyModel.count({ where });
+    const page = Math.max(Math.min(param.page, Math.ceil(count / pageSize)), 1);
+
+    const taxonomies = await this.taxonomyModel.findAll({
+      where,
+      order: [['termOrder', 'asc'], ['created', 'desc']],
+      limit: pageSize,
+      offset: pageSize * (page - 1),
+      subQuery: false
+    });
+    taxonomies.forEach((taxonomy) => {
+      taxonomy.statusDesc = TaxonomyStatusDesc[this.utilService.getEnumKeyByValue(TaxonomyStatus, taxonomy.status)];
+    });
+
+    return {
+      taxonomies, page, count
+    };
+  }
+
+  getAllTaxonomyStatus(): TaxonomyStatusMap[] {
+    const status: TaxonomyStatusMap[] = [];
+    Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).forEach((key) => {
+      status.push({
+        name: TaxonomyStatus[key],
+        desc: TaxonomyStatusDesc[key]
+      });
+    });
+    return status;
   }
 }

@@ -15,7 +15,7 @@ import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
-import { PostStatus, PostStatusLang, PostType } from '../common/enums';
+import { PostStatus, PostStatusDesc, PostType } from '../common/enums';
 import UtilService from './util.service';
 
 @Injectable()
@@ -336,7 +336,7 @@ export default class PostsService {
       post.postCreatedText = moment(post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postExcerpt = post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
-      post.postStatusDesc = PostStatusLang[this.utilService.getEnumKeyByValue(PostStatus, post.postStatus)];
+      post.postStatusDesc = PostStatusDesc[this.utilService.getEnumKeyByValue(PostStatus, post.postStatus)];
     });
     const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts(postIds, isAdmin);
 
@@ -502,7 +502,7 @@ export default class PostsService {
     Object.keys(PostStatus).forEach((key) => {
       status.push({
         name: PostStatus[key],
-        desc: PostStatusLang[key]
+        desc: PostStatusDesc[key]
       });
     });
     return status;

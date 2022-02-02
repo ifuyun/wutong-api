@@ -3,9 +3,8 @@ import CommentsService from '../../services/comments.service';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
 import Search from '../../decorators/search.decorator';
-import IsAdmin from '../../decorators/is-admin.decorator';
 import OptionsService from '../../services/options.service';
-import { CommentStatus, CommentStatusLang, PostStatus, PostStatusLang, PostType } from '../../common/enums';
+import { CommentStatus, CommentStatusDesc } from '../../common/enums';
 import UtilService from '../../services/util.service';
 import PaginatorService from '../../services/paginator.service';
 
@@ -15,7 +14,7 @@ export class AdminCommentController {
     private readonly commentsService: CommentsService,
     private readonly optionsService: OptionsService,
     private readonly utilService: UtilService,
-    private readonly paginatorService: PaginatorService,
+    private readonly paginatorService: PaginatorService
   ) {
   }
 
@@ -29,13 +28,13 @@ export class AdminCommentController {
     @Search() search
   ) {
     const options = await this.optionsService.getOptions();
-    const commentList = await this.commentsService.getComments({page, status, keyword});
-    const {comments, count} = commentList;
+    const commentList = await this.commentsService.getComments({ page, status, keyword });
+    const { comments, count } = commentList;
     page = commentList.page;
 
     const searchParams: string[] = [];
     keyword && searchParams.push(keyword);
-    status && searchParams.push(CommentStatusLang[this.utilService.getEnumKeyByValue(CommentStatus, status)]);
+    status && searchParams.push(CommentStatusDesc[this.utilService.getEnumKeyByValue(CommentStatus, status)]);
 
     const titles = ['评论列表', '管理后台', options.site_name.value];
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));

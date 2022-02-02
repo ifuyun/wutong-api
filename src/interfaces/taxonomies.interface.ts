@@ -1,3 +1,5 @@
+import TaxonomyModel from '../models/taxonomy.model';
+
 export interface TaxonomyNode {
   name?: string;
   description?: string;
@@ -15,4 +17,15 @@ export interface TaxonomyTree {
   taxonomyData: TaxonomyNode[];
   taxonomyTree: Record<string, TaxonomyNode>;
   taxonomyList: TaxonomyNode[];
+}
+
+export interface TaxonomyListVo {
+  taxonomies: TaxonomyModel[];
+  page: number;
+  count: number;
+}
+
+export interface TaxonomyStatusMap {
+  name: string;
+  desc: string;
 }

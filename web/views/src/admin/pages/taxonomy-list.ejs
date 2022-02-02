@@ -4,18 +4,27 @@
     <div id="content">
         <?- include('../elements/top-bar.ejs') -?>
         <div id="control-panel">
-            <h2><?= title ?></h2>
+            <h2><?= taxonomyType ?></h2>
             <div class="split-line"><div class="split-corner">&nbsp;</div></div>
             <div id="search-bar">
                 <form id="form-search" method="get" action="/admin/taxonomy?type=<?= type ?>">
-                    <label><input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." /></label>
-                    <input type="submit" class="button" value="搜索<?= title ?>" />
+                    <label><input type="text" class="input keyword" id="keyword" name="keyword" placeholder="搜索..." value="<?= curKeyword ?>" /></label>
+                    <input type="submit" class="button" value="搜索<?= taxonomyType ?>" />
                 </form>
             </div>
             <div class="clear-right">
                 <div class="table-nav">
-                    <span><a class="button button-spacing" href="javascript:">删除</a></span>
-                    <span><a class="button" href="/admin/taxonomy/item?action=create&type=<?= type ?>"><?= type === 'tag' ? '新增标签' : '新增一级分类' ?></a></span>
+                    <form id="form-filter" method="get" action="/admin/taxonomy?type=<?= type ?>">
+                        <label><a class="button button-spacing" href="javascript:">删除</a></label>
+                        <label><a class="button" href="/admin/taxonomy/item?action=create&type=<?= type ?>"><?= type === 'tag' ? '新增标签' : '新增一级分类' ?></a></label>
+                        <label><select class="input" name="status">
+                            <option value="">所有状态</option>
+                            <? taxonomyStatus.forEach(function (status){ ?>
+                            <option value="<?= status.name ?>"<? if(curStatus === status.name){?> selected="selected"<? } ?>><?= status.desc ?></option>
+                            <? }) ?>
+                        </select></label>
+                        <label><input type="submit" class="button" value="筛选" /></label>
+                    </form>
                 </div>
                 <div>
                     <table class="list-table">
@@ -32,17 +41,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <? if(categories && categories.length > 0) { ?>
-                            <? categories.forEach(function(cat, rowIdx){ ?>
+                            <? if(taxonomies && taxonomies.length > 0) { ?>
+                            <? taxonomies.forEach(function(cat, rowIdx){ ?>
                             <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
                                 <td class="column-check"><input type="checkbox" class="checkRow" /></td>
                                 <td>
                                     <? if(type === 'tag') { ?>
-                                    <a rel="category" href="/admin/post?tag=<?= encodeURIComponent(cat.slug ? cat.slug : cat.name) ?>"><?= util.cutStr(cat.name, 20) ?></a>
+                                    <a rel="category" href="/admin/post?tag=<?= encodeURIComponent(cat.slug ? cat.slug : cat.name) ?>"><?= cat.name ?></a>
                                     <? } else if(type === 'post') { ?>
-                                    <a rel="category" href="/admin/post?category=<?= cat.slug ? cat.slug : cat.name ?>"><?= util.cutStr(cat.name, 20) ?></a>
+                                    <a rel="category" href="/admin/post?category=<?= cat.slug ? cat.slug : cat.name ?>"><?= cat.name ?></a>
                                     <? } else { ?>
-                                    <?= util.cutStr(cat.name, 20) ?>
+                                    <?= cat.name ?>
                                     <? } ?>
                                 </td>
                                 <td>
@@ -54,9 +63,9 @@
                                     <?= cat.slug ?>
                                     <? } ?>
                                 </td>
-                                <td><?= util.cutStr(cat.description, 20) ?></td>
+                                <td><?= cat.description ?></td>
                                 <td><?= cat.termOrder ?></td>
-                                <td><?= formatter.taxonomyStatus(cat.status) ?></td>
+                                <td><?= cat.statusDesc ?></td>
                                 <td class="column-count"><?= cat.count ?></td>
                                 <td class="m-col-operate">
                                     <? if(type !== 'tag') { ?><a href="/admin/taxonomy/item?action=create&type=<?= type ?>&parent=<?= cat.taxonomyId ?>">新增子类</a><? } ?><a href="/admin/taxonomy/item?action=edit&type=<?= type ?>&taxonomyId=<?= cat.taxonomyId ?>">编辑</a><a class="btn-delete" href="javascript:" data-type="<?= type ?>" data-taxonomy="<?= cat.taxonomyId ?>">删除</a><? if(type !== 'link') { ?><a href="/admin/post?<?- type === 'post' ? 'category' : 'tag' ?>=<?- cat.slug ?>">查看</a><? } ?>

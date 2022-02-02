@@ -70,6 +70,8 @@ export enum ResponseCode {
   TAXONOMY_QUERY_ERROR,
   TAXONOMY_SLUG_DUPLICATE,
   TAXONOMY_REMOVE_ERROR,
+  TAXONOMY_TYPE_INVALID,
+  TAXONOMY_STATUS_INVALID,
   // link: 82xx
   LINK_SAVE_ERROR = 8200,
   LINK_REMOVE_ERROR = 8201,
@@ -106,7 +108,7 @@ export enum PostType {
   ATTACHMENT = 'attachment'
 }
 
-export enum PostTypeLang {
+export enum PostTypeDesc {
   POST = '文章',
   PAGE = '独立页面',
   REVISION = '修订稿',
@@ -123,7 +125,7 @@ export enum PostStatus {
   TRASH = 'trash'
 }
 
-export enum PostStatusLang {
+export enum PostStatusDesc {
   PUBLISH = '公开',
   PRIVATE = '私密',
   // PENDING = '待定',
@@ -141,10 +143,70 @@ export enum CommentStatus {
   TRASH = 'trash'
 }
 
-export enum CommentStatusLang {
+export enum CommentStatusDesc {
   NORMAL = '正常',
   PENDING = '待审',
   REJECT = '驳回',
   SPAM = '垃圾评论',
   TRASH = '已删除'
+}
+
+export enum TaxonomyType {
+  POST = 'post',
+  LINK = 'link',
+  TAG = 'tag'
+}
+
+export enum TaxonomyTypeDesc {
+  POST = '文章分类',
+  LINK = '链接分类',
+  TAG = '标签'
+}
+
+export enum TaxonomyStatus {
+  CLOSED = 0,
+  OPEN = 1,
+  TRASH = 2
+}
+
+export enum TaxonomyStatusDesc {
+  CLOSED = '不公开',
+  OPEN = '公开',
+  TRASH = '已删除'
+}
+
+export enum LinkVisibleScope {
+  SITE = 'site',
+  HOMEPAGE = 'homepage',
+  INVISBLE = 'invisible'
+}
+
+export enum LinkVisibleScopeDesc {
+  SITE = '全站',
+  HOMEPAGE = '首页',
+  INVISIBLE = '不可见'
+}
+
+export enum LinkTarget {
+  BLANK = '_blank',
+  TOP = '_top',
+  SELF = '_self'
+}
+
+export enum LinkTargetDesc {
+  BLANK = '新页面',
+  TOP = '父页面',
+  SELF = '当前页'
+}
+
+export enum CopyrightType {
+  FORBIDDEN = 0,
+  AUTHORIZED = 1,
+  CC = 2
+}
+
+export enum CopyrightTypeDesc {
+  FORBIDDEN = '禁止转载',
+  AUTHORIZED = '转载需授权',
+  CC = 'CC-BY-NC-ND'
 }

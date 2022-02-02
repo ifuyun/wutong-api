@@ -51,7 +51,7 @@ export default class UtilService {
     return true;
   }
 
-  getEnumKeyByValue(enumData: Record<string, string>, value: string): string {
+  getEnumKeyByValue(enumData: Record<string, string | number>, value: string | number): string {
     let key: string;
     const keys = Object.keys(enumData);
     for (let i = 0; i < keys.length; i += 1) {

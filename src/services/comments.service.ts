@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import Sequelize, { Op } from 'sequelize';
 import PaginatorService from './paginator.service';
 import UtilService from './util.service';
-import { CommentStatus, CommentStatusLang } from '../common/enums';
+import { CommentStatus, CommentStatusDesc } from '../common/enums';
 import CommentDto from '../dtos/comment.dto';
 import { getUuid } from '../helpers/helper';
 import { CommentListVo, CommentStatusMap } from '../interfaces/comments.interface';
@@ -86,7 +86,7 @@ export default class CommentsService {
     Object.keys(CommentStatus).forEach((key) => {
       status.push({
         name: CommentStatus[key],
-        desc: CommentStatusLang[key]
+        desc: CommentStatusDesc[key]
       });
     });
     return status;
@@ -123,7 +123,7 @@ export default class CommentsService {
     comments.forEach((comment) => {
       // todo: time format changes to config
       comment.commentCreatedText = moment(comment.commentCreated).format('YYYY-MM-DD HH:mm');
-      comment.commentStatusDesc = CommentStatusLang[this.utilService.getEnumKeyByValue(CommentStatus, comment.commentStatus)];
+      comment.commentStatusDesc = CommentStatusDesc[this.utilService.getEnumKeyByValue(CommentStatus, comment.commentStatus)];
     });
 
     return {

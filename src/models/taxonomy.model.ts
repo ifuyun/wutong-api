@@ -88,6 +88,8 @@ export default class TaxonomyModel extends Model {
   })
   status: number;
 
+  statusDesc: string;
+
   @Column({
     field: 'term_group',
     type: DataType.BIGINT,

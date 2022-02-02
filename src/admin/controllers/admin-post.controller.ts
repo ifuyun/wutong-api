@@ -1,5 +1,5 @@
 import { Controller, Get, HttpStatus, Param, Query, Render } from '@nestjs/common';
-import { PostStatus, PostStatusLang, PostType, ResponseCode } from '../../common/enums';
+import { PostStatus, PostStatusDesc, PostType, ResponseCode } from '../../common/enums';
 import IsAdmin from '../../decorators/is-admin.decorator';
 import Search from '../../decorators/search.decorator';
 import CustomException from '../../exceptions/custom.exception';
@@ -82,7 +82,7 @@ export default class AdminPostController {
     const options = await this.optionsService.getOptions();
     const archiveDates = await this.postsService.getArchiveDates({ postType: type, limit: 0 });
 
-    const taxonomyData = await this.taxonomiesService.getTaxonomies();
+    const taxonomyData = await this.taxonomiesService.getAllTaxonomies();
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
     const { taxonomyList } = taxonomies;
     if (type === PostType.POST && category) {
@@ -103,7 +103,7 @@ export default class AdminPostController {
     keyword && searchParams.push(keyword);
     tag && searchParams.push(tag);
     year && searchParams.push(date);
-    status && searchParams.push(PostStatusLang[this.utilService.getEnumKeyByValue(PostStatus, status)]);
+    status && searchParams.push(PostStatusDesc[this.utilService.getEnumKeyByValue(PostStatus, status)]);
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));
     page > 1 && titles.unshift(`第${page}页`);
 

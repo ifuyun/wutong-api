@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { AdminCommentController } from './controllers/admin-comment.controller';
+import AdminTaxonomyController from './controllers/admin-taxonomy.controller';
 import appConfig from '../config/app.config';
 import credentialsConfig from '../config/credentials.config';
 import redisConfig from '../config/redis.config';
@@ -70,7 +71,7 @@ import VotesService from '../services/votes.service';
     ]),
     AdminModule
   ],
-  controllers: [AdminController, AdminPostController, AdminCommentController],
+  controllers: [AdminController, AdminPostController, AdminCommentController, AdminTaxonomyController],
   providers: [
     AppService,
     LoggerService,

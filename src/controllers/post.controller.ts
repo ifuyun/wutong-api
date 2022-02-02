@@ -390,7 +390,7 @@ export default class PostController {
   async showPostsByDate(
     @Req() req,
     @Param('page', new ParseIntPipe(1)) page,
-    @Param('year', new ParseIntPipe(new Date().getFullYear())) year,
+    @Param('year', new ParseIntPipe()) year,
     @Param('month', new ParseIntPipe()) month,
     @IsAdmin() isAdmin
   ) {
