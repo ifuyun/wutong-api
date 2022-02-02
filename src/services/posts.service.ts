@@ -15,7 +15,7 @@ import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
-import { PostStatus } from '../common/enums';
+import { PostStatus, PostStatusLang, PostType } from '../common/enums';
 
 @Injectable()
 export default class PostsService {
@@ -210,14 +210,15 @@ export default class PostsService {
     status?: string;
     author?: string;
   }): Promise<PostListVo> {
-    const { isAdmin, keyword, postType, from, subTaxonomyIds, tag, year, month, status, author } = param;
+    const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, author } = param;
     const pageSize = this.paginatorService.getPageSize();
+    const postType = param.postType || PostType.POST;
     const where = {
       postStatus: {
         [Op.in]: ['publish']
       },
       postType: {
-        [Op.eq]: postType || 'post'
+        [Op.eq]: postType
       }
     };
     if (isAdmin && from === 'admin') {
@@ -495,8 +496,8 @@ export default class PostsService {
     const status: PostStatusMap[] = [];
     Object.keys(PostStatus).forEach((key) => {
       status.push({
-        name: key,
-        desc: PostStatus[key]
+        name: PostStatus[key],
+        desc: PostStatusLang[key]
       });
     });
     return status;

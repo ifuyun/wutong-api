@@ -55,31 +55,34 @@ export enum ResponseCode {
   SUCCESS = 0,
   REQUEST_PARAM_ILLEGAL = 4001,
   UNKNOWN_ERROR = 5001,
-  LOGIN_ERROR = 5002,
-  SESSION_REGENERATE_ERROR = 5003,
-  SESSION_DESTROY_ERROR = 5004,
-  CAPTCHA_INPUT_ERROR = 5005,
+  LOGIN_ERROR,
+  SESSION_REGENERATE_ERROR,
+  SESSION_DESTROY_ERROR,
+  CAPTCHA_INPUT_ERROR,
   // post: 80xx
   POST_NOT_FOUND = 8000,
-  POST_SAVE_ERROR = 8001,
-  POST_COMMENT_CLOSED = 8002,
+  POST_SAVE_ERROR,
+  POST_COMMENT_CLOSED,
+  POST_TYPE_INVALID,
   // taxonomy: 81xx
   TAXONOMY_NOT_FOUND = 8100,
-  TAXONOMY_INVISIBLE = 8101,
-  TAXONOMY_QUERY_ERROR = 8102,
-  TAXONOMY_SLUG_DUPLICATE = 8103,
-  TAXONOMY_REMOVE_ERROR = 8104,
+  TAXONOMY_INVISIBLE,
+  TAXONOMY_QUERY_ERROR,
+  TAXONOMY_SLUG_DUPLICATE,
+  TAXONOMY_REMOVE_ERROR,
   // link: 82xx
   LINK_SAVE_ERROR = 8200,
   LINK_REMOVE_ERROR = 8201,
   // form: 83xx
   FORM_INPUT_ERROR = 8300,
-  UPLOAD_ERROR = 8301,
+  UPLOAD_ERROR,
   // book: 84xx
   BOOK_SAVE_ERROR = 8401,
+  // user: 85xx
+  USER_NOT_FOUND,
   // other
-  CAPTCHAR_GENERATE_ERROR = 8402,
-  VOTE_FAILURE = 8403
+  CAPTCHAR_GENERATE_ERROR = 8902,
+  VOTE_FAILURE
 }
 
 export enum ResponseMessage {
@@ -96,12 +99,36 @@ export enum VoteType {
   DISLIKE = 'dislike'
 }
 
+export enum PostType {
+  POST = 'post',
+  PAGE = 'page',
+  REVISION = 'revision',
+  ATTACHMENT = 'attachment'
+}
+
+export enum PostTypeLang {
+  POST = '文章',
+  PAGE = '独立页面',
+  REVISION = '修订稿',
+  ATTACHMENT = '素材'
+}
+
 export enum PostStatus {
-  'publish' = '公开',
-  'private' = '私密',
-  // 'pending' = '待定',
-  'draft' = '草稿',
-  'auto-draft' = '自动保存草稿',
-  // 'inherit' = '子文章',
-  'trash' = '已删除'
+  PUBLISH = 'publish',
+  PRIVATE = 'private',
+  // PENDING = 'pending',
+  DRAFT = 'draft',
+  AUTO_DRAFT = 'auto-draft',
+  // INHERIT = 'inherit',
+  TRASH = 'trash'
+}
+
+export enum PostStatusLang {
+  PUBLISH = '公开',
+  PRIVATE = '私密',
+  // PENDING = '待定',
+  DRAFT = '草稿',
+  AUTO_DRAFT = '自动保存草稿',
+  // INHERIT = '子文章',
+  TRASH = '已删除'
 }

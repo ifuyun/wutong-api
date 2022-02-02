@@ -5,4 +5,6 @@ export interface PaginatorData {
   nextPage: number;
   curPage: number;
   totalPage: number;
+  pageLimit: number;
+  total: number;
 }

@@ -43,4 +43,8 @@ export default class UsersService {
       return Promise.resolve(null);
     });
   }
+
+  async getUserById(userId: string): Promise<UserModel> {
+    return this.userModel.findByPk(userId);
+  }
 }

@@ -197,4 +197,18 @@ export default class TaxonomiesService {
       })
     };
   }
+
+  async getTaxonomyById(taxonomyId: string): Promise<TaxonomyModel> {
+    return this.taxonomyModel.findByPk(taxonomyId);
+  }
+
+  async getTaxonomyBySlug(slug: string): Promise<TaxonomyModel> {
+    return this.taxonomyModel.findOne({
+      where: {
+        slug: {
+          [Op.eq]: slug
+        }
+      }
+    });
+  }
 }

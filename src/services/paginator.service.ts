@@ -77,7 +77,9 @@ export default class PaginatorService {
       prevPage: page <= 1 ? 0 : (page - 1),
       nextPage: page >= pages ? 0 : (page + 1),
       curPage: page,
-      totalPage: pages
+      totalPage: pages,
+      pageLimit: this.pageSize,
+      total: count
     };
   }
 }
