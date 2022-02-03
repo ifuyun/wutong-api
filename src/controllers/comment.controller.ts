@@ -12,7 +12,7 @@ import PostsService from '../services/posts.service';
 import CustomException from '../exceptions/custom.exception';
 import ExceptionFactory from '../validators/exception-factory';
 
-@Controller('comment')
+@Controller()
 export default class CommentController {
   constructor(
     private readonly commentsService: CommentsService,
@@ -20,7 +20,7 @@ export default class CommentController {
   ) {
   }
 
-  @Post('save')
+  @Post(['comment/save', 'admin/comment/save'])
   @UsePipes(new ValidationPipe({
     transform: true,
     skipNullProperties: true,
@@ -38,29 +38,34 @@ export default class CommentController {
     @Session() session
   ) {
     user = user || {};
-    commentDto = {
-      ...commentDto,
-      commentContent: xss.sanitize(commentDto.commentContent),
+    let commentData: CommentDto = {
+      commentId: commentDto.commentId,
       parentId: commentDto.parentId,
       postId: commentDto.postId,
-      commentAuthor: xss.sanitize(commentDto.commentAuthor) || user.userNiceName || '',
-      commentAuthorEmail: xss.sanitize(commentDto.commentAuthorEmail) || user.userEmail || '',
-      commentStatus: isAdmin ? 'normal' : 'pending',
-      commentIp: ip,
-      commentAgent: agent,
-      userId: user.userId || '',
+      commentContent: xss.sanitize(commentDto.commentContent),
       captchaCode: commentDto.captchaCode || ''
     };
+    if (!commentData.commentId) {
+      commentData = {
+        ...commentData,
+        commentAuthor: xss.sanitize(commentDto.commentAuthor) || user.userNiceName || '',
+        commentAuthorEmail: xss.sanitize(commentDto.commentAuthorEmail) || user.userEmail || '',
+        commentStatus: isAdmin ? 'normal' : 'pending',
+        commentIp: ip,
+        commentAgent: agent,
+        userId: user.userId || ''
+      };
+    }
     // 不是管理员，或，不是在后台修改、回复评论时
-    const shouldCheckCaptcha = !isAdmin || !commentDto.commentId && !commentDto.parentId;
-    if (shouldCheckCaptcha && (!commentDto.captchaCode || !session.captcha)) {
+    const shouldCheckCaptcha = !isAdmin || !commentData.commentId && !commentData.parentId;
+    if (shouldCheckCaptcha && (!commentData.captchaCode || !session.captcha)) {
       throw new CustomException(ResponseCode.CAPTCHA_INPUT_ERROR, HttpStatus.OK, '请输入验证码');
     }
-    if (shouldCheckCaptcha && (session.captcha.toLowerCase() !== commentDto.captchaCode.toLowerCase())) {
+    if (shouldCheckCaptcha && (session.captcha.toLowerCase() !== commentData.captchaCode.toLowerCase())) {
       throw new CustomException(ResponseCode.CAPTCHA_INPUT_ERROR, HttpStatus.OK, '验证码输入有误，请重新输入');
     }
 
-    const post = await this.postsService.getPostById(commentDto.postId, isAdmin);
+    const post = await this.postsService.getPostById(commentData.postId, isAdmin);
     if (!post || !post.postId) {
       throw new CustomException(ResponseCode.POST_NOT_FOUND, HttpStatus.OK, '评论文章不存在');
     }
@@ -68,7 +73,7 @@ export default class CommentController {
       throw new CustomException(ResponseCode.POST_COMMENT_CLOSED, HttpStatus.OK, '该文章禁止评论');
     }
 
-    await this.commentsService.saveComment(commentDto);
+    await this.commentsService.saveComment(commentData);
 
     const referer = req.session.commentReferer;
     delete req.session.commentReferer;

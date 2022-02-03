@@ -135,4 +135,16 @@ export default class CommentsService {
       comments, page, count
     };
   }
+
+  async auditComment(commentId: string, status: string): Promise<[number, CommentModel[]]> {
+    return this.commentModel.update({
+      commentStatus: status
+    }, {
+      where: {
+        commentId: {
+          [Op.eq]: commentId
+        }
+      }
+    });
+  }
 }

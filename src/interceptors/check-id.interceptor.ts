@@ -8,9 +8,10 @@ import CustomException from '../exceptions/custom.exception';
 export default class CheckIdInterceptor implements NestInterceptor {
   constructor(private reflector: Reflector) {
   }
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
-    const idParams = this.reflector.get<string[][]>('idParams', context.getHandler());
+    const idParams = this.reflector.get<{ idInParams?: string[], idInQuery?: string[], idInBody?: string[] }>('idParams', context.getHandler());
     if (!idParams) {
       throw new CustomException({
         data: {
@@ -21,14 +22,20 @@ export default class CheckIdInterceptor implements NestInterceptor {
       });
     }
     const ids: string[] = [];
-    idParams[0].forEach((key) => {
+    idParams.idInParams && idParams.idInParams.forEach((key) => {
       // 路由参数不允许为空
       ids.push(req.params[key]);
     });
-    idParams[1].forEach((key) => {
+    idParams.idInQuery && idParams.idInQuery.forEach((key) => {
       // 查询参数允许为空，非空校验在action层面判断
       if (key && req.query[key]) {
         ids.push(req.query[key]);
+      }
+    });
+    idParams.idInBody && idParams.idInBody.forEach((key) => {
+      // 查询参数允许为空，非空校验在action层面判断
+      if (key && req.body[key]) {
+        ids.push(req.body[key]);
       }
     });
     ids.forEach((id) => {

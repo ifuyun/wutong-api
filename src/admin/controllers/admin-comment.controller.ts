@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import { CommentStatus, CommentStatusDesc, ResponseCode } from '../../common/enums';
 import Search from '../../decorators/search.decorator';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
@@ -11,6 +11,7 @@ import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import { IdParams } from '../../decorators/id-params.decorator';
 import CustomException from '../../exceptions/custom.exception';
 import Referer from '../../decorators/referer.decorator';
+import User from '../../decorators/user.decorator';
 
 @Controller('admin/comment')
 export class AdminCommentController {
@@ -68,11 +69,12 @@ export class AdminCommentController {
   @Get('detail')
   @Render('admin/pages/comment-form')
   @UseInterceptors(CheckIdInterceptor)
-  @IdParams([], ['id'])
+  @IdParams({ idInQuery: ['id'] })
   async editOrReplyComment(
     @Req() req,
     @Query('id', new TrimPipe()) commentId,
     @Query('action', new TrimPipe()) action,
+    @User() user,
     @Referer() referer,
     @Session() session
   ) {
@@ -96,8 +98,33 @@ export class AdminCommentController {
       token: req.csrfToken(),
       options,
       comment,
+      user,
       title,
       action
     };
+  }
+
+  @Post('audit')
+  @Header('Content-Type', 'application/json')
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams({ idInBody: ['commentId'] })
+  async auditComment(
+    @Body(new TrimPipe()) data,
+    @Referer() referer
+  ) {
+    if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
+      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+    }
+    const result = await this.commentsService.auditComment(data.commentId, data.action);
+    if (result[0] < 1) {
+      throw new CustomException(ResponseCode.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, '操作失败。');
+    }
+    return {
+      status: HttpStatus.OK,
+      code: ResponseCode.SUCCESS,
+      data: {
+        url: referer || '/admin/comment'
+      }
+    }
   }
 }

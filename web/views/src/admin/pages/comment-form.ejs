@@ -42,8 +42,9 @@
                                 <input type="submit" class="submit" value="保存" />
                             </div>
                             <input type="hidden" name="_csrf" id="csrfToken" value="<?- token ?>" />
-                            <input type="hidden" name="commentLink" value="<?= options.site_url.value ?>" />
                             <input type="hidden" name="postId" value="<?= comment.post.postId ?>" />
+                            <input type="hidden" name="commentAuthor" value="<?= user.userNiceName ?>" />
+                            <input type="hidden" name="commentAuthorEmail" value="<?= user.userEmail ?>" />
                             <? } ?>
                         </form>
                     </div>

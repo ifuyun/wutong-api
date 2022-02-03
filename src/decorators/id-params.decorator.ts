@@ -1,4 +1,8 @@
 import { SetMetadata } from '@nestjs/common';
 
-export const IdParams = (idInParams: string[], idInQuery: string[] = []) =>
-  SetMetadata('idParams', [idInParams, idInQuery]);
+export const IdParams = (
+  idParams: {
+    idInParams?: string[],
+    idInQuery?: string[],
+    idInBody?: string[]
+  }) => SetMetadata('idParams', idParams);

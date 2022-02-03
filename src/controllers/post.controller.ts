@@ -104,7 +104,7 @@ export default class PostController {
   @Get('post/:postId')
   @Render('home/pages/post')
   @UseInterceptors(CheckIdInterceptor)
-  @IdParams(['postId'], [])
+  @IdParams({ idInParams: ['postId'] })
   async showPost(
     @Req() req,
     @Param('postId') postId,
