@@ -1,4 +1,5 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
+import { ID_REG } from '../common/constants';
 
 export function IsId(validationOptions?: ValidationOptions) {
   return function(object: Object, propertyName: string) {
@@ -10,7 +11,7 @@ export function IsId(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: string) {
-          return !value || /^[0-9a-fA-F]{16}$/i.test(value);
+          return !value || ID_REG.test(value);
         }
       }
     });

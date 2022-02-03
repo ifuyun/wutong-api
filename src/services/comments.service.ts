@@ -21,6 +21,17 @@ export default class CommentsService {
   ) {
   }
 
+  getAllCommentStatus(): CommentStatusMap[] {
+    const status: CommentStatusMap[] = [];
+    Object.keys(CommentStatus).forEach((key) => {
+      status.push({
+        name: CommentStatus[key],
+        desc: CommentStatusDesc[key]
+      });
+    });
+    return status;
+  }
+
   async getCommentCountByPosts(postIds: string[]): Promise<Record<string, number>> {
     return this.commentModel.findAll({
       attributes: ['postId', [Sequelize.fn('count', 1), 'count']],
@@ -62,11 +73,11 @@ export default class CommentsService {
     });
   }
 
-  async saveComment(commentDto: CommentDto): Promise<CommentModel[]> {
+  async saveComment(commentDto: CommentDto): Promise<number> {
     if (!commentDto.commentId) {
       commentDto.commentId = getUuid();
       commentDto.commentCreatedGmt = commentDto.commentModifiedGmt = new Date();
-      return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve([comment]));
+      return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve(1));
     }
     return this.commentModel.update(commentDto, {
       where: {
@@ -74,7 +85,7 @@ export default class CommentsService {
           [Op.eq]: commentDto.commentId
         }
       }
-    }).then((comment) => Promise.resolve(comment[0] > 0 ? comment[1] : []));
+    }).then((result) => Promise.resolve(result[0]));
   }
 
   async getCommentById(commentId: string): Promise<CommentModel> {
@@ -84,17 +95,6 @@ export default class CommentsService {
         attributes: ['postId', 'postGuid', 'postTitle']
       }]
     });
-  }
-
-  getAllCommentStatus(): CommentStatusMap[] {
-    const status: CommentStatusMap[] = [];
-    Object.keys(CommentStatus).forEach((key) => {
-      status.push({
-        name: CommentStatus[key],
-        desc: CommentStatusDesc[key]
-      });
-    });
-    return status;
   }
 
   async getComments(param: { page: number, status?: string, keyword?: string }): Promise<CommentListVo> {

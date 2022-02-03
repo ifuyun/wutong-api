@@ -73,14 +73,16 @@ export default class CommentController {
       throw new CustomException(ResponseCode.POST_COMMENT_CLOSED, HttpStatus.OK, '该文章禁止评论');
     }
 
-    await this.commentsService.saveComment(commentData);
+    const result = await this.commentsService.saveComment(commentData);
+    if (result < 1) {
+      throw new CustomException(ResponseCode.COMMENT_SAVE_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, '评论保存失败。');
+    }
 
-    const referer = req.session.commentReferer;
-    delete req.session.commentReferer;
+    const referer = session.commentReferer;
+    delete session.commentReferer;
     const postUrl = post.postGuid || ('/post/' + post.postId);
 
     return {
-      status: HttpStatus.OK,
       code: ResponseCode.SUCCESS,
       data: {
         commentFlag: post.commentFlag,

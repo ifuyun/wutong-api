@@ -12,3 +12,5 @@ export const POST_CATEGORY_LIMIT = 5;
 export const POST_TAG_LIMIT = 15;
 export const POST_SOURCE_LENGTH = 200;
 export const POST_AUTHOR_LENGTH = 50;
+
+export const ID_REG = /^[0-9a-fA-F]{16}$/i;

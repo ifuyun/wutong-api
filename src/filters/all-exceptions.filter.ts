@@ -30,8 +30,8 @@ export default class AllExceptionsFilter<T> implements ExceptionFilter {
       errData = err.data;
 
       if (isDev) {
-        if (errLog && errLog.stack) {
-          console.error(errLog.stack);
+        if (errLog) {
+          console.error(errLog);
         }
       } else {
         this.logger.error({

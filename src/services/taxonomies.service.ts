@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
-import { isEmptyObject } from '../helpers/helper';
+import { Sequelize } from 'sequelize-typescript';
+import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../common/constants';
+import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../common/enums';
+import TaxonomyDto from '../dtos/taxonomy.dto';
+import { getUuid, isEmptyObject } from '../helpers/helper';
 import { CrumbData } from '../interfaces/crumb.interface';
 import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyTree } from '../interfaces/taxonomies.interface';
 import TaxonomyModel from '../models/taxonomy.model';
 import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
+import LoggerService from './logger.service';
 import PaginatorService from './paginator.service';
-import { CommentStatus, CommentStatusDesc, TaxonomyStatus, TaxonomyStatusDesc } from '../common/enums';
-import * as moment from 'moment';
 import UtilService from './util.service';
 
 @Injectable()
@@ -16,8 +19,12 @@ export default class TaxonomiesService {
   constructor(
     @InjectModel(TaxonomyModel)
     private readonly taxonomyModel: typeof TaxonomyModel,
+    @InjectModel(TaxonomyRelationshipModel)
+    private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
     private readonly utilService: UtilService,
-    private readonly paginatorService: PaginatorService
+    private readonly paginatorService: PaginatorService,
+    private readonly logger: LoggerService,
+    private readonly sequelize: Sequelize
   ) {
   }
 
@@ -105,6 +112,49 @@ export default class TaxonomiesService {
     return crumbs;
   }
 
+  getSubTaxonomies(param: { taxonomyTree: Record<string, TaxonomyNode>, taxonomyData: TaxonomyNode[], slug: string }) {
+    const subTaxonomyIds: string[] = [];
+    const iterator = (nodes: Record<string, TaxonomyNode>, checked = false, slug?: string) => {
+      Object.keys(nodes).forEach((key) => {
+        const curNode = nodes[key];
+        if (checked || curNode.slug === slug) {
+          subTaxonomyIds.push(key);
+          if (curNode.hasChildren) {
+            iterator(curNode.children, true);
+          }
+        } else {
+          if (curNode.hasChildren) {
+            iterator(curNode.children, false, slug);
+          }
+        }
+      });
+    };
+    iterator(param.taxonomyTree, false, param.slug);
+
+    return {
+      subTaxonomyIds,
+      crumbs: this.getTaxonomyPath({
+        taxonomyData: param.taxonomyData,
+        slug: param.slug
+      })
+    };
+  }
+
+  getAllTaxonomyStatus(): TaxonomyStatusMap[] {
+    const status: TaxonomyStatusMap[] = [];
+    Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).forEach((key) => {
+      status.push({
+        name: TaxonomyStatus[key],
+        desc: TaxonomyStatusDesc[key]
+      });
+    });
+    return status;
+  }
+
+  getAllTaxonomyStatusValues(): number[] {
+    return Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).map((key) => TaxonomyStatus[key]);
+  }
+
   async getAllTaxonomies(status?: number[], type: string = 'post'): Promise<TaxonomyNode[]> {
     let where: WhereOptions = {
       type: {
@@ -174,34 +224,6 @@ export default class TaxonomiesService {
     });
   }
 
-  getSubTaxonomies(param: { taxonomyTree: Record<string, TaxonomyNode>, taxonomyData: TaxonomyNode[], slug: string }) {
-    const subTaxonomyIds: string[] = [];
-    const iterator = (nodes: Record<string, TaxonomyNode>, checked = false, slug?: string) => {
-      Object.keys(nodes).forEach((key) => {
-        const curNode = nodes[key];
-        if (checked || curNode.slug === slug) {
-          subTaxonomyIds.push(key);
-          if (curNode.hasChildren) {
-            iterator(curNode.children, true);
-          }
-        } else {
-          if (curNode.hasChildren) {
-            iterator(curNode.children, false, slug);
-          }
-        }
-      });
-    };
-    iterator(param.taxonomyTree, false, param.slug);
-
-    return {
-      subTaxonomyIds,
-      crumbs: this.getTaxonomyPath({
-        taxonomyData: param.taxonomyData,
-        slug: param.slug
-      })
-    };
-  }
-
   async getTaxonomyById(taxonomyId: string): Promise<TaxonomyModel> {
     return this.taxonomyModel.findByPk(taxonomyId);
   }
@@ -261,14 +283,87 @@ export default class TaxonomiesService {
     };
   }
 
-  getAllTaxonomyStatus(): TaxonomyStatusMap[] {
-    const status: TaxonomyStatusMap[] = [];
-    Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).forEach((key) => {
-      status.push({
-        name: TaxonomyStatus[key],
-        desc: TaxonomyStatusDesc[key]
+  async checkTaxonomySlugExist(slug: string, taxonomyId?: string): Promise<boolean> {
+    const where = {
+      slug: {
+        [Op.eq]: slug
+      }
+    };
+    if (taxonomyId) {
+      where['taxonomyId'] = {
+        [Op.ne]: taxonomyId
+      };
+    }
+    const count = await this.taxonomyModel.count({ where });
+    return count > 0;
+  }
+
+  async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<number> {
+    if (!taxonomyDto.taxonomyId) {
+      taxonomyDto.taxonomyId = getUuid();
+      return this.taxonomyModel.create({ ...taxonomyDto }).then((taxonomy) => Promise.resolve(1));
+    }
+    return this.taxonomyModel.update(taxonomyDto, {
+      where: {
+        taxonomyId: {
+          [Op.eq]: taxonomyDto.taxonomyId
+        }
+      }
+    }).then((result) => Promise.resolve(result[0]));
+  }
+
+  async removeTaxonomies(type: string, taxonomyIds: string[]) {
+    return this.sequelize.transaction(async (t) => {
+      await this.taxonomyModel.update({
+        status: TaxonomyStatus.TRASH
+      }, {
+        where: {
+          taxonomyId: {
+            [Op.in]: taxonomyIds
+          }
+        },
+        transaction: t
       });
+      if (type === TaxonomyType.TAG) {
+        await this.taxonomyRelationshipModel.destroy({
+          where: {
+            termTaxonomyId: {
+              [Op.in]: taxonomyIds
+            }
+          },
+          transaction: t
+        });
+      } else {
+        await this.taxonomyRelationshipModel.update({
+          termTaxonomyId: type === TaxonomyType.POST ? DEFAULT_POST_TAXONOMY_ID : DEFAULT_LINK_TAXONOMY_ID
+        }, {
+          where: {
+            termTaxonomyId: {
+              [Op.in]: taxonomyIds
+            }
+          },
+          transaction: t
+        });
+        await this.taxonomyModel.update({
+          parent: type === TaxonomyType.POST ? DEFAULT_POST_TAXONOMY_ID : DEFAULT_LINK_TAXONOMY_ID
+        }, {
+          where: {
+            parent: {
+              [Op.in]: taxonomyIds
+            }
+          },
+          transaction: t
+        });
+      }
+    }).then(() => {
+      return Promise.resolve(true);
+    }).catch((err) => {
+      this.logger.error({
+        message: '分类删除失败。',
+        data: {type, taxonomyIds},
+        stack: err.stack
+      });
+      return Promise.resolve(false);
     });
-    return status;
   }
 }

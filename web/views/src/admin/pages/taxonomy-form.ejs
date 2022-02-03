@@ -27,7 +27,7 @@
                                 <label class="form-label-left" for="cat-parent">父节点</label>
                                 <select class="input form-input" id="cat-parent" name="parent">
                                     <option value="">无</option>
-                                    <? categories.catArray.forEach(function (cat){?>
+                                    <? taxonomyList.forEach(function (cat){?>
                                     <option value="<?= cat.taxonomyId ?>"<? if(cat.taxonomyId === taxonomy.parent){?> selected="selected"<? } ?><? if(cat.taxonomyId === taxonomy.taxonomy_id) { ?> disabled="disabled"<? } ?>><? for(var idx = 1; idx < cat.level; idx += 1){ ?>&nbsp;&nbsp;&nbsp;&nbsp;<? } ?><?= cat.name ?></option>
                                     <? }) ?>
                                 </select>
