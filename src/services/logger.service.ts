@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { configure, getLogger, Logger } from 'log4js';
 import * as moment from 'moment';
-import { LogCategory } from '../common/enums';
+import { LogCategory } from '../common/common.enum';
 import appConfig from '../config/app.config';
 import { LogData } from '../interfaces/logger.interface';
 

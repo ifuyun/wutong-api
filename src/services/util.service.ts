@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OptionData } from '../interfaces/options.interface';
-import { PostSlugPrefixBlacklist } from '../common/enums';
+import { PostSlugPrefixBlacklist } from '../common/common.enum';
 
 @Injectable()
 export default class UtilService {

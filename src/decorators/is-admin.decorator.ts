@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Roles } from '../common/enums';
+import { Roles } from '../common/common.enum';
 
 const IsAdmin = createParamDecorator((data, ctx: ExecutionContext) => {
   const req = ctx.switchToHttp().getRequest();

@@ -15,7 +15,7 @@ import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
-import { PostStatus, PostStatusDesc, PostType } from '../common/enums';
+import { PostStatus, PostStatusDesc, PostType } from '../common/common.enum';
 import UtilService from './util.service';
 
 @Injectable()

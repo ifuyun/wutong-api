@@ -123,4 +123,6 @@ export default class TaxonomyModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
   modified: Date;
+
+  // todo: add column: is_required
 }

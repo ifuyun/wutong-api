@@ -17,7 +17,7 @@ import { AppModule } from './app.module';
 import AppConfig from './config/app.config';
 import RedisConfig from './config/redis.config';
 import LoggerService from './services/logger.service';
-import { LogLevel } from './common/enums';
+import { LogLevel } from './common/common.enum';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import { VoteType } from '../common/enums';
+import { VoteType } from '../common/common.enum';
 
 export function IsValidVoteType(validationOptions?: ValidationOptions) {
   return function(object: Object, propertyName: string) {

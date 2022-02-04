@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../common/constants';
-import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../common/enums';
+import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../common/common.enum';
 import TaxonomyDto from '../dtos/taxonomy.dto';
 import { getUuid, isEmptyObject } from '../helpers/helper';
 import { CrumbData } from '../interfaces/crumb.interface';
@@ -26,6 +26,7 @@ export default class TaxonomiesService {
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
+    this.logger.setLogger(this.logger.sysLogger);
   }
 
   generateTaxonomyTree(taxonomyData: TaxonomyNode[]): Record<string, TaxonomyNode> {
@@ -298,10 +299,10 @@ export default class TaxonomiesService {
     return count > 0;
   }
 
-  async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<number> {
+  async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<boolean> {
     if (!taxonomyDto.taxonomyId) {
       taxonomyDto.taxonomyId = getUuid();
-      return this.taxonomyModel.create({ ...taxonomyDto }).then((taxonomy) => Promise.resolve(1));
+      return this.taxonomyModel.create({ ...taxonomyDto }).then((taxonomy) => Promise.resolve(true));
     }
     return this.taxonomyModel.update(taxonomyDto, {
       where: {
@@ -309,10 +310,10 @@ export default class TaxonomiesService {
           [Op.eq]: taxonomyDto.taxonomyId
         }
       }
-    }).then((result) => Promise.resolve(result[0]));
+    }).then((result) => Promise.resolve(true));
   }
 
-  async removeTaxonomies(type: string, taxonomyIds: string[]) {
+  async removeTaxonomies(type: string, taxonomyIds: string[]): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
       await this.taxonomyModel.update({
         status: TaxonomyStatus.TRASH

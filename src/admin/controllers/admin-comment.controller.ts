@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
-import { CommentStatus, CommentStatusDesc, ResponseCode } from '../../common/enums';
+import { CommentStatus, CommentStatusDesc, ResponseCode } from '../../common/common.enum';
 import Search from '../../decorators/search.decorator';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
@@ -8,13 +8,13 @@ import PaginatorService from '../../services/paginator.service';
 import OptionsService from '../../services/options.service';
 import UtilService from '../../services/util.service';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
-import { IdParams } from '../../decorators/id-params.decorator';
+import IdParams from '../../decorators/id-params.decorator';
 import CustomException from '../../exceptions/custom.exception';
 import Referer from '../../decorators/referer.decorator';
 import User from '../../decorators/user.decorator';
 
 @Controller('admin/comment')
-export class AdminCommentController {
+export default class AdminCommentController {
   constructor(
     private readonly commentsService: CommentsService,
     private readonly optionsService: OptionsService,
@@ -125,6 +125,6 @@ export class AdminCommentController {
       data: {
         url: referer || '/admin/comment'
       }
-    }
+    };
   }
 }

@@ -12,7 +12,7 @@
             <div class="clear-right">
                 <div class="table-nav">
                     <span><a class="button button-spacing" href="javascript:">删除</a></span>
-                    <span><a class="button button-spacing" href="/admin/link/item?action=create">新增链接</a></span>
+                    <span><a class="button button-spacing" href="/admin/link/detail?action=create">新增链接</a></span>
                     <span><a class="button" href="/admin/taxonomy?type=link">链接分类</a></span>
                 </div>
                 <div>
@@ -35,15 +35,15 @@
                             <? links.forEach(function(link, rowIdx){ ?>
                             <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
                                 <td class="column-check"><input type="checkbox" class="checkRow" /></td>
-                                <td title="<?- link.link_name ?>"><?= util.cutStr(link.linkName, 20) ?></td>
-                                <td title="<?- link.link_url ?>"><?= util.cutStr(link.linkUrl, 20) ?></td>
-                                <td title="<?- link.link_description ?>"><?= util.cutStr(link.linkDescription, 20) ?></td>
-                                <td><?= formatter.linkVisible(link.linkVisible) ?></td>
+                                <td title="<?- link.link_name ?>"><?= link.linkName ?></td>
+                                <td title="<?- link.link_url ?>"><?= link.linkUrl ?></td>
+                                <td title="<?- link.link_description ?>"><?= link.linkDescription ?></td>
+                                <td><?= link.linkVisible ?></td>
                                 <td><?= link.linkTarget ?></td>
-                                <td><?= link.linkRating ?></td>
-                                <td><?= moment(link.linkCreated).format('YYYY-MM-DD') ?></td>
+                                <td><?= link.linkOrder ?></td>
+                                <td><?= link.createdText ?></td>
                                 <td class="m-col-operate">
-                                    <a href="/admin/link/item?action=edit&linkId=<?= link.linkId ?>">编辑</a><a class="btn-delete" href="javascript:" data-id="<?= link.linkId ?>">删除</a>
+                                    <a href="/admin/link/detail?action=edit&id=<?= link.linkId ?>">编辑</a><a class="btn-delete" href="javascript:" data-id="<?= link.linkId ?>">删除</a>
                                 </td>
                             </tr>
                             <? }) ?>
@@ -58,6 +58,7 @@
                 <?- include('../elements/pagination.ejs') -?>
             </div>
         </div>
+        <input type="hidden" name="_csrf" id="csrfToken" value="<?- token ?>" />
     </div>
     <?- include('../elements/page-footer.ejs') -?>
 </div>

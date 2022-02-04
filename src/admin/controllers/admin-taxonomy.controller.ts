@@ -1,22 +1,22 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import * as xss from 'sanitizer';
+import { ResponseCode, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { ID_REG } from '../../common/constants';
+import IdParams from '../../decorators/id-params.decorator';
+import Referer from '../../decorators/referer.decorator';
+import Search from '../../decorators/search.decorator';
+import TaxonomyDto from '../../dtos/taxonomy.dto';
+import CustomException from '../../exceptions/custom.exception';
+import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
+import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
+import LowerCasePipe from '../../pipes/lower-case.pipe';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
-import Search from '../../decorators/search.decorator';
-import TaxonomiesService from '../../services/taxonomies.service';
-import { ResponseCode, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/enums';
-import CustomException from '../../exceptions/custom.exception';
-import UtilService from '../../services/util.service';
 import OptionsService from '../../services/options.service';
 import PaginatorService from '../../services/paginator.service';
-import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
-import { IdParams } from '../../decorators/id-params.decorator';
-import Referer from '../../decorators/referer.decorator';
-import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
+import TaxonomiesService from '../../services/taxonomies.service';
+import UtilService from '../../services/util.service';
 import ExceptionFactory from '../../validators/exception-factory';
-import TaxonomyDto from '../../dtos/taxonomy.dto';
-import { LowerCasePipe } from '../../pipes/lower-case.pipe';
-import { ID_REG } from '../../common/constants';
 
 @Controller('admin/taxonomy')
 export default class AdminTaxonomyController {
@@ -104,8 +104,12 @@ export default class AdminTaxonomyController {
     let taxonomy = {
       parent: parentId || ''
     };
+    const typeDesc: string = type === TaxonomyType.TAG ? '标签' : '分类';
     if (action === 'edit') {
       taxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyId);
+      if (!taxonomy) {
+        throw new CustomException(ResponseCode.TAXONOMY_NOT_FOUND, HttpStatus.NOT_FOUND, `${typeDesc}不存在。`);
+      }
     }
     let taxonomyList: TaxonomyNode[] = [];
     if (type !== TaxonomyType.TAG) {
@@ -117,10 +121,10 @@ export default class AdminTaxonomyController {
     const titles = ['管理后台', options.site_name.value];
     let title = '';
     if (action === 'create') {
-      title = type === 'tag' ? '新增标签' : '新增分类';
+      title = `新增${typeDesc}`;
       titles.unshift(title);
     } else {
-      title = type === 'tag' ? '编辑标签' : '编辑分类';
+      title = `编辑${typeDesc}`;
       titles.unshift(taxonomy['name'], title);
     }
     session.taxonomyReferer = referer;
@@ -181,7 +185,7 @@ export default class AdminTaxonomyController {
       throw new CustomException(ResponseCode.TAXONOMY_SLUG_DUPLICATE, HttpStatus.OK, `别名${taxonomyDto.slug}已存在。`);
     }
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);
-    if (result < 1) {
+    if (!result) {
       throw new CustomException(ResponseCode.TAXONOMY_SAVE_ERROR, HttpStatus.OK, '保存失败。');
     }
     const referer = session.taxonomyReferer;
@@ -206,7 +210,7 @@ export default class AdminTaxonomyController {
       throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.OK, '操作不允许。');
     }
     let taxonomyIds: string[] = [];
-    if (typeof data.taxonomyIds ==='string') {
+    if (typeof data.taxonomyIds === 'string') {
       taxonomyIds = data.taxonomyIds.split(',');
     } else if (Array.isArray(data.taxonomyIds)) {
       taxonomyIds = data.taxonomyIds;

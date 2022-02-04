@@ -50,7 +50,6 @@ export enum ResponseCode {
   BAD_GATEWAY = 502,
   SERVICE_UNAVAILABLE = 503,
   GATEWAY_TIMEOUT = 504,
-
   // custom response code
   SUCCESS = 0,
   REQUEST_PARAM_ILLEGAL = 4001,
@@ -79,6 +78,7 @@ export enum ResponseCode {
   // link: 83xx
   LINK_SAVE_ERROR = 8300,
   LINK_REMOVE_ERROR,
+  LINK_NOT_FOUND,
   // form: 84xx
   FORM_INPUT_ERROR = 8400,
   UPLOAD_ERROR,
@@ -89,11 +89,6 @@ export enum ResponseCode {
   // other
   CAPTCHA_GENERATE_ERROR = 8900,
   VOTE_FAILURE
-}
-
-export enum ResponseMessage {
-  PAGE_NOT_FOUND = 'Page not found.',
-  UNKNOWN_ERROR = 'Unknown error.'
 }
 
 export enum Roles {
@@ -182,7 +177,7 @@ export enum TaxonomyStatusDesc {
 export enum LinkVisibleScope {
   SITE = 'site',
   HOMEPAGE = 'homepage',
-  INVISBLE = 'invisible'
+  INVISIBLE = 'invisible'
 }
 
 export enum LinkVisibleScopeDesc {

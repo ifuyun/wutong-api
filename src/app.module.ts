@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import HomeModule from './home.module';
 import AdminModule from './admin/admin.module';
-import StandaloneModule from './standalone/standalone.module';
+import StandaloneModule from './modules/standalone/standalone.module';
 import appConfig from './config/app.config';
 import credentialsConfig from './config/credentials.config';
 import redisConfig from './config/redis.config';

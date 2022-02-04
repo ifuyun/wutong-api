@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import Sequelize, { Op } from 'sequelize';
 import PaginatorService from './paginator.service';
 import UtilService from './util.service';
-import { CommentStatus, CommentStatusDesc } from '../common/enums';
+import { CommentStatus, CommentStatusDesc } from '../common/common.enum';
 import CommentDto from '../dtos/comment.dto';
 import { getUuid } from '../helpers/helper';
 import { CommentListVo, CommentStatusMap } from '../interfaces/comments.interface';

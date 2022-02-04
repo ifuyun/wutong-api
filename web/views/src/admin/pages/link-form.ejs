@@ -40,14 +40,14 @@
                             </div>
                             <div class="form-field">
                                 <label class="form-label-left" for="link-rating">排序</label>
-                                <input type="text" class="input form-input" id="link-rating" name="linkRating" value="<?= link.linkRating ?>" />
+                                <input type="text" class="input form-input" id="link-rating" name="linkOrder" value="<?= link.linkOrder ?>" />
                             </div>
                             <div class="form-field">
                                 <label class="form-label-left" for="link-type">分类</label>
                                 <select class="input form-input" id="link-type" name="linkTaxonomy">
                                     <option value="">无</option>
-                                    <? categories.catArray.forEach(function (cat){?>
-                                    <option value="<?= cat.taxonomyId ?>"<? if(cat.taxonomyId === link.TermTaxonomies[0].taxonomyId){?> selected="selected"<? } ?>><? for(var idx = 1; idx < cat.level; idx += 1){ ?>&nbsp;&nbsp;&nbsp;&nbsp;<? } ?><?= cat.name ?></option>
+                                    <? taxonomyList.forEach(function (cat){?>
+                                    <option value="<?= cat.taxonomyId ?>"<? if(cat.taxonomyId === link.taxonomies[0].taxonomyId){?> selected="selected"<? } ?>><? for(var idx = 1; idx < cat.level; idx += 1){ ?>&nbsp;&nbsp;&nbsp;&nbsp;<? } ?><?= cat.name ?></option>
                                     <? }) ?>
                                 </select>
                             </div>

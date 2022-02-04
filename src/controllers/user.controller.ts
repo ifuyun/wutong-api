@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ResponseCode } from '../common/enums';
+import { ResponseCode } from '../common/common.enum';
 import Referer from '../decorators/referer.decorator';
 import UserLoginDto from '../dtos/user-login.dto';
 import CustomException from '../exceptions/custom.exception';

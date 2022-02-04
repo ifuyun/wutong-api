@@ -1,4 +1,4 @@
-import {  BelongsToMany, Column, CreatedAt, DataType,  Model, PrimaryKey, Sequelize, Table, UpdatedAt } from 'sequelize-typescript';
+import { BelongsToMany, Column, CreatedAt, DataType, Model, PrimaryKey, Sequelize, Table, UpdatedAt } from 'sequelize-typescript';
 import TaxonomyModel from './taxonomy.model';
 import TaxonomyRelationshipModel from './taxonomy-relationship.model';
 
@@ -74,6 +74,7 @@ export default class LinkModel extends Model {
   })
   linkOwner: string;
 
+  // todo: rename
   @Column({
     field: 'link_rating',
     type: DataType.INTEGER({
@@ -83,26 +84,9 @@ export default class LinkModel extends Model {
     allowNull: false,
     defaultValue: 0
   })
-  linkRating: number;
+  linkOrder: number;
 
-  @CreatedAt
-  @Column({
-    field: 'link_created',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  linkCreated: Date;
-
-  @UpdatedAt
-  @Column({
-    field: 'link_modified',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  linkModified: Date;
-
+  // todo: change column order
   @Column({
     type: DataType.STRING(255),
     allowNull: false,
@@ -110,4 +94,26 @@ export default class LinkModel extends Model {
     field: 'link_rss'
   })
   linkRss: string;
+
+  // todo: rename
+  @CreatedAt
+  @Column({
+    field: 'link_created',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  created: Date;
+
+  createdText: string;
+
+  // todo: rename
+  @UpdatedAt
+  @Column({
+    field: 'link_modified',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  modified: Date;
 }

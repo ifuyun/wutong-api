@@ -1,5 +1,5 @@
 import { Controller, Get, HttpStatus, Param, Query, Render } from '@nestjs/common';
-import { PostStatus, PostStatusDesc, PostType, ResponseCode } from '../../common/enums';
+import { PostStatus, PostStatusDesc, PostType, ResponseCode } from '../../common/common.enum';
 import IsAdmin from '../../decorators/is-admin.decorator';
 import Search from '../../decorators/search.decorator';
 import CustomException from '../../exceptions/custom.exception';

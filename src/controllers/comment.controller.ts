@@ -3,7 +3,7 @@ import * as xss from 'sanitizer';
 import CommentsService from '../services/comments.service';
 import CommentDto from '../dtos/comment.dto';
 import TrimPipe from '../pipes/trim.pipe';
-import { ResponseCode } from '../common/enums';
+import { ResponseCode } from '../common/common.enum';
 import User from '../decorators/user.decorator';
 import IsAdmin from '../decorators/is-admin.decorator';
 import Ip from '../decorators/ip.decorator';

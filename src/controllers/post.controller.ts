@@ -1,5 +1,6 @@
 import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
-import { ResponseCode, ResponseMessage } from '../common/enums';
+import { ResponseCode } from '../common/common.enum';
+import { Messages } from '../common/messages.enum';
 import { POST_DESCRIPTION_LENGTH } from '../common/constants';
 import Ip from '../decorators/ip.decorator';
 import IpAndAgent from '../decorators/ip-and-agent.decorator';
@@ -20,7 +21,7 @@ import PostsService from '../services/posts.service';
 import TaxonomiesService from '../services/taxonomies.service';
 import UtilService from '../services/util.service';
 import { CrumbData } from '../interfaces/crumb.interface';
-import { IdParams } from '../decorators/id-params.decorator';
+import IdParams from '../decorators/id-params.decorator';
 
 @Controller()
 export default class PostController {
@@ -28,12 +29,13 @@ export default class PostController {
     private readonly postsService: PostsService,
     private readonly commonService: CommonService,
     private readonly taxonomiesService: TaxonomiesService,
-    private readonly loggerService: LoggerService,
+    private readonly logger: LoggerService,
     private readonly paginatorService: PaginatorService,
     private readonly utilService: UtilService,
     private readonly commentsService: CommentsService,
     private readonly crumbService: CrumbService
   ) {
+    this.logger.setLogger(this.logger.sysLogger);
   }
 
   @Get(['', '/+', 'post/page-:page'])
@@ -128,7 +130,7 @@ export default class PostController {
         data: {
           code: ResponseCode.UNAUTHORIZED,
           status: HttpStatus.NOT_FOUND,
-          message: ResponseMessage.PAGE_NOT_FOUND
+          message: Messages.PAGE_NOT_FOUND
         },
         log: {
           msg: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
@@ -146,7 +148,7 @@ export default class PostController {
         data: {
           code: ResponseCode.TAXONOMY_NOT_FOUND,
           status: HttpStatus.NOT_FOUND,
-          message: ResponseMessage.PAGE_NOT_FOUND
+          message: Messages.PAGE_NOT_FOUND
         },
         log: {
           msg: 'Taxonomy not exist.',
@@ -172,7 +174,7 @@ export default class PostController {
         data: {
           code: ResponseCode.TAXONOMY_INVISIBLE,
           status: HttpStatus.NOT_FOUND,
-          message: ResponseMessage.PAGE_NOT_FOUND
+          message: Messages.PAGE_NOT_FOUND
         },
         log: {
           msg: 'Taxonomy is invisible.',

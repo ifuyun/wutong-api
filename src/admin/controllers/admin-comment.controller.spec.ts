@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AdminCommentController } from './admin-comment.controller';
+import AdminCommentController from './admin-comment.controller';
 
 describe('AdminCommentController', () => {
   let controller: AdminCommentController;

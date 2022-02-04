@@ -1,27 +1,26 @@
-import { Controller, Get, HttpException, HttpStatus, Param, Render, Req } from '@nestjs/common';
-import { POST_DESCRIPTION_LENGTH } from '../common/constants';
-import { ResponseMessage } from '../common/enums';
-import IsAdmin from '../decorators/is-admin.decorator';
-import User from '../decorators/user.decorator';
-import { appendUrlRef, cutStr, filterHtmlTag, uniqueTags } from '../helpers/helper';
-import CommentsService from '../services/comments.service';
-import CommonService from '../services/common.service';
-import LoggerService from '../services/logger.service';
-import PaginatorService from '../services/paginator.service';
-import PostsService from '../services/posts.service';
-import TaxonomiesService from '../services/taxonomies.service';
-import UtilService from '../services/util.service';
-import ReqPath from '../decorators/req-path.decorator';
+import { Controller, Get, HttpException, HttpStatus, Render, Req } from '@nestjs/common';
+import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
+import { Messages } from '../../common/messages.enum';
+import IsAdmin from '../../decorators/is-admin.decorator';
+import ReqPath from '../../decorators/req-path.decorator';
+import User from '../../decorators/user.decorator';
+import { appendUrlRef, cutStr, filterHtmlTag, uniqueTags } from '../../helpers/helper';
+import CommentsService from '../../services/comments.service';
+import CommonService from '../../services/common.service';
+import LoggerService from '../../services/logger.service';
+import PostsService from '../../services/posts.service';
+import UtilService from '../../services/util.service';
 
 @Controller()
 export default class PostStandaloneController {
   constructor(
     private readonly postsService: PostsService,
     private readonly commonService: CommonService,
-    private readonly loggerService: LoggerService,
+    private readonly logger: LoggerService,
     private readonly utilService: UtilService,
     private readonly commentsService: CommentsService
   ) {
+    this.logger.setLogger(this.logger.sysLogger);
   }
 
   @Get('*')
@@ -34,11 +33,11 @@ export default class PostStandaloneController {
   ) {
     const isLikePost = this.utilService.isReqPathLikePostSlug(reqPath);
     if (!isLikePost) {
-      throw new HttpException(ResponseMessage.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new HttpException(Messages.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const post = await this.postsService.getPostBySlug(reqPath);
     if (!post) {
-      throw new HttpException(ResponseMessage.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new HttpException(Messages.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const { comments, commonData } = await Promise.all([
       this.commentsService.getCommentsByPostId(post.postId),

@@ -1,4 +1,3 @@
-/*global process*/
 /**
  * 数据库配置
  * @author Fuyun
@@ -7,7 +6,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SequelizeModuleOptions, SequelizeOptionsFactory } from '@nestjs/sequelize/dist/interfaces/sequelize-options.interface';
+import { SequelizeModuleOptions, SequelizeOptionsFactory } from '@nestjs/sequelize';
 import credentials from '../config/credentials.config';
 import LoggerService from './logger.service';
 
@@ -16,12 +15,15 @@ interface DbConfigOptions {
   production: SequelizeModuleOptions
 }
 
-/* Can't return config directly, it must be defined as a Class, otherwise, LoggerService will be undefined. */
+/**
+ * Can't return config directly, it must be defined as a Class,
+ * otherwise, LoggerService will be undefined.
+ */
 @Injectable()
 export default class DbConfigService implements SequelizeOptionsFactory {
   constructor(
     private readonly configService: ConfigService,
-    private readonly loggerService: LoggerService
+    private readonly logger: LoggerService
   ) {
   }
 
@@ -42,7 +44,7 @@ export default class DbConfigService implements SequelizeOptionsFactory {
       synchronize: false,
       autoLoadModels: true,
       logging: (sql) => {
-        this.loggerService.dbLogger.trace(sql);
+        this.logger.dbLogger.trace(sql);
       }
     },
     production: {
@@ -61,7 +63,7 @@ export default class DbConfigService implements SequelizeOptionsFactory {
       synchronize: false,
       autoLoadModels: true,
       logging: (sql) => {
-        this.loggerService.dbLogger.trace(sql);
+        this.logger.dbLogger.trace(sql);
       }
     }
   };
