@@ -117,7 +117,8 @@ export default class LinksService {
             linkId: {
               [Op.eq]: linkDto.linkId
             }
-          }
+          },
+          transaction: t
         });
         await this.taxonomyRelationshipModel.update({
           termTaxonomyId: linkDto.linkTaxonomy

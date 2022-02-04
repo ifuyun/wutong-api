@@ -7,6 +7,7 @@ import redisConfig from '../config/redis.config';
 import AdminController from './controllers/admin.controller';
 import AdminCommentController from './controllers/admin-comment.controller';
 import AdminLinkController from './controllers/admin-link.controller';
+import AdminOptionController from './controllers/admin-option.controller';
 import AdminPostController from './controllers/admin-post.controller';
 import AdminTaxonomyController from './controllers/admin-taxonomy.controller';
 import BookModel from '../models/book.model';
@@ -72,7 +73,7 @@ import VotesService from '../services/votes.service';
     ]),
     AdminModule
   ],
-  controllers: [AdminController, AdminPostController, AdminCommentController, AdminTaxonomyController, AdminLinkController],
+  controllers: [AdminController, AdminPostController, AdminCommentController, AdminTaxonomyController, AdminLinkController, AdminOptionController],
   providers: [
     AppService,
     LoggerService,

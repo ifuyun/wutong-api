@@ -135,8 +135,8 @@ export default class AdminTaxonomyController {
         description: `${options.site_name.value}管理后台`,
         author: options.site_author.value
       },
-      token: req.csrfToken(),
       curNav: `taxonomy-${type}`,
+      token: req.csrfToken(),
       title,
       type,
       options,

@@ -84,8 +84,10 @@ export enum ResponseCode {
   UPLOAD_ERROR,
   // user: 85xx
   USER_NOT_FOUND = 8500,
-  // book: 86xx
-  BOOK_SAVE_ERROR = 8600,
+  // option: 86xx
+  OPTION_SAVE_ERROR = 8600,
+  // book: 88xx
+  BOOK_SAVE_ERROR = 8800,
   // other
   CAPTCHA_GENERATE_ERROR = 8900,
   VOTE_FAILURE
