@@ -180,8 +180,8 @@ export default class AdminTaxonomyController {
       status: taxonomyDto.status,
       type
     };
-    const slugExist = await this.taxonomiesService.checkTaxonomySlugExist(taxonomyDto.slug, taxonomyDto.taxonomyId);
-    if (slugExist) {
+    const isSlugExist = await this.taxonomiesService.checkTaxonomySlugExist(taxonomyDto.slug, taxonomyDto.taxonomyId);
+    if (isSlugExist) {
       throw new CustomException(ResponseCode.TAXONOMY_SLUG_DUPLICATE, HttpStatus.OK, `别名${taxonomyDto.slug}已存在。`);
     }
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);

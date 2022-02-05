@@ -40,7 +40,7 @@ lerna-debug.log*
 *.ttc
 package-lock.json
 ifuyun
-credentials.config.*
+credentials.config.ts
 /web/public/dist/**
 /web/public/dev/**
 /web/public/static/**

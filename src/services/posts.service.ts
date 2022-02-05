@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
-import Sequelize, { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
-import PaginatorService from './paginator.service';
-import PostMetaService from './post-meta.service';
-import TaxonomiesService from './taxonomies.service';
+import { CountOptions, FindOptions, IncludeOptions, Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, ResponseCode } from '../common/common.enum';
 import { POST_EXCERPT_LENGTH } from '../common/constants';
+import PostDto from '../dtos/post.dto';
+import CustomException from '../exceptions/custom.exception';
 import { cutStr, filterHtmlTag } from '../helpers/helper';
 import { PostListVo, PostStatusMap, PostVo } from '../interfaces/posts.interface';
 import PostModel from '../models/post.model';
@@ -15,8 +16,12 @@ import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
-import { PostStatus, PostStatusDesc, PostType } from '../common/common.enum';
+import LoggerService from './logger.service';
+import PaginatorService from './paginator.service';
+import PostMetaService from './post-meta.service';
+import TaxonomiesService from './taxonomies.service';
 import UtilService from './util.service';
+import OptionsService from './options.service';
 
 @Injectable()
 export default class PostsService {
@@ -30,8 +35,89 @@ export default class PostsService {
     private readonly paginatorService: PaginatorService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomiesService: TaxonomiesService,
-    private readonly utilService: UtilService
+    private readonly optionsService: OptionsService,
+    private readonly utilService: UtilService,
+    private readonly logger: LoggerService,
+    private readonly sequelize: Sequelize
   ) {
+  }
+
+  getAllPostStatus(): PostStatusMap[] {
+    const status: PostStatusMap[] = [];
+    Object.keys(PostStatus).forEach((key) => {
+      status.push({
+        name: PostStatus[key],
+        desc: PostStatusDesc[key]
+      });
+    });
+    return status;
+  }
+
+  transformArchiveDate(archiveDates: VPostDateArchiveModel[]) {
+    const archiveDateList = {};
+    (archiveDates || []).forEach((item) => {
+      const data = item.get();
+      const year = data.dateText.split('/')[0];
+      archiveDateList[year] = archiveDateList[year] || {};
+      archiveDateList[year].list = archiveDateList[year].list || [];
+      archiveDateList[year].list.push(data);
+      archiveDateList[year].postCount = archiveDateList[year].postCount || 0;
+      archiveDateList[year].postCount += data.count;
+    });
+    const archiveDateYears = Object.keys(archiveDateList).sort((a, b) => a < b ? 1 : -1);
+
+    return {
+      archiveDateList, archiveDateYears
+    };
+  }
+
+  assemblePostData(param: { posts: PostModel[], postMeta: PostMetaModel[], taxonomies: TaxonomyModel[] }): PostVo[] {
+    const { posts, postMeta, taxonomies } = param;
+    const postList = [];
+    posts.forEach((post) => {
+      const meta: Record<string, string> = {};
+      postMeta.forEach((u, i) => {
+        if (u.postId === post.postId) {
+          meta[u.metaKey] = u.metaValue;
+          // decrease iterate times
+          postMeta.splice(i, 1);
+        }
+      });
+      meta.postAuthor = meta['post_author'] || post.author.userNiceName;
+
+      const tags = [];
+      const categories = [];
+      taxonomies.forEach((t) => {
+        if (t.type === 'tag') {
+          t.taxonomyRelationships.forEach((r) => {
+            if (r.objectId === post.postId) {
+              tags.push(t);
+            }
+          });
+        } else {
+          t.taxonomyRelationships.forEach((r) => {
+            if (r.objectId === post.postId) {
+              categories.push(t);
+            }
+          });
+        }
+      });
+      postList.push({
+        post,
+        meta,
+        tags,
+        categories
+      });
+    });
+    return postList;
+  }
+
+  transformCopyright(type: number | string): string {
+    type = type.toString();
+    if (!Object.keys(CopyrightType).map((k) => CopyrightType[k].toString()).includes(type)) {
+      throw new CustomException(ResponseCode.COPYRIGHT_ILLEGAL, HttpStatus.INTERNAL_SERVER_ERROR, '数据错误。');
+    }
+    return CopyrightTypeDesc[this.utilService.getEnumKeyByValue(CopyrightType, parseInt(type, 10))];
   }
 
   async getRecentPosts(): Promise<PostModel[]> {
@@ -126,24 +212,6 @@ export default class PostsService {
     return this.postArchiveView.findAll(queryOpt);
   }
 
-  transformArchiveDate(archiveDates: VPostDateArchiveModel[]) {
-    const archiveDateList = {};
-    (archiveDates || []).forEach((item) => {
-      const data = item.get();
-      const year = data.dateText.split('/')[0];
-      archiveDateList[year] = archiveDateList[year] || {};
-      archiveDateList[year].list = archiveDateList[year].list || [];
-      archiveDateList[year].list.push(data);
-      archiveDateList[year].postCount = archiveDateList[year].postCount || 0;
-      archiveDateList[year].postCount += data.count;
-    });
-    const archiveDateYears = Object.keys(archiveDateList).sort((a, b) => a < b ? 1 : -1);
-
-    return {
-      archiveDateList, archiveDateYears
-    };
-  }
-
   async getTaxonomiesAndPostMetaByPosts(postIds: string[], isAdmin?: boolean) {
     return Promise.all([
       this.postMetaService.getPostMetaByPostIds(postIds),
@@ -156,47 +224,6 @@ export default class PostsService {
         taxonomies: results[1]
       });
     });
-  }
-
-  assemblePostData(param: { posts: PostModel[], postMeta: PostMetaModel[], taxonomies: TaxonomyModel[] }): PostVo[] {
-    const { posts, postMeta, taxonomies } = param;
-    const postList = [];
-    posts.forEach((post) => {
-      const meta: Record<string, string> = {};
-      postMeta.forEach((u, i) => {
-        if (u.postId === post.postId) {
-          meta[u.metaKey] = u.metaValue;
-          // decrease iterate times
-          postMeta.splice(i, 1);
-        }
-      });
-      meta.postAuthor = meta['post_author'] || post.author.userNiceName;
-
-      const tags = [];
-      const categories = [];
-      taxonomies.forEach((t) => {
-        if (t.type === 'tag') {
-          t.taxonomyRelationships.forEach((r) => {
-            if (r.objectId === post.postId) {
-              tags.push(t);
-            }
-          });
-        } else {
-          t.taxonomyRelationships.forEach((r) => {
-            if (r.objectId === post.postId) {
-              categories.push(t);
-            }
-          });
-        }
-      });
-      postList.push({
-        post,
-        meta,
-        tags,
-        categories
-      });
-    });
-    return postList;
   }
 
   async getPosts(param: {
@@ -480,31 +507,19 @@ export default class PostsService {
     });
   }
 
-  transformCopyright(type: number | string): string {
-    const defaultType = '1';
-    if (typeof type !== 'number' && typeof type !== 'string') {
-      type = defaultType;
-    }
-    type = type.toString();
-    if (!['0', '1', '2'].includes(type)) {
-      type = defaultType;
-    }
-    const copyrightMap = {
-      '0': '禁止转载',
-      '1': '转载需授权',
-      '2': 'CC-BY-NC-ND'
-    };
-    return copyrightMap[type];
+  async checkPostGuidExist(guid: string): Promise<boolean> {
+    const count = await this.postModel.count({
+      where: {
+        postGuid: {
+          [Op.eq]: guid
+        }
+      }
+    });
+
+    return count > 0;
   }
 
-  getAllPostStatus(): PostStatusMap[] {
-    const status: PostStatusMap[] = [];
-    Object.keys(PostStatus).forEach((key) => {
-      status.push({
-        name: PostStatus[key],
-        desc: PostStatusDesc[key]
-      });
-    });
-    return status;
+  async saveFile(postDto: PostDto): Promise<PostModel> {
+    return this.postModel.create({...postDto});
   }
 }

@@ -136,7 +136,7 @@ export default class LinksService {
     }).catch((err) => {
       this.logger.error({
         message: '链接保存失败。',
-        data: LinkDto,
+        data: linkDto,
         stack: err.stack
       });
       return Promise.resolve(false);

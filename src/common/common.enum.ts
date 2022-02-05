@@ -63,6 +63,7 @@ export enum ResponseCode {
   POST_SAVE_ERROR,
   POST_COMMENT_CLOSED,
   POST_TYPE_INVALID,
+  COPYRIGHT_ILLEGAL,
   // taxonomy: 81xx
   TAXONOMY_NOT_FOUND = 8100,
   TAXONOMY_INVISIBLE,
@@ -82,6 +83,7 @@ export enum ResponseCode {
   // form: 84xx
   FORM_INPUT_ERROR = 8400,
   UPLOAD_ERROR,
+  UPLOAD_PATH_CONFLICT,
   // user: 85xx
   USER_NOT_FOUND = 8500,
   // option: 86xx

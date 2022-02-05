@@ -6,6 +6,7 @@ import credentialsConfig from '../config/credentials.config';
 import redisConfig from '../config/redis.config';
 import AdminController from './controllers/admin.controller';
 import AdminCommentController from './controllers/admin-comment.controller';
+import AdminFileController from './controllers/admin-file.controller';
 import AdminLinkController from './controllers/admin-link.controller';
 import AdminOptionController from './controllers/admin-option.controller';
 import AdminPostController from './controllers/admin-post.controller';
@@ -73,7 +74,15 @@ import VotesService from '../services/votes.service';
     ]),
     AdminModule
   ],
-  controllers: [AdminController, AdminPostController, AdminCommentController, AdminTaxonomyController, AdminLinkController, AdminOptionController],
+  controllers: [
+    AdminController,
+    AdminPostController,
+    AdminCommentController,
+    AdminTaxonomyController,
+    AdminLinkController,
+    AdminOptionController,
+    AdminFileController
+  ],
   providers: [
     AppService,
     LoggerService,

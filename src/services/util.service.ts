@@ -62,26 +62,4 @@ export default class UtilService {
     }
     return key;
   }
-
-  /**
-   * 判断是否已登录
-   * @param {Object} user user对象
-   * @return {boolean} 判断结果：已登录返回true，否则返回false
-   * @version 1.0.0
-   * @since 1.0.0
-   */
-  static isLogin(user) {
-    return user ? !!user : false;
-  }
-
-  /**
-   * 判断登录用户是否管理员
-   * @param {Object} user user对象
-   * @return {boolean} 判断结果：是管理员返回true，否则返回false
-   * @version 1.0.0
-   * @since 1.0.0
-   */
-  static isAdminUser(user) {
-    return UtilService.isLogin(user) && user.userMeta && user.userMeta.role === 'admin';
-  }
 }

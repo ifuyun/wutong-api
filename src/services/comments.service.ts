@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
-import Sequelize, { Op } from 'sequelize';
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import PaginatorService from './paginator.service';
 import UtilService from './util.service';
 import { CommentStatus, CommentStatusDesc } from '../common/common.enum';

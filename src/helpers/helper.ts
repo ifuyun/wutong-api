@@ -140,3 +140,14 @@ export function uniqueTags(tagStr: string) {
   const tags = tagStr.split(',');
   return unique(tags).join(',');
 }
+
+export function getFileExt(fileName: string): string {
+  let partials = fileName.split('.');
+  let fileExt: string = '';
+  if (partials.length > 1) {
+    fileExt = '.' + partials.pop();
+  } else {
+    fileExt = '';
+  }
+  return fileExt;
+}
