@@ -1,8 +1,15 @@
-import { Controller, Get, HttpStatus, Param, Query, Render } from '@nestjs/common';
-import { PostStatus, PostStatusDesc, PostType, ResponseCode } from '../../common/common.enum';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import * as unique from 'lodash/uniq';
+import * as xss from 'sanitizer';
+import { PostStatus, PostStatusDesc, PostType, ResponseCode, TaxonomyType } from '../../common/common.enum';
 import IsAdmin from '../../decorators/is-admin.decorator';
+import IdParams from '../../decorators/id-params.decorator';
+import Referer from '../../decorators/referer.decorator';
 import Search from '../../decorators/search.decorator';
 import CustomException from '../../exceptions/custom.exception';
+import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
+import PostModel from '../../models/post.model';
+import LowerCasePipe from '../../pipes/lower-case.pipe';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
 import CommentsService from '../../services/comments.service';
@@ -12,6 +19,9 @@ import PostsService from '../../services/posts.service';
 import TaxonomiesService from '../../services/taxonomies.service';
 import UsersService from '../../services/users.service';
 import UtilService from '../../services/util.service';
+import { PostDto } from '../../dtos/post.dto';
+import User from '../../decorators/user.decorator';
+import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
 
 @Controller('admin/post')
 export default class AdminPostController {
@@ -35,13 +45,13 @@ export default class AdminPostController {
     @Query('date', new TrimPipe()) date,
     @Query('keyword', new TrimPipe()) keyword,
     @Query('tag', new TrimPipe()) tag,
-    @Query('type', new TrimPipe()) type,
+    @Query('type', new TrimPipe()) postType,
     @Query('category', new TrimPipe()) category,
     @Search() search,
     @IsAdmin() isAdmin
   ) {
-    type = type || PostType.POST;
-    if (!Object.keys(PostType).map((key) => PostType[key]).includes(type)) {
+    postType = postType || PostType.POST;
+    if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType)) {
       throw new CustomException(ResponseCode.POST_TYPE_INVALID, HttpStatus.FORBIDDEN, '查询参数有误');
     }
     const searchParams: string[] = [];
@@ -69,7 +79,7 @@ export default class AdminPostController {
     const queryParam = {
       page,
       isAdmin,
-      postType: type,
+      postType,
       from: 'admin',
       keyword,
       tag,
@@ -80,12 +90,12 @@ export default class AdminPostController {
       subTaxonomyIds: null
     };
     const options = await this.optionsService.getOptions();
-    const archiveDates = await this.postsService.getArchiveDates({ postType: type, limit: 0 });
+    const archiveDates = await this.postsService.getArchiveDates({ postType, limit: 0 });
 
     const taxonomyData = await this.taxonomiesService.getAllTaxonomies();
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
     const { taxonomyList } = taxonomies;
-    if (type === PostType.POST && category) {
+    if (postType === PostType.POST && category) {
       const { subTaxonomyIds } = await this.taxonomiesService.getSubTaxonomies({
         taxonomyData: taxonomies.taxonomyData,
         taxonomyTree: taxonomies.taxonomyTree,
@@ -98,12 +108,12 @@ export default class AdminPostController {
     const { posts, count, postIds } = postList;
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
-    const titles = [type === PostType.PAGE ? '页面列表' : '文章列表', '管理后台', options.site_name.value];
+    const titles = [postType === PostType.PAGE ? '页面列表' : '文章列表', '管理后台', options.site_name.value];
 
     keyword && searchParams.push(keyword);
     tag && searchParams.push(tag);
     year && searchParams.push(date);
-    status && searchParams.push(PostStatusDesc[this.utilService.getEnumKeyByValue(PostStatus, status)]);
+    status && searchParams.push(PostStatusDesc[getEnumKeyByValue(PostStatus, status)]);
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));
     page > 1 && titles.unshift(`第${page}页`);
 
@@ -118,8 +128,8 @@ export default class AdminPostController {
         linkUrl: '/admin/post/page-',
         linkParam: search
       },
-      curNav: type,
-      postType: type,
+      curNav: postType,
+      postType: postType,
       options,
       posts,
       comments,
@@ -131,6 +141,191 @@ export default class AdminPostController {
       curTag: tag,
       curDate: date,
       curKeyword: keyword
+    };
+  }
+
+  @Get('detail')
+  @Render('admin/pages/post-form')
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams({ idInQuery: ['postId'] })
+  async editPost(
+    @Req() req,
+    @Query('postId', new TrimPipe()) postId,
+    @Query('action', new TrimPipe(), new LowerCasePipe()) action,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) postType,
+    @IsAdmin() isAdmin,
+    @Referer() referer,
+    @Session() session
+  ) {
+    postType = postType || PostType.POST;
+    if (!['create', 'edit'].includes(action)) {
+      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+    }
+    if (![PostType.POST, PostType.PAGE].includes(postType)) {
+      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+    }
+    let post: PostModel;
+    const postTags: string[] = [];
+    const postTaxonomies: string[] = [];
+    if (action === 'edit' && postId) {
+      post = await this.postsService.getPostById(postId, isAdmin);
+      if (!post) {
+        throw new CustomException(ResponseCode.POST_NOT_FOUND, HttpStatus.NOT_FOUND, '文章不存在');
+      }
+      // in edit mode, postType is not required
+      postType = post.postType;
+      if (post.taxonomies) {
+        post.taxonomies.forEach((t) => {
+          if (t.type === TaxonomyType.TAG) {
+            postTags.push(t.name);
+          } else if (t.type === TaxonomyType.POST) {
+            postTaxonomies.push(t.taxonomyId);
+          }
+        });
+      }
+    }
+    const options = await this.optionsService.getOptions();
+    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([], TaxonomyType.POST);
+    const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
+    taxonomies.taxonomyList.forEach((node) => {
+      if (postTaxonomies.includes(node.taxonomyId)) {
+        node.isChecked = true;
+      }
+    });
+    const postMeta: Record<string, string> = {
+      'show_wechat_card': '1',
+      'copyright_type': '1',
+      'post_source': '',
+      'post_author': ''
+    };
+
+    const emptyPost = {
+      postStatus: PostStatus.PUBLISH,
+      // todo
+      postOriginal: 1,
+      // todo
+      commentFlag: 'verify'
+    };
+    const title = `${action === 'create' ? '撰写新' : '编辑'}${postType === PostType.POST ? '文章' : '页面'}`;
+    const titles = [title, '管理后台', options.site_name.value];
+    if (post) {
+      titles.unshift(post.postTitle);
+    }
+    session.postReferer = referer;
+
+    return {
+      meta: {
+        title: this.utilService.getTitle(titles),
+        description: `${options.site_name.value}管理后台`,
+        author: options.site_author.value
+      },
+      token: req.csrfToken(),
+      curNav: postType,
+      title,
+      options,
+      post: post || emptyPost,
+      postMeta: post && post.postMetaMap || postMeta,
+      taxonomyList: taxonomies.taxonomyList,
+      postCategories: postTaxonomies,
+      postTags: postTags.join(',')
+    };
+  }
+
+  @Post('save')
+  @Header('Content-Type', 'application/json')
+  async savePost(
+    @Req() req,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) postType,
+    @Body(new TrimPipe()) postDto: PostDto,
+    @User() user,
+    @Session() session
+  ) {
+    postType = postType || PostType.POST;
+    if (![PostType.POST, PostType.PAGE].includes(postType)) {
+      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+    }
+    const newPostId = postDto.postId || getUuid();
+    const postData: PostDto = {
+      postId: postDto.postId,
+      postTitle: xss.sanitize(postDto.postTitle),
+      postContent: postDto.postContent,
+      postExcerpt: xss.sanitize(postDto.postExcerpt),
+      postGuid: postDto.postGuid || `/post/${newPostId}`,
+      postAuthor: user.userId,
+      postStatus: postDto.postStatus,
+      postPassword: postDto.postStatus === PostStatus.PASSWORD ? postDto.postPassword : '',
+      postOriginal: postDto.postOriginal,
+      commentFlag: postDto.commentFlag,
+      postDate: postDto.postDate
+    };
+    if (!postDto.postId) {// 编辑时不允许修改postType
+      postData.postType = postType;
+    }
+    const isPostGuidExist = await this.postsService.checkPostGuidExist(postData.postGuid, postData.postId);
+    if (isPostGuidExist) {
+      throw new CustomException(ResponseCode.POST_GUID_CONFLICT, HttpStatus.OK, 'URL已存在，请重新输入。');
+    }
+
+    const nowTime = new Date();
+    // todo: updateModified is string
+    if (postDto.postId && postDto.postContent !== postDto.postRawContent && postDto.updateModified.toString() === '1') {
+      postData.postModified = nowTime;
+    }
+    let postTags: string[];
+    if (typeof postDto.postTags === 'string') {
+      postTags = unique(postDto.postTags.split(/[,\s]/i).filter((v) => v.trim()));
+    } else {
+      postTags = postDto.postTags;
+    }
+    const postTaxonomies = postDto.postTaxonomies;
+
+    const metaData = [{
+      metaId: getUuid(),
+      postId: newPostId,
+      metaKey: 'show_wechat_card',
+      metaValue: postDto.showWechatCard || '0'
+    }, {
+      metaId: getUuid(),
+      postId: newPostId,
+      metaKey: 'copyright_type',
+      metaValue: postDto.copyrightType || '1'
+    }];
+    // todo: postOriginal is string
+    if (postDto.postOriginal.toString() !== '1') { // 非原创
+      metaData.push({
+        metaId: getUuid(),
+        postId: newPostId,
+        metaKey: 'post_source',
+        metaValue: postDto.postSource
+      });
+      metaData.push({
+        metaId: getUuid(),
+        postId: newPostId,
+        metaKey: 'post_author',
+        metaValue: postDto.postAuthor
+      });
+    }
+
+    const result = await this.postsService.savePost({
+      newPostId,
+      postData,
+      postMeta: metaData,
+      postTaxonomies,
+      postTags
+    });
+    if (!result) {
+      throw new CustomException(ResponseCode.POST_SAVE_ERROR, HttpStatus.OK, '保存失败。');
+    }
+
+    const referer = session.postReferer;
+    delete session.postReferer;
+
+    return {
+      code: ResponseCode.SUCCESS,
+      status: HttpStatus.OK,
+      data: {
+        url: referer || '/admin/post?type=' + postType
+      }
     };
   }
 }

@@ -18,6 +18,8 @@ import AppConfig from './config/app.config';
 import RedisConfig from './config/redis.config';
 import LoggerService from './services/logger.service';
 import { LogLevel } from './common/common.enum';
+import { ValidationPipe } from '@nestjs/common';
+import ExceptionFactory from './validators/exception-factory';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -105,6 +107,12 @@ async function bootstrap() {
       res.setHeader('X-Powered-By', appConfig.domain);
       next();
     });
+    app.useGlobalPipes(new ValidationPipe({
+      transform: true,
+      skipNullProperties: true,
+      stopAtFirstError: true,
+      exceptionFactory: ExceptionFactory
+    }));
 
     await app.listen(appConfig.port, appConfig.host, () => sysLogger.info(transformLogData({
       message: `Server listening on: ${appConfig.host}:${appConfig.port}`

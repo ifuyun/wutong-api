@@ -1,17 +1,20 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import { VoteType } from '../common/common.enum';
 
-export function IsValidVoteType(validationOptions?: ValidationOptions) {
+export function IsIncludedIn(
+  options: { ranges: (string | number)[], allowNull?: boolean },
+  validationOptions?: ValidationOptions
+) {
   return function(object: Object, propertyName: string) {
     registerDecorator({
-      name: 'IsValidVoteType',
+      name: 'IsIncludedIn',
       target: object.constructor,
       propertyName: propertyName,
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: string) {
-          return value === VoteType.LIKE || value === VoteType.DISLIKE;
+        validate(value: string | number) {
+          // todo: add error description
+          return options.allowNull && !value || options.ranges.includes(value);
         }
       }
     });

@@ -1,6 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
 import { IsId } from '../validators/is-id.validator';
-import { IsValidVoteType } from '../validators/is-valid-vote-type.validator';
+import { IsIncludedIn } from '../validators/is-included-in.validator';
+import { VoteType } from '../common/common.enum';
 
 export default class VoteDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -11,7 +12,10 @@ export default class VoteDto {
   @IsNotEmpty({ message: '投票对象不存在' })
   objectId: string;
 
-  @IsValidVoteType({ message: '参数错误' })
+  @IsIncludedIn(
+    { ranges: [VoteType.LIKE, VoteType.DISLIKE] },
+    { message: '参数错误' }
+  )
   @IsNotEmpty({ message: '参数错误' })
   type: string;
 

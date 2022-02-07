@@ -5,7 +5,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../common/constants';
 import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../common/common.enum';
 import TaxonomyDto from '../dtos/taxonomy.dto';
-import { getUuid, isEmptyObject } from '../helpers/helper';
+import { getEnumKeyByValue, getUuid, isEmptyObject } from '../helpers/helper';
 import { CrumbData } from '../interfaces/crumb.interface';
 import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyTree } from '../interfaces/taxonomies.interface';
 import TaxonomyModel from '../models/taxonomy.model';
@@ -246,6 +246,7 @@ export default class TaxonomiesService {
         [Op.eq]: type
       }
     };
+    // todo: move to validation
     if (typeof status === 'number' && /^\d+$/i.test(status.toString())) {
       where['status'] = status;
     }
@@ -276,7 +277,7 @@ export default class TaxonomiesService {
       subQuery: false
     });
     taxonomies.forEach((taxonomy) => {
-      taxonomy.statusDesc = TaxonomyStatusDesc[this.utilService.getEnumKeyByValue(TaxonomyStatus, taxonomy.status)];
+      taxonomy.statusDesc = TaxonomyStatusDesc[getEnumKeyByValue(TaxonomyStatus, taxonomy.status)];
     });
 
     return {
@@ -284,10 +285,16 @@ export default class TaxonomiesService {
     };
   }
 
-  async checkTaxonomySlugExist(slug: string, taxonomyId?: string): Promise<boolean> {
-    const where = {
+  async checkTaxonomySlugExist(slug: string, type: string, taxonomyId?: string): Promise<{ taxonomy: TaxonomyModel, isExist: boolean }> {
+    const where: WhereOptions = {
       slug: {
         [Op.eq]: slug
+      },
+      status: {
+        [Op.eq]: TaxonomyStatus.OPEN
+      },
+      type: {
+        [Op.eq]: type
       }
     };
     if (taxonomyId) {
@@ -295,8 +302,14 @@ export default class TaxonomiesService {
         [Op.ne]: taxonomyId
       };
     }
-    const count = await this.taxonomyModel.count({ where });
-    return count > 0;
+    const taxonomy = await this.taxonomyModel.findOne({
+      attributes: ['taxonomyId', 'type', 'name', 'slug', 'status'],
+      where
+    });
+    return {
+      taxonomy,
+      isExist: !!taxonomy
+    };
   }
 
   async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<boolean> {
@@ -361,7 +374,7 @@ export default class TaxonomiesService {
     }).catch((err) => {
       this.logger.error({
         message: '分类删除失败。',
-        data: {type, taxonomyIds},
+        data: { type, taxonomyIds },
         stack: err.stack
       });
       return Promise.resolve(false);

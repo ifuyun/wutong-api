@@ -1,11 +1,10 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req } from '@nestjs/common';
 import { ResponseCode } from '../../common/common.enum';
 import OptionDto from '../../dtos/option.dto';
 import CustomException from '../../exceptions/custom.exception';
 import TrimPipe from '../../pipes/trim.pipe';
 import OptionsService from '../../services/options.service';
 import UtilService from '../../services/util.service';
-import ExceptionFactory from '../../validators/exception-factory';
 
 @Controller('admin/setting')
 export default class AdminOptionController {
@@ -35,12 +34,6 @@ export default class AdminOptionController {
   }
 
   @Post('save')
-  @UsePipes(new ValidationPipe({
-    transform: true,
-    skipNullProperties: true,
-    stopAtFirstError: true,
-    exceptionFactory: ExceptionFactory
-  }))
   @Header('Content-Type', 'application/json')
   async saveOptions(
     @Body(new TrimPipe()) optionDto: OptionDto

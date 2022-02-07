@@ -1,19 +1,20 @@
 import { Controller, Get, Header, HttpStatus, Post, Render, Req, Session } from '@nestjs/common';
-import * as xss from 'sanitizer';
-import OptionsService from '../../services/options.service';
-import Referer from '../../decorators/referer.decorator';
-import UtilService from '../../services/util.service';
 import * as formidable from 'formidable';
-import * as moment from 'moment';
-import * as path from 'path';
 import * as fs from 'fs';
 import * as mkdirp from 'mkdirp';
-import { getFileExt, getUuid } from '../../helpers/helper';
-import User from '../../decorators/user.decorator';
+import * as moment from 'moment';
+import * as path from 'path';
+import * as xss from 'sanitizer';
 import { PostStatus, PostType, ResponseCode } from '../../common/common.enum';
-import PostsService from '../../services/posts.service';
-import CommonService from '../../services/common.service';
+import Referer from '../../decorators/referer.decorator';
+import User from '../../decorators/user.decorator';
+import { PostFileDto } from '../../dtos/post.dto';
 import CustomException from '../../exceptions/custom.exception';
+import { getFileExt, getUuid } from '../../helpers/helper';
+import CommonService from '../../services/common.service';
+import OptionsService from '../../services/options.service';
+import PostsService from '../../services/posts.service';
+import UtilService from '../../services/util.service';
 
 @Controller('admin/file')
 export default class AdminFileController {
@@ -96,7 +97,7 @@ export default class AdminFileController {
       throw new CustomException(ResponseCode.UPLOAD_PATH_CONFLICT, HttpStatus.OK, '文件上传错误，请重新上传。');
     }
     const fileDesc = xss.sanitize(result['rawName']);
-    const fileData = {
+    const fileData: PostFileDto = {
       postContent: fileDesc,
       postExcerpt: fileDesc,
       postTitle: fileDesc,

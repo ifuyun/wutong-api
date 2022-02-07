@@ -33,7 +33,7 @@ export default class CheckIdInterceptor implements NestInterceptor {
       }
     });
     idParams.idInBody && idParams.idInBody.forEach((key) => {
-      // 查询参数允许为空，非空校验在action层面判断
+      // 表单参数允许为空，非空校验在action层面判断
       if (key && req.body[key]) {
         ids.push(req.body[key]);
       }

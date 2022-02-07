@@ -24,6 +24,8 @@ export default class PostModel extends Model {
   @HasMany(() => PostMetaModel)
   postMeta: PostMetaModel[];
 
+  postMetaMap: Record<string, string | number>;
+
   @HasMany(() => CommentModel)
   comments: CommentModel[];
 
@@ -88,7 +90,7 @@ export default class PostModel extends Model {
 
   @Column({
     field: 'post_status',
-    type: DataType.ENUM('publish', 'private', 'pending', 'draft', 'auto-draft', 'inherit', 'trash'),
+    type: DataType.ENUM('publish', 'password', 'private', 'pending', 'draft', 'auto-draft', 'inherit', 'trash'),
     allowNull: false,
     defaultValue: 'publish'
   })
@@ -98,7 +100,7 @@ export default class PostModel extends Model {
 
   @Column({
     field: 'comment_flag',
-    type: DataType.ENUM('open', 'verify', 'closed'),
+    type: DataType.ENUM('open', 'verify', 'close'),
     allowNull: false,
     defaultValue: 'verify'
   })

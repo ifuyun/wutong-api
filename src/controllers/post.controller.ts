@@ -1,4 +1,5 @@
 import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import * as unique from 'lodash/uniq';
 import { ResponseCode } from '../common/common.enum';
 import { Messages } from '../common/messages.enum';
 import { POST_DESCRIPTION_LENGTH } from '../common/constants';
@@ -9,7 +10,7 @@ import Referer from '../decorators/referer.decorator';
 import User from '../decorators/user.decorator';
 import UserAgent from '../decorators/user-agent.decorator';
 import CustomException from '../exceptions/custom.exception';
-import { appendUrlRef, cutStr, filterHtmlTag, uniqueTags } from '../helpers/helper';
+import { appendUrlRef, cutStr, filterHtmlTag } from '../helpers/helper';
 import CheckIdInterceptor from '../interceptors/check-id.interceptor';
 import ParseIntPipe from '../pipes/parse-int.pipe';
 import CommentsService from '../services/comments.service';
@@ -207,12 +208,7 @@ export default class PostController {
       });
     });
 
-    const postMeta: Record<string, string> = {};
-    if (post.postMeta) {
-      post.postMeta.forEach((meta) => {
-        postMeta[meta.metaKey] = meta.metaValue;
-      });
-    }
+    const postMeta: Record<string, string | number> = post.postMetaMap;
     postMeta.copyright_type_text = this.postsService.transformCopyright(postMeta.copyright_type);
     postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
 
@@ -250,7 +246,7 @@ export default class PostController {
       }
     });
     keywords.push(options.site_keywords.value);
-    resData.meta.keywords = uniqueTags(keywords.join(','));
+    resData.meta.keywords = unique(keywords).join(',');
 
     if (user) {
       resData.user.userName = user.userNiceName;
@@ -298,7 +294,7 @@ export default class PostController {
         title: '',
         description: `「${curTaxonomyName}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
         author: options.site_author.value,
-        keywords: uniqueTags(curTaxonomyName + ',' + options.site_keywords.value)
+        keywords: unique(`${curTaxonomyName},${options.site_keywords.value}`.split(',')).join(',')
       },
       token: req.csrfToken(),
       ...commonData,
@@ -362,7 +358,7 @@ export default class PostController {
         title: '',
         description: `「${tag}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
         author: options.site_author.value,
-        keywords: uniqueTags(tag + ',' + options.site_keywords.value)
+        keywords: unique(`${tag},${options.site_keywords.value}`.split(',')).join(',')
       },
       token: req.csrfToken(),
       ...commonData,

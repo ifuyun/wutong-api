@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ResponseCode } from '../common/common.enum';
 import Referer from '../decorators/referer.decorator';
@@ -45,7 +45,6 @@ export default class UserController {
   }
 
   @Post('login')
-  @UsePipes(new ValidationPipe({ transform: true }))
   @Header('Content-Type', 'application/json')
   async login(
     @Req() req,

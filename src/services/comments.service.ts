@@ -7,7 +7,7 @@ import PaginatorService from './paginator.service';
 import UtilService from './util.service';
 import { CommentStatus, CommentStatusDesc } from '../common/common.enum';
 import CommentDto from '../dtos/comment.dto';
-import { getUuid } from '../helpers/helper';
+import { getEnumKeyByValue, getUuid } from '../helpers/helper';
 import { CommentListVo, CommentStatusMap } from '../interfaces/comments.interface';
 import CommentModel from '../models/comment.model';
 import PostModel from '../models/post.model';
@@ -129,7 +129,7 @@ export default class CommentsService {
     comments.forEach((comment) => {
       // todo: time format changes to config
       comment.commentCreatedText = moment(comment.commentCreated).format('YYYY-MM-DD HH:mm');
-      comment.commentStatusDesc = CommentStatusDesc[this.utilService.getEnumKeyByValue(CommentStatus, comment.commentStatus)];
+      comment.commentStatusDesc = CommentStatusDesc[getEnumKeyByValue(CommentStatus, comment.commentStatus)];
     });
 
     return {

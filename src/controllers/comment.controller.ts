@@ -1,16 +1,15 @@
-import { Body, Controller, Header, HttpStatus, Post, Req, Session, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Header, HttpStatus, Post, Req, Session } from '@nestjs/common';
 import * as xss from 'sanitizer';
 import CommentsService from '../services/comments.service';
 import CommentDto from '../dtos/comment.dto';
 import TrimPipe from '../pipes/trim.pipe';
-import { ResponseCode } from '../common/common.enum';
+import { CommentFlag, ResponseCode } from '../common/common.enum';
 import User from '../decorators/user.decorator';
 import IsAdmin from '../decorators/is-admin.decorator';
 import Ip from '../decorators/ip.decorator';
 import UserAgent from '../decorators/user-agent.decorator';
 import PostsService from '../services/posts.service';
 import CustomException from '../exceptions/custom.exception';
-import ExceptionFactory from '../validators/exception-factory';
 
 @Controller()
 export default class CommentController {
@@ -21,12 +20,6 @@ export default class CommentController {
   }
 
   @Post(['comment/save', 'admin/comment/save'])
-  @UsePipes(new ValidationPipe({
-    transform: true,
-    skipNullProperties: true,
-    stopAtFirstError: true,
-    exceptionFactory: ExceptionFactory
-  }))
   @Header('Content-Type', 'application/json')
   async saveComment(
     @Req() req,
@@ -65,11 +58,11 @@ export default class CommentController {
       throw new CustomException(ResponseCode.CAPTCHA_INPUT_ERROR, HttpStatus.OK, '验证码输入有误，请重新输入');
     }
 
-    const post = await this.postsService.getPostById(commentData.postId, isAdmin);
+    const post = await this.postsService.getPostById(commentData.postId);
     if (!post || !post.postId) {
       throw new CustomException(ResponseCode.POST_NOT_FOUND, HttpStatus.OK, '评论文章不存在');
     }
-    if (post.commentFlag === 'closed' && !isAdmin) {
+    if (post.commentFlag === CommentFlag.CLOSE && !isAdmin) {
       throw new CustomException(ResponseCode.POST_COMMENT_CLOSED, HttpStatus.OK, '该文章禁止评论');
     }
 

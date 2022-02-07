@@ -5,7 +5,7 @@ import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { LinkTarget, LinkTargetDesc, LinkVisibleScope, LinkVisibleScopeDesc } from '../common/common.enum';
 import LinkDto from '../dtos/link.dto';
-import { getUuid } from '../helpers/helper';
+import { getEnumKeyByValue, getUuid } from '../helpers/helper';
 import { LinkListVo } from '../interfaces/links.interface';
 import LinkModel from '../models/link.model';
 import TaxonomyModel from '../models/taxonomy.model';
@@ -79,8 +79,8 @@ export default class LinksService {
     });
     links.map((link) => {
       link.createdText = moment(link.created).format('YYYY-MM-DD');
-      link.linkVisible = LinkVisibleScopeDesc[this.utilService.getEnumKeyByValue(LinkVisibleScope, link.linkVisible)];
-      link.linkTarget = LinkTargetDesc[this.utilService.getEnumKeyByValue(LinkTarget, link.linkTarget)];
+      link.linkVisible = LinkVisibleScopeDesc[getEnumKeyByValue(LinkVisibleScope, link.linkVisible)];
+      link.linkTarget = LinkTargetDesc[getEnumKeyByValue(LinkTarget, link.linkTarget)];
     });
     return { links, page, count };
   }

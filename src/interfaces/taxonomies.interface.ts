@@ -11,6 +11,7 @@ export interface TaxonomyNode {
   level?: number
   children?: Record<string, TaxonomyNode>;
   hasChildren?: boolean;
+  isChecked?: boolean;
 }
 
 export interface TaxonomyTree {

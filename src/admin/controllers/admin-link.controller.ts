@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
 import { ID_REG } from '../../common/constants';
 import { LinkTarget, LinkVisibleScope, ResponseCode } from '../../common/common.enum';
@@ -8,7 +8,6 @@ import Search from '../../decorators/search.decorator';
 import LinkDto from '../../dtos/link.dto';
 import CustomException from '../../exceptions/custom.exception';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
-import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
 import LinksService from '../../services/links.service';
@@ -17,6 +16,7 @@ import PaginatorService from '../../services/paginator.service';
 import TaxonomiesService from '../../services/taxonomies.service';
 import UtilService from '../../services/util.service';
 import ExceptionFactory from '../../validators/exception-factory';
+import LowerCasePipe from '../../pipes/lower-case.pipe';
 
 @Controller('admin/link')
 export default class AdminLinkController {
@@ -68,7 +68,7 @@ export default class AdminLinkController {
   async editLink(
     @Req() req,
     @Query('id', new TrimPipe()) linkId,
-    @Query('action', new TrimPipe()) action,
+    @Query('action', new TrimPipe(), new LowerCasePipe()) action,
     @Referer() referer,
     @Session() session
   ) {
@@ -82,19 +82,17 @@ export default class AdminLinkController {
         throw new CustomException(ResponseCode.LINK_NOT_FOUND, HttpStatus.NOT_FOUND, '链接不存在。');
       }
     }
-    let taxonomyList: TaxonomyNode[];
     const taxonomyData = await this.taxonomiesService.getAllTaxonomies([], 'link');
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
-    taxonomyList = taxonomies.taxonomyList;
 
     const options = await this.optionsService.getOptions();
     const titles = ['管理后台', options.site_name.value];
     let title = '';
     if (action === 'create') {
-      title = `新增链接`;
+      title = '新增链接';
       titles.unshift(title);
     } else {
-      title = `编辑链接`;
+      title = '编辑链接';
       titles.unshift(link['linkName'], title);
     }
     session.linkReferer = referer;
@@ -106,21 +104,15 @@ export default class AdminLinkController {
         author: options.site_author.value
       },
       token: req.csrfToken(),
-      curNav: `taxonomy-link`,
+      curNav: 'taxonomy-link',
       title,
       link,
       options,
-      taxonomyList
+      taxonomyList: taxonomies.taxonomyList
     };
   }
 
   @Post('save')
-  @UsePipes(new ValidationPipe({
-    transform: true,
-    skipNullProperties: true,
-    stopAtFirstError: true,
-    exceptionFactory: ExceptionFactory
-  }))
   @Header('Content-Type', 'application/json')
   async saveLink(
     @Req() req,
@@ -164,6 +156,7 @@ export default class AdminLinkController {
     @Body(new TrimPipe()) data,
     @Referer() referer
   ) {
+    // todo: ParseArrayPipe
     let linkIds: string[] = [];
     if (typeof data.linkIds === 'string') {
       linkIds = data.linkIds.split(',');

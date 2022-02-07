@@ -6,9 +6,9 @@
         <div id="control-panel">
             <div id="control-body">
                 <? if(postType === 'post') { ?>
-                <h2>文章<a class="button button-add-h2" href="/admin/post/item?action=create">写文章</a></h2>
+                <h2>文章<a class="button button-add-h2" href="/admin/post/detail?action=create">写文章</a></h2>
                 <? } else if(postType === 'page') { ?>
-                <h2>页面<a class="button button-add-h2" href="/admin/post/item?action=create&type=page">撰写新页面</a></h2>
+                <h2>页面<a class="button button-add-h2" href="/admin/post/detail?action=create&type=page">撰写新页面</a></h2>
                 <? } else { ?>
                 <h2>素材<a class="button button-add-h2" href="/admin/file/upload">添加</a></h2>
                 <? } ?>
@@ -88,7 +88,7 @@
                                 <td><a rel="author" href="/admin/post?author=<?= post.postAuthor ?>"><?- post.author.userNiceName ?></a></td>
                                 <td><a href="/admin/post?status=<?= post.postStatusDesc ?>"><?= post.postStatusDesc ?></a></td>
                                 <td class="m-col-operate">
-                                    <a href="/admin/post/item?action=edit&type=<?= postType ?>&postId=<?= post.postId ?>">编辑</a><a class="btn-delete" href="javascript:">删除</a>
+                                    <a href="/admin/post/detail?action=edit&type=<?= postType ?>&postId=<?= post.postId ?>">编辑</a><a class="btn-delete" href="javascript:">删除</a>
                                 </td>
                             </tr>
                             <? }) ?>

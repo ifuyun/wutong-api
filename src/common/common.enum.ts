@@ -63,6 +63,7 @@ export enum ResponseCode {
   POST_SAVE_ERROR,
   POST_COMMENT_CLOSED,
   POST_TYPE_INVALID,
+  POST_GUID_CONFLICT,
   COPYRIGHT_ILLEGAL,
   // taxonomy: 81xx
   TAXONOMY_NOT_FOUND = 8100,
@@ -120,6 +121,7 @@ export enum PostTypeDesc {
 
 export enum PostStatus {
   PUBLISH = 'publish',
+  PASSWORD = 'password',
   PRIVATE = 'private',
   // PENDING = 'pending',
   DRAFT = 'draft',
@@ -136,6 +138,18 @@ export enum PostStatusDesc {
   AUTO_DRAFT = '自动保存草稿',
   // INHERIT = '子文章',
   TRASH = '已删除'
+}
+
+export enum CommentFlag {
+  OPEN = 'open',
+  VERIFY = 'verify',
+  CLOSE = 'close'
+}
+
+export enum CommentFlagDesc {
+  OPEN = '允许',
+  VERIFY = '审核',
+  CLOSE = '禁止'
 }
 
 export enum CommentStatus {

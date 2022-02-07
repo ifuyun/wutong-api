@@ -12,6 +12,7 @@ import IdParams from '../../decorators/id-params.decorator';
 import CustomException from '../../exceptions/custom.exception';
 import Referer from '../../decorators/referer.decorator';
 import User from '../../decorators/user.decorator';
+import { getEnumKeyByValue } from '../../helpers/helper';
 
 @Controller('admin/comment')
 export default class AdminCommentController {
@@ -39,7 +40,7 @@ export default class AdminCommentController {
 
     const searchParams: string[] = [];
     keyword && searchParams.push(keyword);
-    status && searchParams.push(CommentStatusDesc[this.utilService.getEnumKeyByValue(CommentStatus, status)]);
+    status && searchParams.push(CommentStatusDesc[getEnumKeyByValue(CommentStatus, status)]);
 
     const titles = ['评论列表', '管理后台', options.site_name.value];
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));

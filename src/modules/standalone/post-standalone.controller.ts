@@ -1,10 +1,11 @@
 import { Controller, Get, HttpException, HttpStatus, Render, Req } from '@nestjs/common';
+import * as unique from 'lodash/uniq';
 import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
 import { Messages } from '../../common/messages.enum';
 import IsAdmin from '../../decorators/is-admin.decorator';
 import ReqPath from '../../decorators/req-path.decorator';
 import User from '../../decorators/user.decorator';
-import { appendUrlRef, cutStr, filterHtmlTag, uniqueTags } from '../../helpers/helper';
+import { appendUrlRef, cutStr, filterHtmlTag } from '../../helpers/helper';
 import CommentsService from '../../services/comments.service';
 import CommonService from '../../services/common.service';
 import LoggerService from '../../services/logger.service';
@@ -31,7 +32,8 @@ export default class PostStandaloneController {
     @User() user,
     @IsAdmin() isAdmin
   ) {
-    const isLikePost = this.utilService.isReqPathLikePostSlug(reqPath);
+    // todo: move to validation
+    const isLikePost = this.utilService.isUrlPathLikePostSlug(reqPath);
     if (!isLikePost) {
       throw new HttpException(Messages.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
@@ -69,7 +71,7 @@ export default class PostStandaloneController {
         title: this.utilService.getTitle([post.postTitle, options.site_name.value]),
         description: post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_DESCRIPTION_LENGTH),
         author: options.site_author.value,
-        keywords: uniqueTags(post.postTitle + ',' + options.site_keywords.value)
+        keywords: unique(`${post.postTitle},${options.site_keywords.value}`.split(',')).join(',')
       },
       token: req.csrfToken(),
       ...commonData,

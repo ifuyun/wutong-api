@@ -5,9 +5,9 @@
         <?- include('../elements/top-bar.ejs') -?>
         <div id="control-panel">
             <div id="control-body">
-                <h2><?= postTitle ?></h2>
+                <h2><?= title ?></h2>
                 <div class="split-line"><div class="split-corner">&nbsp;</div></div>
-                <form id="form-post" method="post" action="/admin/post/save?type=<?= page ?>">
+                <form id="form-post" method="post" action="/admin/post/save?type=<?= curNav ?>">
                     <div class="form-wrap form-box">
                         <div class="form-basic">
                             <div>
@@ -17,11 +17,11 @@
                                 <label><textarea class="input" id="post-content" name="postContent"><?= post.postContent ?></textarea></label>
                                 <input type="hidden" name="postRawContent" value="<?= post.postContent ?>" />
                             </div>
-                            <? if (page === 'post') { ?>
+                            <? if (curNav === 'post') { ?>
                             <div class="form-field form-field-box">
                                 <label class="form-label form-field-split" for="post-tag">标签</label>
                                 <div class="form-field-box-sub">
-                                    <input type="text" class="input input-normal" name="postTag" id="post-tag" value="<?= postTags ?>" />
+                                    <input type="text" class="input input-normal" name="postTags" id="post-tag" value="<?= postTags ?>" />
                                 </div>
                                 <p class="form-field-box-sub">多个标签请用英文逗号（,）或空格分开（10个之内）</p>
                             </div>
@@ -55,7 +55,7 @@
                                         <label for="post-status-private"><input type="radio" class="postStatus" name="postStatus" id="post-status-private" value="private"<? if(post.postStatus === 'private'){ ?> checked="checked" <? } ?> />&nbsp;私密</label>
                                     </div>
                                 </div>
-                                <? if (page === 'post') { ?>
+                                <? if (curNav === 'post') { ?>
                                 <div class="form-field-box-sub">
                                     <div class="form-field-text">来源</div>
                                     <div class="form-field-input">
@@ -79,7 +79,7 @@
                                     <div class="form-field-input">
                                         <label><input type="radio" name="commentFlag" value="open"<? if(post.commentFlag === 'open'){ ?> checked="checked" <? } ?> />&nbsp;允许</label><br />
                                         <label><input type="radio" name="commentFlag" value="verify"<? if(post.commentFlag === 'verify'){ ?> checked="checked" <? } ?> />&nbsp;审核</label><br />
-                                        <label><input type="radio" name="commentFlag" value="closed"<? if(post.commentFlag === 'closed'){ ?> checked="checked" <? } ?> />&nbsp;禁止</label>
+                                        <label><input type="radio" name="commentFlag" value="close"<? if(post.commentFlag === 'close'){ ?> checked="checked" <? } ?> />&nbsp;禁止</label>
                                     </div>
                                 </div>
                                 <div class="form-field-box-sub">
@@ -100,19 +100,19 @@
                                 <div class="form-field-box-sub">
                                     <div class="form-field-text">发布时间</div>
                                     <div class="form-field-input">
-                                        <label><input type="text" class="input" name="postDate" id="post-date" maxlength="10" placeholder="Y-m-d" value="<?= moment(post.postDate).format('YYYY-MM-DD') ?>" /></label>
+                                        <label><input type="text" class="input" name="postDate" id="post-date" maxlength="10" placeholder="Y-m-d" value="<?= post.postDateText ?>" /></label>
                                     </div>
                                 </div>
                             </div>
-                            <? if (page === 'post') { ?>
+                            <? if (curNav === 'post') { ?>
                             <div class="form-field form-field-box">
                                 <span class="form-label form-field-split">分类目录</span>
                                 <div class="form-field-box-sub">
-                                    <? categories.catArray.forEach(function (cat, catIdx){?>
+                                    <? taxonomyList.forEach(function (cat, catIdx){?>
                                         <label for="post-cate-<?= cat.taxonomyId ?>">
                                             <? for(var idx = 1; idx < cat.level; idx += 1){ ?>&nbsp;&nbsp;&nbsp;&nbsp;<? } ?>
-                                            <input type="checkbox" name="postCategory" id="post-cate-<?= cat.taxonomyId ?>" value="<?= cat.taxonomyId ?>"<? if(util.inArray(cat.taxonomyId, postCategories) >= 0){ ?> checked="checked"<? } ?> />&nbsp;<?= cat.name ?></label>
-                                        <? if(catIdx < categories.catArray.length - 1){ ?><br /><? } ?>
+                                            <input type="checkbox" name="postTaxonomies[]" id="post-cate-<?= cat.taxonomyId ?>" value="<?= cat.taxonomyId ?>"<? if(cat.isChecked){ ?> checked="checked"<? } ?> />&nbsp;<?= cat.name ?></label>
+                                        <? if(catIdx < taxonomyList.length - 1){ ?><br /><? } ?>
                                     <? }) ?>
                                 </div>
                             </div>

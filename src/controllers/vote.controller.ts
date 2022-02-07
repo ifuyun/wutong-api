@@ -1,4 +1,4 @@
-import { Body, Controller, Header, HttpStatus, Post, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Header, HttpStatus, Post, Req } from '@nestjs/common';
 import { ResponseCode, VoteType } from '../common/common.enum';
 import VoteDto from '../dtos/vote.dto';
 import Ip from '../decorators/ip.decorator';
@@ -8,7 +8,6 @@ import CustomException from '../exceptions/custom.exception';
 import TrimPipe from '../pipes/trim.pipe';
 import CommentsService from '../services/comments.service';
 import VotesService from '../services/votes.service';
-import ExceptionFactory from '../validators/exception-factory';
 
 @Controller('vote')
 export default class VoteController {
@@ -19,12 +18,6 @@ export default class VoteController {
   }
 
   @Post('save')
-  @UsePipes(new ValidationPipe({
-    transform: true,
-    skipNullProperties: true,
-    stopAtFirstError: true,
-    exceptionFactory: ExceptionFactory
-  }))
   @Header('Content-Type', 'application/json')
   async saveVote(
     @Req() req,

@@ -1,5 +1,4 @@
 import { createHash } from 'crypto';
-import * as unique from 'lodash/uniq';
 
 /**
  * 截取字符串为指定长度，超过长度加'...'
@@ -126,21 +125,6 @@ export function isEmptyObject(obj) {
   return true;
 }
 
-/**
- * 标签去重
- * @method uniqueTags
- * @static
- * @param {string} tagStr tag string
- * @return {string} tag string
- * @author Fuyun
- * @version 1.0.0
- * @since 1.0.0
- */
-export function uniqueTags(tagStr: string) {
-  const tags = tagStr.split(',');
-  return unique(tags).join(',');
-}
-
 export function getFileExt(fileName: string): string {
   let partials = fileName.split('.');
   let fileExt: string = '';
@@ -150,4 +134,20 @@ export function getFileExt(fileName: string): string {
     fileExt = '';
   }
   return fileExt;
+}
+
+export function getEnumKeyByValue(enumData: Record<string, string | number>, value: string | number): string {
+  let key: string;
+  const keys = Object.keys(enumData);
+  for (let i = 0; i < keys.length; i += 1) {
+    if (enumData[keys[i]] === value) {
+      key = keys[i];
+      break;
+    }
+  }
+  return key;
+}
+
+export function getEnumValues(enumData: Record<string, string | number>): (string | number)[] {
+  return Object.keys(enumData).map((key) => enumData[key]);
 }

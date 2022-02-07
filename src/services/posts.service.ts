@@ -1,13 +1,13 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
-import { CountOptions, FindOptions, IncludeOptions, Op } from 'sequelize';
+import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, ResponseCode } from '../common/common.enum';
+import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, ResponseCode, TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { POST_EXCERPT_LENGTH } from '../common/constants';
-import PostDto from '../dtos/post.dto';
+import { PostDto, PostFileDto } from '../dtos/post.dto';
 import CustomException from '../exceptions/custom.exception';
-import { cutStr, filterHtmlTag } from '../helpers/helper';
+import { cutStr, filterHtmlTag, getEnumKeyByValue, getUuid } from '../helpers/helper';
 import { PostListVo, PostStatusMap, PostVo } from '../interfaces/posts.interface';
 import PostModel from '../models/post.model';
 import PostMetaModel from '../models/post-meta.model';
@@ -22,6 +22,7 @@ import PostMetaService from './post-meta.service';
 import TaxonomiesService from './taxonomies.service';
 import UtilService from './util.service';
 import OptionsService from './options.service';
+import { PostMetaVo } from '../interfaces/post-meta.interface';
 
 @Injectable()
 export default class PostsService {
@@ -32,6 +33,12 @@ export default class PostsService {
     private readonly postView: typeof VPostViewAverageModel,
     @InjectModel(VPostDateArchiveModel)
     private readonly postArchiveView: typeof VPostDateArchiveModel,
+    @InjectModel(TaxonomyRelationshipModel)
+    private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
+    @InjectModel(PostMetaModel)
+    private readonly postMetaModel: typeof PostMetaModel,
+    @InjectModel(TaxonomyModel)
+    private readonly taxonomyModel: typeof TaxonomyModel,
     private readonly paginatorService: PaginatorService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomiesService: TaxonomiesService,
@@ -117,7 +124,7 @@ export default class PostsService {
     if (!Object.keys(CopyrightType).map((k) => CopyrightType[k].toString()).includes(type)) {
       throw new CustomException(ResponseCode.COPYRIGHT_ILLEGAL, HttpStatus.INTERNAL_SERVER_ERROR, '数据错误。');
     }
-    return CopyrightTypeDesc[this.utilService.getEnumKeyByValue(CopyrightType, parseInt(type, 10))];
+    return CopyrightTypeDesc[getEnumKeyByValue(CopyrightType, parseInt(type, 10))];
   }
 
   async getRecentPosts(): Promise<PostModel[]> {
@@ -304,7 +311,7 @@ export default class PostsService {
             [Op.eq]: 'tag'
           },
           status: {
-            [Op.eq]: 1
+            [Op.eq]: TaxonomyStatus.OPEN
           },
           slug: {
             [Op.eq]: tag
@@ -363,7 +370,7 @@ export default class PostsService {
       post.postCreatedText = moment(post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
       post.postExcerpt = post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
-      post.postStatusDesc = PostStatusDesc[this.utilService.getEnumKeyByValue(PostStatus, post.postStatus)];
+      post.postStatusDesc = PostStatusDesc[getEnumKeyByValue(PostStatus, post.postStatus)];
     });
     const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts(postIds, isAdmin);
 
@@ -375,50 +382,46 @@ export default class PostsService {
     };
   }
 
-  async getPostById(postId: string, isAdmin: boolean): Promise<PostModel> {
+  async getPostById(postId: string, isAdmin?: boolean): Promise<PostModel> {
     let where = {
       [Op.or]: [{
-        taxonomy: {
-          [Op.eq]: 'post'
-        }
+        taxonomy: TaxonomyType.POST,
+        status: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN
       }, {
-        taxonomy: {
-          [Op.eq]: 'tag'
-        },
-        status: {
-          [Op.eq]: 1
-        }
+        taxonomy: TaxonomyType.TAG,
+        status: TaxonomyStatus.OPEN
       }]
     };
-    if (!isAdmin) {
-      where[Op.or][0].status = {
-        [Op.eq]: 1
-      };
-    }
     return this.postModel.findByPk(postId, {
       attributes: [
         'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
         'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified',
-        'postCreated', 'postGuid', 'commentCount', 'postViewCount'
+        'postCreated', 'postGuid', 'postType', 'commentCount', 'postViewCount'
       ],
       include: [{
         model: UserModel,
         as: 'author',
         attributes: ['userNiceName']
       }, {
-        model: TaxonomyModel,
-        as: 'taxonomies',
-        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'termOrder', 'status', 'count'],
-        where
-      }, {
         model: PostMetaModel,
         as: 'postMeta',
         attributes: ['metaKey', 'metaValue']
+      }, {
+        model: TaxonomyModel,
+        as: 'taxonomies',
+        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'termOrder', 'status', 'count'],
+        where,
+        // force to use left join
+        required: false
       }]
     }).then((post) => {
       if (post) {
         post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
         post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
+        post.postMetaMap = {};
+        post.postMeta.forEach((meta) => {
+          post.postMetaMap[meta.metaKey] = meta.metaValue;
+        });
       }
       return Promise.resolve(post);
     });
@@ -507,19 +510,115 @@ export default class PostsService {
     });
   }
 
-  async checkPostGuidExist(guid: string): Promise<boolean> {
-    const count = await this.postModel.count({
-      where: {
-        postGuid: {
-          [Op.eq]: guid
-        }
+  async checkPostGuidExist(guid: string, postId?: string): Promise<boolean> {
+    // 检查范围：全部，包含已删除文章和草稿
+    const where: WhereOptions = {
+      postGuid: {
+        [Op.eq]: guid
       }
+    };
+    if (postId) {
+      where.postId = {
+        [Op.ne]: postId
+      };
+    }
+    const count = await this.postModel.count({
+      where
     });
 
     return count > 0;
   }
 
-  async saveFile(postDto: PostDto): Promise<PostModel> {
-    return this.postModel.create({...postDto});
+  async saveFile(postDto: PostFileDto): Promise<PostModel> {
+    return this.postModel.create({ ...postDto });
+  }
+
+  async savePost(data: {
+    newPostId: string,
+    postData: PostDto,
+    postMeta: PostMetaVo[],
+    postTags?: string[],
+    postTaxonomies?: string[]
+  }): Promise<boolean> {
+    return this.sequelize.transaction(async (t) => {
+      if (data.postData.postId) {
+        await this.taxonomyRelationshipModel.destroy({
+          where: {
+            objectId: {
+              [Op.eq]: data.postData.postId
+            }
+          },
+          transaction: t
+        });
+        await this.postMetaModel.destroy({
+          where: {
+            postId: {
+              [Op.eq]: data.postData.postId
+            }
+          },
+          transaction: t
+        });
+        await this.postModel.update({ ...data.postData }, {
+          where: {
+            postId: {
+              [Op.eq]: data.postData.postId
+            }
+          },
+          transaction: t
+        });
+      } else {
+        data.postData.postId = data.newPostId;
+        await this.postModel.create({ ...data.postData }, {
+          transaction: t
+        });
+      }
+      // bulkCreate会报类型错误
+      for (let postMeta of data.postMeta) {
+        await this.postMetaModel.create({ ...postMeta }, {
+          transaction: t
+        });
+      }
+      for (let taxonomy of data.postTaxonomies) {
+        await this.taxonomyRelationshipModel.create({
+          objectId: data.newPostId,
+          termTaxonomyId: taxonomy
+        }, {
+          transaction: t
+        });
+      }
+      for (let tag of data.postTags) {
+        const result = await this.taxonomiesService.checkTaxonomySlugExist(tag, TaxonomyType.TAG);
+        let taxonomyId = getUuid();
+        if (result.taxonomy) {
+          taxonomyId = result.taxonomy.taxonomyId;
+        } else {
+          await this.taxonomyModel.create({
+            taxonomyId,
+            type: TaxonomyType.TAG,
+            name: tag,
+            slug: tag,
+            description: tag,
+            count: 1
+          }, {
+            transaction: t
+          });
+        }
+        await this.taxonomyRelationshipModel.create({
+          objectId: data.newPostId,
+          termTaxonomyId: taxonomyId
+        }, {
+          transaction: t
+        });
+      }
+    }).then(() => {
+      return Promise.resolve(true);
+    }).catch((err) => {
+      this.logger.error({
+        message: '内容保存失败。',
+        data: data,
+        stack: err.stack
+      });
+      return Promise.resolve(false);
+    });
   }
 }

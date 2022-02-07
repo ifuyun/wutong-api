@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
 import { ResponseCode, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
 import { ID_REG } from '../../common/constants';
@@ -16,7 +16,7 @@ import OptionsService from '../../services/options.service';
 import PaginatorService from '../../services/paginator.service';
 import TaxonomiesService from '../../services/taxonomies.service';
 import UtilService from '../../services/util.service';
-import ExceptionFactory from '../../validators/exception-factory';
+import { getEnumKeyByValue } from '../../helpers/helper';
 
 @Controller('admin/taxonomy')
 export default class AdminTaxonomyController {
@@ -51,9 +51,9 @@ export default class AdminTaxonomyController {
 
     const searchParams: string[] = [];
     keyword && searchParams.push(keyword);
-    status && searchParams.push(TaxonomyStatusDesc[this.utilService.getEnumKeyByValue(TaxonomyStatus, status)]);
+    status && searchParams.push(TaxonomyStatusDesc[getEnumKeyByValue(TaxonomyStatus, status)]);
 
-    const taxonomyType = TaxonomyTypeDesc[this.utilService.getEnumKeyByValue(TaxonomyType, type)];
+    const taxonomyType = TaxonomyTypeDesc[getEnumKeyByValue(TaxonomyType, type)];
     const titles = ['管理后台', options.site_name.value];
     titles.unshift(taxonomyType);
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));
@@ -146,12 +146,6 @@ export default class AdminTaxonomyController {
   }
 
   @Post('save')
-  @UsePipes(new ValidationPipe({
-    transform: true,
-    skipNullProperties: true,
-    stopAtFirstError: true,
-    exceptionFactory: ExceptionFactory
-  }))
   @Header('Content-Type', 'application/json')
   async saveTaxonomy(
     @Req() req,
@@ -180,7 +174,7 @@ export default class AdminTaxonomyController {
       status: taxonomyDto.status,
       type
     };
-    const isSlugExist = await this.taxonomiesService.checkTaxonomySlugExist(taxonomyDto.slug, taxonomyDto.taxonomyId);
+    const { isExist: isSlugExist } = await this.taxonomiesService.checkTaxonomySlugExist(taxonomyDto.slug, type, taxonomyDto.taxonomyId);
     if (isSlugExist) {
       throw new CustomException(ResponseCode.TAXONOMY_SLUG_DUPLICATE, HttpStatus.OK, `别名${taxonomyDto.slug}已存在。`);
     }
@@ -209,6 +203,7 @@ export default class AdminTaxonomyController {
     if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
       throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.OK, '操作不允许。');
     }
+    // todo: ParseArrayPipe
     let taxonomyIds: string[] = [];
     if (typeof data.taxonomyIds === 'string') {
       taxonomyIds = data.taxonomyIds.split(',');
