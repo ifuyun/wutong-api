@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import VoteDto from '../dtos/vote.dto';
+import { VoteDto } from '../dtos/vote.dto';
 import { getUuid } from '../helpers/helper';
 import LoggerService from './logger.service';
 import CommentModel from '../models/comment.model';

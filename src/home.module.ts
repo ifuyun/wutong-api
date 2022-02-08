@@ -42,6 +42,7 @@ import TaxonomiesService from './services/taxonomies.service';
 import UsersService from './services/users.service';
 import UtilService from './services/util.service';
 import VotesService from './services/votes.service';
+import { IsPostExistConstraint } from './validators/is-post-exist.validator';
 
 @Module({
   imports: [
@@ -88,7 +89,8 @@ import VotesService from './services/votes.service';
     CommentsService,
     CaptchaService,
     UsersService,
-    VotesService
+    VotesService,
+    IsPostExistConstraint
   ]
 })
 export default class HomeModule {

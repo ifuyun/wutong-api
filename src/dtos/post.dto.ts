@@ -1,20 +1,21 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
-import { POST_AUTHOR_LENGTH, POST_SOURCE_LENGTH, POST_TAG_LIMIT, POST_TAXONOMY_LIMIT } from '../common/constants';
-import { IsId } from '../validators/is-id.validator';
-import { IsNumber } from '../validators/is-number.validator';
-import { TagMaxSize } from '../validators/tag-max-size.validator';
-import { IsIncludedIn } from '../validators/is-included-in.validator';
+import { POST_AUTHOR_LENGTH, POST_EXCERPT_LENGTH, POST_SOURCE_LENGTH, POST_TAG_LIMIT, POST_TAXONOMY_LIMIT, POST_TITLE_LENGTH } from '../common/constants';
 import { CommentFlag, PostStatus } from '../common/common.enum';
 import { getEnumValues } from '../helpers/helper';
-import { IsIds } from '../validators/is-ids.validator';
 import { IsGuid } from '../validators/is-guid.validator';
+import { IsId } from '../validators/is-id.validator';
+import { IsIds } from '../validators/is-ids.validator';
+import { IsIncludedIn } from '../validators/is-included-in.validator';
+import { IsNumber } from '../validators/is-number.validator';
+import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
 
 export class BasicPostDto {
   // 验证顺序根据注解声明顺序从下往上
   @IsId({ message: '文章不存在' })
   postId?: string;
 
+  @MaxLength(POST_TITLE_LENGTH, { message: '文章标题长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '文章标题不能为空' })
   postTitle: string;
 
@@ -24,6 +25,7 @@ export class BasicPostDto {
   @IsNotEmpty({ message: '发布时间不能为空' })
   postDate: Date;
 
+  @MaxLength(POST_EXCERPT_LENGTH, { message: '文章摘要长度应不大于$constraint1字符' })
   postExcerpt?: string;
 
   @IsIncludedIn(
@@ -51,12 +53,12 @@ export class AdditionalPostDto {
 }
 
 export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
-  @IsIds({message: '分类不存在'})
+  @IsIds({ message: '分类不存在' })
   @ArrayMaxSize(POST_TAXONOMY_LIMIT, { message: '分类数应不大于$constraint1个' })
   @ArrayNotEmpty({ message: '分类不能为空' })
   postTaxonomies?: string[];
 
-  @TagMaxSize(
+  @ArrayMaxSizePlus(
     { size: POST_TAG_LIMIT, separator: /[,\s]/i },
     { message: '标签数应不大于$constraint1个，实际为$constraint2个' }
   )
@@ -78,7 +80,7 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
 
   // todo: postType参数是通过query传递，无法直接o.postType，因此间接判断postTaxonomies
   @ValidateIf(o => !o.postTaxonomies || o.postTaxonomies.length < 1)
-  @IsGuid({message: 'URL格式有误'})
+  @IsGuid({ message: 'URL格式有误' })
   @IsNotEmpty({ message: 'URL不能为空' })
   postGuid?: string;
 

@@ -1,12 +1,16 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
 import * as xss from 'sanitizer';
-import { PostStatus, PostStatusDesc, PostType, ResponseCode, TaxonomyType } from '../../common/common.enum';
-import IsAdmin from '../../decorators/is-admin.decorator';
+import { PostStatus, PostStatusDesc, PostType, TaxonomyType } from '../../common/common.enum';
+import { ResponseCode } from '../../common/response-codes.enum';
 import IdParams from '../../decorators/id-params.decorator';
+import IsAdmin from '../../decorators/is-admin.decorator';
 import Referer from '../../decorators/referer.decorator';
 import Search from '../../decorators/search.decorator';
+import User from '../../decorators/user.decorator';
+import { PostDto } from '../../dtos/post.dto';
 import CustomException from '../../exceptions/custom.exception';
+import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import PostModel from '../../models/post.model';
 import LowerCasePipe from '../../pipes/lower-case.pipe';
@@ -19,9 +23,6 @@ import PostsService from '../../services/posts.service';
 import TaxonomiesService from '../../services/taxonomies.service';
 import UsersService from '../../services/users.service';
 import UtilService from '../../services/util.service';
-import { PostDto } from '../../dtos/post.dto';
-import User from '../../decorators/user.decorator';
-import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
 
 @Controller('admin/post')
 export default class AdminPostController {
@@ -30,8 +31,8 @@ export default class AdminPostController {
     private readonly optionsService: OptionsService,
     private readonly taxonomiesService: TaxonomiesService,
     private readonly commentsService: CommentsService,
-    private readonly utilService: UtilService,
     private readonly paginatorService: PaginatorService,
+    private readonly utilService: UtilService,
     private readonly usersService: UsersService
   ) {
   }

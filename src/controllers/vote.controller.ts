@@ -1,6 +1,7 @@
 import { Body, Controller, Header, HttpStatus, Post, Req } from '@nestjs/common';
-import { ResponseCode, VoteType } from '../common/common.enum';
-import VoteDto from '../dtos/vote.dto';
+import { VoteType } from '../common/common.enum';
+import { ResponseCode } from '../common/response-codes.enum';
+import { VoteDto } from '../dtos/vote.dto';
 import Ip from '../decorators/ip.decorator';
 import User from '../decorators/user.decorator';
 import UserAgent from '../decorators/user-agent.decorator';

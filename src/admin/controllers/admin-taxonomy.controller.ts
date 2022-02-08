@@ -1,12 +1,14 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
-import { ResponseCode, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { ResponseCode } from '../../common/response-codes.enum';
 import { ID_REG } from '../../common/constants';
 import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
 import Search from '../../decorators/search.decorator';
-import TaxonomyDto from '../../dtos/taxonomy.dto';
+import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import CustomException from '../../exceptions/custom.exception';
+import { getEnumKeyByValue } from '../../helpers/helper';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
 import LowerCasePipe from '../../pipes/lower-case.pipe';
@@ -16,15 +18,14 @@ import OptionsService from '../../services/options.service';
 import PaginatorService from '../../services/paginator.service';
 import TaxonomiesService from '../../services/taxonomies.service';
 import UtilService from '../../services/util.service';
-import { getEnumKeyByValue } from '../../helpers/helper';
 
 @Controller('admin/taxonomy')
 export default class AdminTaxonomyController {
   constructor(
     private readonly taxonomiesService: TaxonomiesService,
     private readonly optionsService: OptionsService,
-    private readonly utilService: UtilService,
-    private readonly paginatorService: PaginatorService
+    private readonly paginatorService: PaginatorService,
+    private readonly utilService: UtilService
   ) {
   }
 

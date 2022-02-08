@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
-import { ResponseCode } from '../common/common.enum';
+import { ResponseCode } from '../common/response-codes.enum';
 import CustomException from '../exceptions/custom.exception';
 
 export default function ExceptionFactory(errors: ValidationError[]) {

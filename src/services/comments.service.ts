@@ -3,21 +3,19 @@ import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import PaginatorService from './paginator.service';
-import UtilService from './util.service';
 import { CommentStatus, CommentStatusDesc } from '../common/common.enum';
-import CommentDto from '../dtos/comment.dto';
+import { CommentDto } from '../dtos/comment.dto';
 import { getEnumKeyByValue, getUuid } from '../helpers/helper';
 import { CommentListVo, CommentStatusMap } from '../interfaces/comments.interface';
 import CommentModel from '../models/comment.model';
 import PostModel from '../models/post.model';
+import PaginatorService from './paginator.service';
 
 @Injectable()
 export default class CommentsService {
   constructor(
     @InjectModel(CommentModel)
     private readonly commentModel: typeof CommentModel,
-    private readonly utilService: UtilService,
     private readonly paginatorService: PaginatorService
   ) {
   }
@@ -54,7 +52,7 @@ export default class CommentsService {
 
   async getCommentsByPostId(postId: string): Promise<CommentModel[]> {
     return this.commentModel.findAll({
-      attributes: ['commentId', 'commentContent', 'commentAuthor', 'commentVote', 'commentCreated'],
+      attributes: ['commentId', 'commentContent', 'commentAuthor', 'commentVote', 'created'],
       where: {
         postId: {
           [Op.eq]: postId
@@ -64,11 +62,11 @@ export default class CommentsService {
         }
       },
       order: [
-        ['commentCreated', 'desc']
+        ['created', 'desc']
       ]
     }).then((comments) => {
       comments.map((comment) => {
-        comment.commentCreatedText = moment(comment.commentCreated).format('YYYY-MM-DD HH:mm');
+        comment.createdText = moment(comment.created).format('YYYY-MM-DD HH:mm');
       });
       return Promise.resolve(comments);
     });
@@ -77,7 +75,6 @@ export default class CommentsService {
   async saveComment(commentDto: CommentDto): Promise<number> {
     if (!commentDto.commentId) {
       commentDto.commentId = getUuid();
-      commentDto.commentCreatedGmt = commentDto.commentModifiedGmt = new Date();
       return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve(1));
     }
     return this.commentModel.update(commentDto, {
@@ -121,14 +118,14 @@ export default class CommentsService {
         model: PostModel,
         attributes: ['postId', 'postGuid', 'postTitle']
       }],
-      order: [['commentCreated', 'desc']],
+      order: [['created', 'desc']],
       limit: pageSize,
       offset: pageSize * (page - 1),
       subQuery: false
     });
     comments.forEach((comment) => {
       // todo: time format changes to config
-      comment.commentCreatedText = moment(comment.commentCreated).format('YYYY-MM-DD HH:mm');
+      comment.createdText = moment(comment.created).format('YYYY-MM-DD HH:mm');
       comment.commentStatusDesc = CommentStatusDesc[getEnumKeyByValue(CommentStatus, comment.commentStatus)];
     });
 
@@ -147,5 +144,16 @@ export default class CommentsService {
         }
       }
     });
+  }
+
+  async checkCommentExist(commentId: string): Promise<boolean> {
+    const count = await this.commentModel.count({
+      where: {
+        commentId: {
+          [Op.eq]: commentId
+        }
+      }
+    });
+    return count > 0;
   }
 }

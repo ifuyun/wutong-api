@@ -4,7 +4,7 @@ import { Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../common/constants';
 import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../common/common.enum';
-import TaxonomyDto from '../dtos/taxonomy.dto';
+import { TaxonomyDto } from '../dtos/taxonomy.dto';
 import { getEnumKeyByValue, getUuid, isEmptyObject } from '../helpers/helper';
 import { CrumbData } from '../interfaces/crumb.interface';
 import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyTree } from '../interfaces/taxonomies.interface';
@@ -12,7 +12,6 @@ import TaxonomyModel from '../models/taxonomy.model';
 import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import LoggerService from './logger.service';
 import PaginatorService from './paginator.service';
-import UtilService from './util.service';
 
 @Injectable()
 export default class TaxonomiesService {
@@ -21,7 +20,6 @@ export default class TaxonomiesService {
     private readonly taxonomyModel: typeof TaxonomyModel,
     @InjectModel(TaxonomyRelationshipModel)
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
-    private readonly utilService: UtilService,
     private readonly paginatorService: PaginatorService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize

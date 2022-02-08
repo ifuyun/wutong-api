@@ -83,6 +83,7 @@ export default class CommentModel extends Model {
   })
   commentIp: string;
 
+  // todo: to be renamed
   @CreatedAt
   @Column({
     type: DataType.DATE,
@@ -90,10 +91,11 @@ export default class CommentModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     field: 'comment_created'
   })
-  commentCreated: Date;
+  created: Date;
 
-  commentCreatedText: string;
+  createdText: string;
 
+  // todo: to be removed
   @Column({
     type: DataType.DATE,
     allowNull: false,
@@ -102,6 +104,7 @@ export default class CommentModel extends Model {
   })
   commentCreatedGmt: Date;
 
+  // todo: to be renamed
   @UpdatedAt
   @Column({
     type: DataType.DATE,
@@ -109,8 +112,9 @@ export default class CommentModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     field: 'comment_modified'
   })
-  commentModified: Date;
+  modified: Date;
 
+  // todo: to be removed
   @Column({
     type: DataType.DATE,
     allowNull: false,

@@ -5,7 +5,8 @@ import * as mkdirp from 'mkdirp';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as xss from 'sanitizer';
-import { PostStatus, PostType, ResponseCode } from '../../common/common.enum';
+import { PostStatus, PostType } from '../../common/common.enum';
+import { ResponseCode } from '../../common/response-codes.enum';
 import Referer from '../../decorators/referer.decorator';
 import User from '../../decorators/user.decorator';
 import { PostFileDto } from '../../dtos/post.dto';
@@ -19,10 +20,10 @@ import UtilService from '../../services/util.service';
 @Controller('admin/file')
 export default class AdminFileController {
   constructor(
-    private readonly postsService: PostsService,
+    private readonly commonService: CommonService,
     private readonly optionsService: OptionsService,
-    private readonly utilService: UtilService,
-    private readonly commonService: CommonService
+    private readonly postsService: PostsService,
+    private readonly utilService: UtilService
   ) {
   }
 
@@ -91,7 +92,7 @@ export default class AdminFileController {
       await this.commonService.watermark(result['filePath']);
     }
     const options = await this.optionsService.getOptions(false);
-    const postGuid = `${options.upload_path_prefix.value}/${curYear}/${curMonth}/${result['fileName']}`;
+    const postGuid = `${options.upload_url_prefix.value}/${curYear}/${curMonth}/${result['fileName']}`;
     const isPostGuidExist = await this.postsService.checkPostGuidExist(postGuid);
     if (isPostGuidExist) {
       throw new CustomException(ResponseCode.UPLOAD_PATH_CONFLICT, HttpStatus.OK, '文件上传错误，请重新上传。');

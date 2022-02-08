@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import LinkDto from '../dtos/link.dto';
+import { LinkDto } from '../dtos/link.dto';
 import { OptionData } from '../interfaces/options.interface';
 import OptionModel from '../models/option.model';
 import LoggerService from './logger.service';

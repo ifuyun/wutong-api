@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import UserLoginDto from '../dtos/user-login.dto';
+import { UserLoginDto } from '../dtos/user-login.dto';
 import { UserVo } from '../interfaces/users.interface';
 import UserModel from '../models/user.model';
 import UserMetaModel from '../models/user-meta.model';

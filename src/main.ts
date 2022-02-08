@@ -20,6 +20,7 @@ import LoggerService from './services/logger.service';
 import { LogLevel } from './common/common.enum';
 import { ValidationPipe } from '@nestjs/common';
 import ExceptionFactory from './validators/exception-factory';
+import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -76,7 +77,7 @@ async function bootstrap() {
     app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
     app.use(cookieParser(appConfig.cookieSecret));
 
-    const redisClient = createClient(redisConfig.port, redisConfig.host, {'auth_pass': redisConfig.password});
+    const redisClient = createClient(redisConfig.port, redisConfig.host, { 'auth_pass': redisConfig.password });
     const RedisStore = connectRedis(session);
     app.use(session({
       name: 'jsid',
@@ -113,6 +114,7 @@ async function bootstrap() {
       stopAtFirstError: true,
       exceptionFactory: ExceptionFactory
     }));
+    useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
     await app.listen(appConfig.port, appConfig.host, () => sysLogger.info(transformLogData({
       message: `Server listening on: ${appConfig.host}:${appConfig.port}`

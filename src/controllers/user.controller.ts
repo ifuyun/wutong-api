@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ResponseCode } from '../common/common.enum';
+import { ResponseCode } from '../common/response-codes.enum';
 import Referer from '../decorators/referer.decorator';
-import UserLoginDto from '../dtos/user-login.dto';
+import { UserLoginDto } from '../dtos/user-login.dto';
 import CustomException from '../exceptions/custom.exception';
 import OptionsService from '../services/options.service';
 import UsersService from '../services/users.service';

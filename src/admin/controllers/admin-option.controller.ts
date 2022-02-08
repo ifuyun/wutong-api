@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req } from '@nestjs/common';
-import { ResponseCode } from '../../common/common.enum';
-import OptionDto from '../../dtos/option.dto';
+import { ResponseCode } from '../../common/response-codes.enum';
+import { OptionDto } from '../../dtos/option.dto';
 import CustomException from '../../exceptions/custom.exception';
 import TrimPipe from '../../pipes/trim.pipe';
 import OptionsService from '../../services/options.service';
@@ -43,11 +43,11 @@ export default class AdminOptionController {
       site_description: optionDto.siteDescription,
       site_slogan: optionDto.siteSlogan,
       site_url: optionDto.siteUrl,
-      site_keywords: optionDto.siteKeywords,
+      site_keywords: <string>optionDto.siteKeywords,
       admin_email: optionDto.adminEmail,
       icp_num: optionDto.icpNum,
       copyright_notice: optionDto.copyNotice,
-      upload_path: optionDto.uploadPath
+      upload_url_prefix: optionDto.uploadUrlPrefix
     };
     const result = await this.optionsService.saveOptions(data);
     if (!result) {

@@ -3,7 +3,7 @@ import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { VoteType } from '../common/common.enum';
 
-export default class VoteDto {
+export class VoteDto {
   // 验证顺序根据注解声明顺序从下往上
   @IsId({ message: '投票不存在' })
   voteId: string;

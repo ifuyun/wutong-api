@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, ResponseCode, TaxonomyStatus, TaxonomyType } from '../common/common.enum';
+import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../common/common.enum';
+import { ResponseCode } from '../common/response-codes.enum';
 import { POST_EXCERPT_LENGTH } from '../common/constants';
 import { PostDto, PostFileDto } from '../dtos/post.dto';
 import CustomException from '../exceptions/custom.exception';
 import { cutStr, filterHtmlTag, getEnumKeyByValue, getUuid } from '../helpers/helper';
 import { PostListVo, PostStatusMap, PostVo } from '../interfaces/posts.interface';
+import { PostMetaVo } from '../interfaces/post-meta.interface';
 import PostModel from '../models/post.model';
 import PostMetaModel from '../models/post-meta.model';
 import TaxonomyModel from '../models/taxonomy.model';
@@ -17,12 +19,10 @@ import UserModel from '../models/user.model';
 import VPostViewAverageModel from '../models/v-post-view-average.model';
 import VPostDateArchiveModel from '../models/v-post-date-archive.model';
 import LoggerService from './logger.service';
+import OptionsService from './options.service';
 import PaginatorService from './paginator.service';
 import PostMetaService from './post-meta.service';
 import TaxonomiesService from './taxonomies.service';
-import UtilService from './util.service';
-import OptionsService from './options.service';
-import { PostMetaVo } from '../interfaces/post-meta.interface';
 
 @Injectable()
 export default class PostsService {
@@ -33,18 +33,17 @@ export default class PostsService {
     private readonly postView: typeof VPostViewAverageModel,
     @InjectModel(VPostDateArchiveModel)
     private readonly postArchiveView: typeof VPostDateArchiveModel,
+    @InjectModel(TaxonomyModel)
+    private readonly taxonomyModel: typeof TaxonomyModel,
     @InjectModel(TaxonomyRelationshipModel)
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
     @InjectModel(PostMetaModel)
     private readonly postMetaModel: typeof PostMetaModel,
-    @InjectModel(TaxonomyModel)
-    private readonly taxonomyModel: typeof TaxonomyModel,
+    private readonly logger: LoggerService,
+    private readonly optionsService: OptionsService,
     private readonly paginatorService: PaginatorService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomiesService: TaxonomiesService,
-    private readonly optionsService: OptionsService,
-    private readonly utilService: UtilService,
-    private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
   }
@@ -526,6 +525,17 @@ export default class PostsService {
       where
     });
 
+    return count > 0;
+  }
+
+  async checkPostExist(postId: string): Promise<boolean> {
+    const count = await this.postModel.count({
+      where: {
+        postId: {
+          [Op.eq]: postId
+        }
+      }
+    });
     return count > 0;
   }
 

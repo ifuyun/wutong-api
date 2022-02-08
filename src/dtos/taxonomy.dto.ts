@@ -2,7 +2,7 @@ import { IsNotEmpty } from 'class-validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsNumber } from '../validators/is-number.validator';
 
-export default class TaxonomyDto {
+export class TaxonomyDto {
   // 验证顺序根据注解声明顺序从下往上
   @IsId({ message: '分类不存在' })
   taxonomyId?: string;

@@ -1,6 +1,6 @@
 import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
-import { ResponseCode } from '../common/common.enum';
+import { ResponseCode } from '../common/response-codes.enum';
 import { Messages } from '../common/messages.enum';
 import { POST_DESCRIPTION_LENGTH } from '../common/constants';
 import Ip from '../decorators/ip.decorator';
@@ -234,7 +234,7 @@ export default class PostController {
       postTaxonomies: [],
       postTags: [],
       comments, prevPost, nextPost,
-      urlShare: appendUrlRef(options.site_url.value + post.postGuid, 'qrcode')
+      urlShare: appendUrlRef(options.site_url.value, post.postGuid, 'qrcode')
     };
     const keywords = [];
     post.taxonomies.forEach((v) => {

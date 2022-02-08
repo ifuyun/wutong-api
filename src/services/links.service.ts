@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { LinkTarget, LinkTargetDesc, LinkVisibleScope, LinkVisibleScopeDesc } from '../common/common.enum';
-import LinkDto from '../dtos/link.dto';
+import { LinkTarget, LinkTargetDesc, LinkVisible, LinkVisibleDesc } from '../common/common.enum';
+import { LinkDto } from '../dtos/link.dto';
 import { getEnumKeyByValue, getUuid } from '../helpers/helper';
 import { LinkListVo } from '../interfaces/links.interface';
 import LinkModel from '../models/link.model';
@@ -12,7 +12,6 @@ import TaxonomyModel from '../models/taxonomy.model';
 import TaxonomyRelationshipModel from '../models/taxonomy-relationship.model';
 import LoggerService from './logger.service';
 import PaginatorService from './paginator.service';
-import UtilService from './util.service';
 
 @Injectable()
 export default class LinksService {
@@ -21,7 +20,6 @@ export default class LinksService {
     private readonly linkModel: typeof LinkModel,
     @InjectModel(TaxonomyRelationshipModel)
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
-    private readonly utilService: UtilService,
     private readonly paginatorService: PaginatorService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
@@ -79,7 +77,7 @@ export default class LinksService {
     });
     links.map((link) => {
       link.createdText = moment(link.created).format('YYYY-MM-DD');
-      link.linkVisible = LinkVisibleScopeDesc[getEnumKeyByValue(LinkVisibleScope, link.linkVisible)];
+      link.linkVisible = LinkVisibleDesc[getEnumKeyByValue(LinkVisible, link.linkVisible)];
       link.linkTarget = LinkTargetDesc[getEnumKeyByValue(LinkTarget, link.linkTarget)];
     });
     return { links, page, count };

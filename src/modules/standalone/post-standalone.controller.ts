@@ -82,7 +82,7 @@ export default class PostStandaloneController {
       post,
       postMeta,
       comments,
-      urlShare: appendUrlRef(options.site_url.value + post.postGuid, 'qrcode')
+      urlShare: appendUrlRef(options.site_url.value, post.postGuid, 'qrcode')
     };
     if (user) {
       resData.user.userName = user.userNiceName;

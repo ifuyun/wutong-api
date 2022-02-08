@@ -29,73 +29,6 @@ export enum LogCategory {
   threadLogger = 'thread'
 }
 
-export enum ResponseCode {
-  // HTTP status
-  HTTP_SUCCESS = 200,
-  BAD_REQUEST = 400,
-  UNAUTHORIZED = 401,
-  FORBIDDEN = 403,
-  NOT_FOUND = 404,
-  INTERNAL_SERVER_ERROR = 500,
-  MOVED_PERMANENTLY = 301,
-  FOUND = 302,
-  TEMPORARY_REDIRECT = 307,
-  PERMANENT_REDIRECT = 308,
-  METHOD_NOT_ALLOWED = 405,
-  NOT_ACCEPTABLE = 406,
-  PROXY_AUTHENTICATION_REQUIRED = 407,
-  REQUEST_TIMEOUT = 408,
-  TOO_MANY_REQUESTS = 429,
-  NOT_IMPLEMENTED = 501,
-  BAD_GATEWAY = 502,
-  SERVICE_UNAVAILABLE = 503,
-  GATEWAY_TIMEOUT = 504,
-  // custom response code
-  SUCCESS = 0,
-  REQUEST_PARAM_ILLEGAL = 4001,
-  UNKNOWN_ERROR = 5001,
-  LOGIN_ERROR,
-  SESSION_REGENERATE_ERROR,
-  SESSION_DESTROY_ERROR,
-  CAPTCHA_INPUT_ERROR,
-  // post: 80xx
-  POST_NOT_FOUND = 8000,
-  POST_SAVE_ERROR,
-  POST_COMMENT_CLOSED,
-  POST_TYPE_INVALID,
-  POST_GUID_CONFLICT,
-  COPYRIGHT_ILLEGAL,
-  // taxonomy: 81xx
-  TAXONOMY_NOT_FOUND = 8100,
-  TAXONOMY_INVISIBLE,
-  TAXONOMY_QUERY_ERROR,
-  TAXONOMY_SLUG_DUPLICATE,
-  TAXONOMY_REMOVE_ERROR,
-  TAXONOMY_TYPE_INVALID,
-  TAXONOMY_STATUS_INVALID,
-  TAXONOMY_SAVE_ERROR,
-  TAXONOMY_DELETE_ERROR,
-  // comment: 82xx
-  COMMENT_SAVE_ERROR = 8200,
-  // link: 83xx
-  LINK_SAVE_ERROR = 8300,
-  LINK_REMOVE_ERROR,
-  LINK_NOT_FOUND,
-  // form: 84xx
-  FORM_INPUT_ERROR = 8400,
-  UPLOAD_ERROR,
-  UPLOAD_PATH_CONFLICT,
-  // user: 85xx
-  USER_NOT_FOUND = 8500,
-  // option: 86xx
-  OPTION_SAVE_ERROR = 8600,
-  // book: 88xx
-  BOOK_SAVE_ERROR = 8800,
-  // other
-  CAPTCHA_GENERATE_ERROR = 8900,
-  VOTE_FAILURE
-}
-
 export enum Roles {
   ROLE_ADMIN = 'admin'
 }
@@ -192,13 +125,13 @@ export enum TaxonomyStatusDesc {
   TRASH = '已删除'
 }
 
-export enum LinkVisibleScope {
+export enum LinkVisible {
   SITE = 'site',
   HOMEPAGE = 'homepage',
   INVISIBLE = 'invisible'
 }
 
-export enum LinkVisibleScopeDesc {
+export enum LinkVisibleDesc {
   SITE = '全站',
   HOMEPAGE = '首页',
   INVISIBLE = '不可见'

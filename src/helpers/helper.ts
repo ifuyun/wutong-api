@@ -82,15 +82,22 @@ export function getUuid() {
 
 /**
  * URL添加来源参数
- * @param {string} url URL
+ * @param {string} host URL
+ * @param {string} path path
  * @param {string} from 来源
  * @return {string} 新的URL
  * @version 1.0.0
  * @since 1.0.0
  */
-export function appendUrlRef(url, from) {
-  const split = url.indexOf('?') >= 0 ? '&' : '?';
-  return url + split + 'ref=' + from;
+export function appendUrlRef(host: string, path: string, from: string) {
+  const separator = path.indexOf('?') >= 0 ? '&' : '?';
+  if (!host.endsWith('/')) {
+    host += '/';
+  }
+  if (path.startsWith('/')) {
+    path = path.substring(1);
+  }
+  return host + path + separator + 'ref=' + from;
 }
 
 /**

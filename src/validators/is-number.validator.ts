@@ -11,7 +11,7 @@ export function IsNumber(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: any) {
           if (typeof value === 'number') {
-            return true
+            return true;
           }
           if (typeof value === 'string') {
             return /^[+-]?\d+(?:.\d+)?$/i.test(value);

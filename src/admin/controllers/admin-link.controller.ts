@@ -1,13 +1,15 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
+import { LinkTarget, LinkVisible } from '../../common/common.enum';
+import { ResponseCode } from '../../common/response-codes.enum';
 import { ID_REG } from '../../common/constants';
-import { LinkTarget, LinkVisibleScope, ResponseCode } from '../../common/common.enum';
-import IdParams  from '../../decorators/id-params.decorator';
+import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
 import Search from '../../decorators/search.decorator';
-import LinkDto from '../../dtos/link.dto';
+import { LinkDto } from '../../dtos/link.dto';
 import CustomException from '../../exceptions/custom.exception';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
+import LowerCasePipe from '../../pipes/lower-case.pipe';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
 import TrimPipe from '../../pipes/trim.pipe';
 import LinksService from '../../services/links.service';
@@ -15,17 +17,15 @@ import OptionsService from '../../services/options.service';
 import PaginatorService from '../../services/paginator.service';
 import TaxonomiesService from '../../services/taxonomies.service';
 import UtilService from '../../services/util.service';
-import ExceptionFactory from '../../validators/exception-factory';
-import LowerCasePipe from '../../pipes/lower-case.pipe';
 
 @Controller('admin/link')
 export default class AdminLinkController {
   constructor(
     private readonly linkService: LinksService,
-    private readonly taxonomiesService: TaxonomiesService,
     private readonly optionsService: OptionsService,
-    private readonly utilService: UtilService,
-    private readonly paginatorService: PaginatorService
+    private readonly taxonomiesService: TaxonomiesService,
+    private readonly paginatorService: PaginatorService,
+    private readonly utilService: UtilService
   ) {
   }
 
@@ -119,21 +119,15 @@ export default class AdminLinkController {
     @Body(new TrimPipe()) linkDto: LinkDto,
     @Session() session
   ) {
-    if (!Object.keys(LinkVisibleScope).map((k) => LinkVisibleScope[k]).includes(linkDto.linkVisible)) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请选择正确的可见性。');
-    }
-    if (!Object.keys(LinkTarget).map((k) => LinkTarget[k]).includes(linkDto.linkTarget)) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请选择正确的打开方式。');
-    }
     linkDto = {
-      linkId: xss.sanitize(linkDto.linkId),
-      linkTaxonomy: xss.sanitize(linkDto.linkTaxonomy),
-      linkUrl: xss.sanitize(linkDto.linkUrl),
+      linkId: linkDto.linkId,
       linkName: xss.sanitize(linkDto.linkName),
+      linkUrl: xss.sanitize(linkDto.linkUrl),
       linkDescription: xss.sanitize(linkDto.linkDescription),
-      linkTarget: linkDto.linkTarget,
       linkVisible: linkDto.linkVisible,
-      linkOrder: linkDto.linkOrder
+      linkTarget: linkDto.linkTarget,
+      linkOrder: linkDto.linkOrder,
+      linkTaxonomy: linkDto.linkTaxonomy
     };
     const result = await this.linkService.saveLink(linkDto);
     if (!result) {

@@ -1,16 +1,21 @@
+import { IntersectionType } from '@nestjs/mapped-types';
 import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsCommentExist } from '../validators/is-comment-exist.validator';
 import { IsId } from '../validators/is-id.validator';
+import { IsPostExist } from '../validators/is-post-exist.validator';
 
-export default class CommentDto {
+export class BasicCommentDto {
   // 验证顺序根据注解声明顺序从下往上
-  @IsId({ message: '评论不存在' })
+  @IsId({ message: '参数非法' })
   commentId?: string;
 
-  @IsId({ message: '评论文章不存在' })
+  @IsPostExist({ message: '评论文章不存在' })
+  @IsId({ message: '参数非法' })
   @IsNotEmpty({ message: '评论文章不存在' })
   postId: string;
 
-  @IsId({ message: '回复的评论不存在' })
+  @IsCommentExist({ message: '回复的评论不存在' })
+  @IsId({ message: '参数非法' })
   parentId?: string;
 
   @IsNotEmpty({ message: '昵称不能为空' })
@@ -22,13 +27,15 @@ export default class CommentDto {
 
   @IsNotEmpty({ message: '评论内容不能为空' })
   commentContent: string;
+}
 
+export class AdditionalCommentDto {
   captchaCode?: string;
-
   commentStatus?: string;
   commentIp?: string;
   commentAgent?: string;
   userId?: string;
-  commentCreatedGmt?: Date;
-  commentModifiedGmt?: Date;
+}
+
+export class CommentDto extends IntersectionType(BasicCommentDto, AdditionalCommentDto) {
 }
