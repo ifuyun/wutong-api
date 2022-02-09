@@ -1,5 +1,5 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
+import { ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { TAXONOMY_DESCRIPTION_LENGTH, TAXONOMY_NAME_LENGTH, TAXONOMY_SLUG_LENGTH } from '../common/constants';
 import { getEnumStringValues } from '../helpers/helper';
@@ -59,4 +59,10 @@ export class AdditionalTaxonomyDto {
 }
 
 export class TaxonomyDto extends IntersectionType(BasicTaxonomyDto, AdditionalTaxonomyDto) {
+}
+
+export class RemoveTaxonomyDto {
+  @IsId({ message: '参数非法' })
+  @ArrayNotEmpty({ message: '请选择要删除的分类' })
+  taxonomyIds: string[];
 }

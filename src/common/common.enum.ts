@@ -73,6 +73,11 @@ export enum PostStatusDesc {
   TRASH = '已删除'
 }
 
+export enum PostOriginal {
+  YES = 1,
+  NO = 0
+}
+
 export enum CommentFlag {
   OPEN = 'open',
   VERIFY = 'verify',

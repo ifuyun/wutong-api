@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
 import * as xss from 'sanitizer';
-import { PostStatus, PostStatusDesc, PostType, TaxonomyType } from '../../common/common.enum';
+import { CommentFlag, PostOriginal, PostStatus, PostStatusDesc, PostType, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
 import IdParams from '../../decorators/id-params.decorator';
 import IsAdmin from '../../decorators/is-admin.decorator';
@@ -202,10 +202,8 @@ export default class AdminPostController {
 
     const emptyPost = {
       postStatus: PostStatus.PUBLISH,
-      // todo
-      postOriginal: 1,
-      // todo
-      commentFlag: 'verify'
+      postOriginal: PostOriginal.YES,
+      commentFlag: CommentFlag.VERIFY
     };
     const title = `${action === 'create' ? '撰写新' : '编辑'}${postType === PostType.POST ? '文章' : '页面'}`;
     const titles = [title, '管理后台', options.site_name.value];
@@ -236,15 +234,10 @@ export default class AdminPostController {
   @Header('Content-Type', 'application/json')
   async savePost(
     @Req() req,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) postType,
     @Body(new TrimPipe()) postDto: PostDto,
     @User() user,
     @Session() session
   ) {
-    postType = postType || PostType.POST;
-    if (![PostType.POST, PostType.PAGE].includes(postType)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
-    }
     const newPostId = postDto.postId || getUuid();
     const postData: PostDto = {
       postId: postDto.postId,
@@ -260,7 +253,7 @@ export default class AdminPostController {
       postDate: postDto.postDate
     };
     if (!postDto.postId) {// 编辑时不允许修改postType
-      postData.postType = postType;
+      postData.postType = postDto.postType;
     }
     const isPostGuidExist = await this.postsService.checkPostGuidExist(postData.postGuid, postData.postId);
     if (isPostGuidExist) {
@@ -325,7 +318,7 @@ export default class AdminPostController {
       code: ResponseCode.SUCCESS,
       status: HttpStatus.OK,
       data: {
-        url: referer || '/admin/post?type=' + postType
+        url: referer || '/admin/post?type=' + postDto.postType
       }
     };
   }

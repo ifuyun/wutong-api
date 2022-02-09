@@ -1,5 +1,5 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { IsNotEmpty, MaxLength } from 'class-validator';
+import { ArrayNotEmpty, IsNotEmpty, MaxLength } from 'class-validator';
 import { LinkTarget, LinkVisible } from '../common/common.enum';
 import { LINK_DESCRIPTION_LENGTH, LINK_NAME_LENGTH, LINK_URL_LENGTH } from '../common/constants';
 import { getEnumValues } from '../helpers/helper';
@@ -56,4 +56,10 @@ export class AdditionalLinkDto {
 }
 
 export class LinkDto extends IntersectionType(BasicLinkDto, AdditionalLinkDto) {
+}
+
+export class RemoveLinkDto {
+  @IsId({ message: '参数非法' })
+  @ArrayNotEmpty({ message: '请选择要删除的链接' })
+  linkIds: string[];
 }

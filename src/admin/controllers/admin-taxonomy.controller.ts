@@ -6,7 +6,7 @@ import { ID_REG } from '../../common/constants';
 import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
 import Search from '../../decorators/search.decorator';
-import { TaxonomyDto } from '../../dtos/taxonomy.dto';
+import { RemoveTaxonomyDto, TaxonomyDto } from '../../dtos/taxonomy.dto';
 import CustomException from '../../exceptions/custom.exception';
 import { getEnumKeyByValue } from '../../helpers/helper';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
@@ -185,28 +185,13 @@ export default class AdminTaxonomyController {
   async removeTaxonomies(
     @Req() req,
     @Query('type', new TrimPipe(), new LowerCasePipe()) type,
-    @Body(new TrimPipe()) data,
+    @Body(new TrimPipe()) removeTaxonomyDto: RemoveTaxonomyDto,
     @Referer() referer
   ) {
     if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
       throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.OK, '操作不允许。');
     }
-    // todo: ParseArrayPipe
-    let taxonomyIds: string[] = [];
-    if (typeof data.taxonomyIds === 'string') {
-      taxonomyIds = data.taxonomyIds.split(',');
-    } else if (Array.isArray(data.taxonomyIds)) {
-      taxonomyIds = data.taxonomyIds;
-    }
-    if (taxonomyIds.length < 1) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请选择要删除的分类。');
-    }
-    taxonomyIds.forEach((id) => {
-      if (!ID_REG.test(id)) {
-        throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请求参数错误');
-      }
-    });
-    const result = await this.taxonomiesService.removeTaxonomies(type, taxonomyIds);
+    const result = await this.taxonomiesService.removeTaxonomies(type, removeTaxonomyDto.taxonomyIds);
     if (!result) {
       throw new CustomException(ResponseCode.TAXONOMY_DELETE_ERROR, HttpStatus.OK, '删除失败。');
     }

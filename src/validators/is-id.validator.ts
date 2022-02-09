@@ -10,8 +10,19 @@ export function IsId(validationOptions?: ValidationOptions) {
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: string) {
-          return !value || ID_REG.test(value);
+        validate(value: string | string[]) {
+          if (typeof value === 'string') {
+            return !value || ID_REG.test(value);
+          }
+
+          let result: boolean = true;
+          for (let v of value) {
+            result = ID_REG.test(v);
+            if (!result) {
+              break;
+            }
+          }
+          return result;
         }
       }
     });

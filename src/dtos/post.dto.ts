@@ -1,11 +1,10 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { POST_AUTHOR_LENGTH, POST_EXCERPT_LENGTH, POST_SOURCE_LENGTH, POST_TAG_LIMIT, POST_TAXONOMY_LIMIT, POST_TITLE_LENGTH } from '../common/constants';
-import { CommentFlag, PostStatus } from '../common/common.enum';
+import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
 import { getEnumValues } from '../helpers/helper';
 import { IsGuid } from '../validators/is-guid.validator';
 import { IsId } from '../validators/is-id.validator';
-import { IsIds } from '../validators/is-ids.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
 import { IsPostExist } from '../validators/is-post-exist.validator';
@@ -13,6 +12,13 @@ import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
 
 export class BasicPostDto {
   // 验证顺序根据注解声明顺序从下往上
+  @IsIncludedIn(
+    { ranges: [PostType.POST, PostType.PAGE] },
+    { message: '不支持的操作' }
+  )
+  @IsNotEmpty({ message: '参数非法' })
+  postType?: string;
+
   @IsPostExist({ message: '修改的文章不存在' })
   @IsId({ message: '参数非法' })
   postId?: string;
@@ -37,8 +43,6 @@ export class BasicPostDto {
   @IsNotEmpty({ message: '公开度不能为空' })
   postStatus: string;
 
-  postType?: string;
-
   @IsId({ message: '参数非法' })
   postParent?: string;
 }
@@ -55,7 +59,7 @@ export class AdditionalPostDto {
 }
 
 export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
-  @IsIds({ message: '参数非法' })
+  @IsId({ message: '参数非法' })
   @ArrayMaxSize(POST_TAXONOMY_LIMIT, { message: '分类数应不大于$constraint1个' })
   @ArrayNotEmpty({ message: '分类不能为空' })
   postTaxonomies?: string[];
@@ -80,8 +84,7 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   @IsNotEmpty({ message: '转载文章请注明作者' })
   postAuthor: string;
 
-  // todo: postType参数是通过query传递，无法直接o.postType，因此间接判断postTaxonomies
-  @ValidateIf(o => !o.postTaxonomies || o.postTaxonomies.length < 1)
+  @ValidateIf(o => o.postType === PostType.PAGE || !!o.postGuid)
   @IsGuid({ message: 'URL格式有误' })
   @IsNotEmpty({ message: 'URL不能为空' })
   postGuid?: string;

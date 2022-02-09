@@ -6,7 +6,7 @@ import { ID_REG } from '../../common/constants';
 import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
 import Search from '../../decorators/search.decorator';
-import { LinkDto } from '../../dtos/link.dto';
+import { LinkDto, RemoveLinkDto } from '../../dtos/link.dto';
 import CustomException from '../../exceptions/custom.exception';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import LowerCasePipe from '../../pipes/lower-case.pipe';
@@ -147,25 +147,10 @@ export default class AdminLinkController {
   @Post('remove')
   async removeLinks(
     @Req() req,
-    @Body(new TrimPipe()) data,
+    @Body(new TrimPipe()) removeLinkDto: RemoveLinkDto,
     @Referer() referer
   ) {
-    // todo: ParseArrayPipe
-    let linkIds: string[] = [];
-    if (typeof data.linkIds === 'string') {
-      linkIds = data.linkIds.split(',');
-    } else if (Array.isArray(data.linkIds)) {
-      linkIds = data.linkIds;
-    }
-    if (linkIds.length < 1) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请选择要删除的链接。');
-    }
-    linkIds.forEach((id) => {
-      if (!ID_REG.test(id)) {
-        throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请求参数错误');
-      }
-    });
-    const result = await this.linkService.removeLinks(linkIds);
+    const result = await this.linkService.removeLinks(removeLinkDto.linkIds);
     if (!result) {
       throw new CustomException(ResponseCode.LINK_REMOVE_ERROR, HttpStatus.OK, '删除失败。');
     }
