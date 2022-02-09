@@ -1,14 +1,15 @@
+import { IntersectionType } from '@nestjs/mapped-types';
 import { IsNotEmpty } from 'class-validator';
+import { VoteType } from '../common/common.enum';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
-import { VoteType } from '../common/common.enum';
 
-export class VoteDto {
+export class BasicVoteDto {
   // 验证顺序根据注解声明顺序从下往上
-  @IsId({ message: '投票不存在' })
-  voteId: string;
+  @IsId({ message: '参数非法' })
+  voteId?: string;
 
-  @IsId({ message: '投票对象不存在' })
+  @IsId({ message: '参数非法' })
   @IsNotEmpty({ message: '投票对象不存在' })
   objectId: string;
 
@@ -17,15 +18,17 @@ export class VoteDto {
     { message: '参数错误' }
   )
   @IsNotEmpty({ message: '参数错误' })
-  type: string;
+  type?: string;
 
-  voteResult: number;
+  voteResult?: number;
+}
 
-  voteCreated: Date;
-
+export class AdditionalVoteDto {
   userId: string;
-
   userIp: string;
-
   userAgent: string;
+  voteCreated?: Date;
+}
+
+export class VoteDto extends IntersectionType(BasicVoteDto, AdditionalVoteDto) {
 }

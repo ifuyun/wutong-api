@@ -156,5 +156,9 @@ export function getEnumKeyByValue(enumData: Record<string, string | number>, val
 }
 
 export function getEnumValues(enumData: Record<string, string | number>): (string | number)[] {
-  return Object.keys(enumData).map((key) => enumData[key]);
+  return Object.keys(enumData).filter((key) => !/^\d+$/i.test(key)).map((key) => enumData[key]);
+}
+
+export function getEnumStringValues(enumData: Record<string, string | number>): string[] {
+  return Object.keys(enumData).filter((key) => !/^\d+$/i.test(key)).map((key) => enumData[key].toString());
 }

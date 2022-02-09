@@ -29,11 +29,11 @@ export default class VoteController {
   ) {
     user = user || {};
     voteDto = {
-      ...voteDto,
+      objectId: voteDto.objectId,
       voteResult: voteDto.type === VoteType.LIKE ? 1 : -1,
+      userId: user.userId || '',
       userIp: ip,
-      userAgent: agent,
-      userId: user.userId || ''
+      userAgent: agent
     };
     const result = await this.votesService.saveVote(voteDto);
     if (!result) {

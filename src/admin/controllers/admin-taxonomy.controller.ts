@@ -150,35 +150,22 @@ export default class AdminTaxonomyController {
   @Header('Content-Type', 'application/json')
   async saveTaxonomy(
     @Req() req,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type,
     @Body(new TrimPipe()) taxonomyDto: TaxonomyDto,
     @Session() session
   ) {
-    // Body参数无法完成自动类型转换，因此虽然DTO定义是number，但实际仍是string，导致无法直接调用parseInt
+    const type = taxonomyDto.type.toLowerCase();
+    // todo: Body参数无法完成自动类型转换，因此虽然DTO定义是number，但实际仍是string，导致无法直接调用parseInt
     taxonomyDto.status = Number(taxonomyDto.status);
-    if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.OK, '操作不允许。');
-    }
-    if (!this.taxonomiesService.getAllTaxonomyStatusValues().includes(taxonomyDto.status)) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '请选择有效的状态。');
-    }
-    if (type !== TaxonomyType.TAG && (!taxonomyDto.termOrder || !/^\d+$/i.test(taxonomyDto.termOrder.toString()))) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.OK, '排序必须为数字。');
-    }
     taxonomyDto = {
-      taxonomyId: xss.sanitize(taxonomyDto.taxonomyId),
+      taxonomyId: taxonomyDto.taxonomyId,
       name: xss.sanitize(taxonomyDto.name),
       slug: xss.sanitize(taxonomyDto.slug),
       description: xss.sanitize(taxonomyDto.description),
-      parent: type !== TaxonomyType.TAG ? xss.sanitize(taxonomyDto.parent) : '',
-      termOrder: xss.sanitize(taxonomyDto.termOrder),
+      parent: type !== TaxonomyType.TAG ? taxonomyDto.parent : '',
+      termOrder: taxonomyDto.termOrder,
       status: taxonomyDto.status,
       type
     };
-    const { isExist: isSlugExist } = await this.taxonomiesService.checkTaxonomySlugExist(taxonomyDto.slug, type, taxonomyDto.taxonomyId);
-    if (isSlugExist) {
-      throw new CustomException(ResponseCode.TAXONOMY_SLUG_DUPLICATE, HttpStatus.OK, `别名${taxonomyDto.slug}已存在。`);
-    }
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);
     if (!result) {
       throw new CustomException(ResponseCode.TAXONOMY_SAVE_ERROR, HttpStatus.OK, '保存失败。');

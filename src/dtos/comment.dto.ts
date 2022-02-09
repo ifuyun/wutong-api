@@ -6,6 +6,7 @@ import { IsPostExist } from '../validators/is-post-exist.validator';
 
 export class BasicCommentDto {
   // 验证顺序根据注解声明顺序从下往上
+  @IsCommentExist({ message: '修改的评论不存在' })
   @IsId({ message: '参数非法' })
   commentId?: string;
 

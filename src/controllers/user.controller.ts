@@ -80,7 +80,7 @@ export default class UserController {
       domain,
       maxAge: expires
     });
-    if (loginDto.rememberMe && loginDto.rememberMe === '1') {
+    if (loginDto.rememberMe === '1') {
       req.session.cookie.expires = new Date(Date.now() + expires);
       req.session.cookie.maxAge = expires;
     } else {

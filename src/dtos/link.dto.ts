@@ -9,7 +9,7 @@ import { IsNumber } from '../validators/is-number.validator';
 
 export class BasicLinkDto {
   // 验证顺序根据注解声明顺序从下往上
-  @IsId({ message: '链接不存在' })
+  @IsId({ message: '参数非法' })
   linkId?: string;
 
   @MaxLength(LINK_NAME_LENGTH, { message: '名称长度应不大于$constraint1字符' })
@@ -42,7 +42,7 @@ export class BasicLinkDto {
   @IsNotEmpty({ message: '排序不能为空' })
   linkOrder: number;
 
-  @IsId({ message: '分类不存在' })
+  @IsId({ message: '参数非法' })
   @IsNotEmpty({ message: '请选择分类' })
   linkTaxonomy?: string;
 }

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req } from '@nestjs/common';
+import * as xss from 'sanitizer';
 import { ResponseCode } from '../../common/response-codes.enum';
 import { OptionDto } from '../../dtos/option.dto';
 import CustomException from '../../exceptions/custom.exception';
@@ -39,15 +40,15 @@ export default class AdminOptionController {
     @Body(new TrimPipe()) optionDto: OptionDto
   ) {
     const data = {
-      site_name: optionDto.siteName,
-      site_description: optionDto.siteDescription,
-      site_slogan: optionDto.siteSlogan,
+      site_name: xss.sanitize(optionDto.siteName),
+      site_description: xss.sanitize(optionDto.siteDescription),
+      site_slogan: xss.sanitize(optionDto.siteSlogan),
       site_url: optionDto.siteUrl,
-      site_keywords: <string>optionDto.siteKeywords,
+      site_keywords: xss.sanitize(optionDto.siteKeywords),
       admin_email: optionDto.adminEmail,
-      icp_num: optionDto.icpNum,
-      copyright_notice: optionDto.copyNotice,
-      upload_url_prefix: optionDto.uploadUrlPrefix
+      icp_num: xss.sanitize(optionDto.icpNum),
+      copyright_notice: xss.sanitize(optionDto.copyNotice),
+      upload_url_prefix: xss.sanitize(optionDto.uploadUrlPrefix)
     };
     const result = await this.optionsService.saveOptions(data);
     if (!result) {

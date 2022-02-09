@@ -1,7 +1,7 @@
 import { IsEmail, IsNotEmpty, MaxLength } from 'class-validator';
 import { SITE_ADMIN_EMAIL_LENGTH, SITE_COPYRIGHT_LENGTH, SITE_DESCRIPTION_LENGTH, SITE_ICP_NUM_LENGTH, SITE_KEYWORDS_LENGTH, SITE_KEYWORDS_SIZE, SITE_NAME_LENGTH, SITE_SLOGAN_LENGTH, SITE_URL_LENGTH, UPLOAD_URL_PREFIX_LENGTH } from '../common/constants';
-import { IsHost } from '../validators/is-host.validator';
 import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
+import { IsHost } from '../validators/is-host.validator';
 
 export class OptionDto {
   // 验证顺序根据注解声明顺序从下往上

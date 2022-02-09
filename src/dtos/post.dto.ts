@@ -8,11 +8,13 @@ import { IsId } from '../validators/is-id.validator';
 import { IsIds } from '../validators/is-ids.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
+import { IsPostExist } from '../validators/is-post-exist.validator';
 import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
 
 export class BasicPostDto {
   // 验证顺序根据注解声明顺序从下往上
-  @IsId({ message: '文章不存在' })
+  @IsPostExist({ message: '修改的文章不存在' })
+  @IsId({ message: '参数非法' })
   postId?: string;
 
   @MaxLength(POST_TITLE_LENGTH, { message: '文章标题长度应不大于$constraint1字符' })
@@ -37,7 +39,7 @@ export class BasicPostDto {
 
   postType?: string;
 
-  @IsId({ message: '父内容不存在' })
+  @IsId({ message: '参数非法' })
   postParent?: string;
 }
 
@@ -53,7 +55,7 @@ export class AdditionalPostDto {
 }
 
 export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
-  @IsIds({ message: '分类不存在' })
+  @IsIds({ message: '参数非法' })
   @ArrayMaxSize(POST_TAXONOMY_LIMIT, { message: '分类数应不大于$constraint1个' })
   @ArrayNotEmpty({ message: '分类不能为空' })
   postTaxonomies?: string[];

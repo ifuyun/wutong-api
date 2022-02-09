@@ -310,6 +310,17 @@ export default class TaxonomiesService {
     };
   }
 
+  async checkTaxonomyExist(taxonomyId: string): Promise<boolean> {
+    const count = await this.taxonomyModel.count({
+      where: {
+        taxonomyId: {
+          [Op.eq]: taxonomyId
+        }
+      }
+    });
+    return count > 0;
+  }
+
   async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<boolean> {
     if (!taxonomyDto.taxonomyId) {
       taxonomyDto.taxonomyId = getUuid();

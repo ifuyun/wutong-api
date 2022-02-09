@@ -43,7 +43,7 @@ export default class VotesService {
       return Promise.resolve(true);
     }).catch((err) => {
       this.logger.error({
-        message: '投票保存失败。',
+        message: '投票失败',
         data: voteDto,
         stack: err.stack
       });

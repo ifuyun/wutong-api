@@ -1,5 +1,8 @@
 export const DEFAULT_POST_TAXONOMY_ID = '0000000000000000';
 export const DEFAULT_LINK_TAXONOMY_ID = '0000000000000001';
+
+export const ID_REG = /^[0-9a-fA-F]{16}$/i;
+
 export const KEY_WX_MP_ACCESS_TOKEN = 'wx_mp_access_token';
 export const KEY_WX_MP_ACCESS_TOKEN_TIME = 'wx_mp_access_token_time';
 export const KEY_WX_MP_JSAPI_TICKET = 'wx_mp_jsapi_ticket';
@@ -29,4 +32,6 @@ export const SITE_ICP_NUM_LENGTH = 50;
 export const SITE_COPYRIGHT_LENGTH = 100;
 export const UPLOAD_URL_PREFIX_LENGTH = 20;
 
-export const ID_REG = /^[0-9a-fA-F]{16}$/i;
+export const TAXONOMY_NAME_LENGTH = 20;
+export const TAXONOMY_SLUG_LENGTH = 50;
+export const TAXONOMY_DESCRIPTION_LENGTH = 40;

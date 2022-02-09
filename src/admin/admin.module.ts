@@ -44,6 +44,8 @@ import UsersService from '../services/users.service';
 import UtilService from '../services/util.service';
 import VotesService from '../services/votes.service';
 import { IsPostExistConstraint } from '../validators/is-post-exist.validator';
+import { IsSlugExistConstraint } from '../validators/is-slug-exist.validator';
+import { IsTaxonomyExistConstraint } from '../validators/is-taxonomy-exist.validator';
 
 @Module({
   imports: [
@@ -99,7 +101,9 @@ import { IsPostExistConstraint } from '../validators/is-post-exist.validator';
     CommentsService,
     UsersService,
     VotesService,
-    IsPostExistConstraint
+    IsPostExistConstraint,
+    IsTaxonomyExistConstraint,
+    IsSlugExistConstraint
   ]
 })
 export default class AdminModule {
