@@ -10,9 +10,8 @@ const credentials = CredentialsConfig();
 const env = (process.env.ENV && process.env.ENV.trim()) || 'development';
 const isDev = env !== 'production';
 const appConfig = {
+  // todo: to be removed & replaced with db-options
   siteName: '爱浮云',
-  version: '4.0.0',
-  author: 'Fuyun',
   sessionKey: 'sid',
   sessionSecret: credentials.sessionSecret,
   cookieSecret: credentials.cookieSecret,

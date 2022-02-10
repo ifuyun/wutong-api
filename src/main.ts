@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
+import { useContainer } from 'class-validator';
 import * as cluster from 'cluster';
 import * as compress from 'compression';
 import * as connectRedis from 'connect-redis';
@@ -8,6 +9,7 @@ import * as cookieParser from 'cookie-parser';
 import * as csrf from 'csurf';
 import * as ejs from 'ejs';
 import * as session from 'express-session';
+import helmet from 'helmet';
 import * as log4js from 'log4js';
 import { cpus } from 'os';
 import { join } from 'path';
@@ -20,7 +22,6 @@ import LoggerService from './services/logger.service';
 import { LogLevel } from './common/common.enum';
 import { ValidationPipe } from '@nestjs/common';
 import ExceptionFactory from './validators/exception-factory';
-import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -51,15 +52,54 @@ async function bootstrap() {
       });
     });
   } else {
-    const redisConfig = RedisConfig();
-
-    // todo: 在logger之前设置static将无法记录静态文件访问日志
-    app.useStaticAssets(join(__dirname, '..', 'web', 'public', 'static'));
-    app.useStaticAssets(join(__dirname, '..', 'web', 'public', appConfig.isDev ? 'dev' : 'dist'));
-    app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', appConfig.viewsPath));
     /* if @types/ejs is installed, it'll be a error as it's read-only */
     ejs.delimiter = '?';
     app.setViewEngine('ejs');
+    app.use(compress());
+    app.use(cookieParser(appConfig.cookieSecret));
+
+    const redisConfig = RedisConfig();
+    const redisClient = createClient(redisConfig.port, redisConfig.host, { 'auth_pass': redisConfig.password });
+    const RedisStore = connectRedis(session);
+    app.use(session({
+      name: appConfig.sessionKey,
+      store: new RedisStore({
+        client: redisClient,
+        ttl: 7 * 24 * 60 * 60
+      }),
+      secret: appConfig.sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      cookie: { // 默认domain：当前登录域ifuyun.com，设置后为.ifuyun.com
+        maxAge: appConfig.cookieExpires // 默认7天
+      }
+    }));
+
+    app.use(bodyParser.json({
+      limit: '20mb'
+    }));
+    app.use(bodyParser.urlencoded({
+      limit: '20mb',
+      extended: true
+    }));
+    app.enable('trust proxy');
+    app.use(csrf({ cookie: true }));
+    app.use(helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false
+    }));
+    app.useGlobalPipes(new ValidationPipe({
+      transform: true,
+      skipNullProperties: true,
+      stopAtFirstError: true,
+      exceptionFactory: ExceptionFactory
+    }));
+    useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
+    app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
+    app.useStaticAssets(join(__dirname, '..', 'web', 'public', 'static'));
+    app.useStaticAssets(join(__dirname, '..', 'web', 'public', appConfig.isDev ? 'dev' : 'dist'));
+    app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', appConfig.viewsPath));
 
     app.use((req, res, next) => {
       loggerService.updateContext();
@@ -72,49 +112,6 @@ async function bootstrap() {
       level: LogLevel.INFO,
       format: ':remote-addr - :method :status HTTP/:http-version :url - [:response-time ms/:content-length B] ":referrer" ":user-agent"'
     }));
-
-    app.use(compress());
-    app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
-    app.use(cookieParser(appConfig.cookieSecret));
-
-    const redisClient = createClient(redisConfig.port, redisConfig.host, { 'auth_pass': redisConfig.password });
-    const RedisStore = connectRedis(session);
-    app.use(session({
-      name: appConfig.sessionKey,
-      store: new RedisStore({
-        client: redisClient,
-        ttl: 7 * 24 * 60 * 60
-      }),
-      secret: appConfig.sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        // 默认domain：当前登录域ifuyun.com，设置后为.ifuyun.com
-        maxAge: appConfig.cookieExpires // 默认7天
-      }
-    }));
-
-    app.use(bodyParser.json({
-      limit: '20mb'
-    }));
-    app.use(bodyParser.urlencoded({
-      limit: '20mb',
-      extended: true
-    }));
-    app.use(csrf({ cookie: true }));
-    app.enable('trust proxy');
-    app.use((req, res, next) => {
-      res.setHeader('Server', appConfig.author + '/' + appConfig.version);
-      res.setHeader('X-Powered-By', appConfig.domain);
-      next();
-    });
-    app.useGlobalPipes(new ValidationPipe({
-      transform: true,
-      skipNullProperties: true,
-      stopAtFirstError: true,
-      exceptionFactory: ExceptionFactory
-    }));
-    useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
     await app.listen(appConfig.port, appConfig.host, () => sysLogger.info(transformLogData({
       message: `Server listening on: ${appConfig.host}:${appConfig.port}`
