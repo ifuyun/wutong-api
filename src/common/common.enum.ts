@@ -29,8 +29,8 @@ export enum LogCategory {
   threadLogger = 'thread'
 }
 
-export enum Roles {
-  ROLE_ADMIN = 'admin'
+export enum Role {
+  ADMIN = 'admin'
 }
 
 export enum VoteType {

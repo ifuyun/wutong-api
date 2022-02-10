@@ -13,6 +13,7 @@ const appConfig = {
   siteName: '爱浮云',
   version: '4.0.0',
   author: 'Fuyun',
+  sessionKey: 'sid',
   sessionSecret: credentials.sessionSecret,
   cookieSecret: credentials.cookieSecret,
   cookieExpires: 1000 * 60 * 60 * 24 * 7,

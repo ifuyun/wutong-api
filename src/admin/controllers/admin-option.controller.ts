@@ -1,13 +1,18 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req, UseGuards } from '@nestjs/common';
 import * as xss from 'sanitizer';
+import { Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
+import Roles from '../../decorators/roles.decorator';
 import { OptionDto } from '../../dtos/option.dto';
 import CustomException from '../../exceptions/custom.exception';
+import RolesGuard from '../../guards/roles.guard';
 import TrimPipe from '../../pipes/trim.pipe';
 import OptionsService from '../../services/options.service';
 import UtilService from '../../services/util.service';
 
 @Controller('admin/setting')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminOptionController {
   constructor(
     private readonly optionsService: OptionsService,

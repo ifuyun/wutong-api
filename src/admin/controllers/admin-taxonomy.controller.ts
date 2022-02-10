@@ -1,13 +1,14 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
-import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
-import { ID_REG } from '../../common/constants';
 import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
+import Roles from '../../decorators/roles.decorator';
 import Search from '../../decorators/search.decorator';
 import { RemoveTaxonomyDto, TaxonomyDto } from '../../dtos/taxonomy.dto';
 import CustomException from '../../exceptions/custom.exception';
+import RolesGuard from '../../guards/roles.guard';
 import { getEnumKeyByValue } from '../../helpers/helper';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
@@ -20,6 +21,8 @@ import TaxonomiesService from '../../services/taxonomies.service';
 import UtilService from '../../services/util.service';
 
 @Controller('admin/taxonomy')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminTaxonomyController {
   constructor(
     private readonly taxonomiesService: TaxonomiesService,

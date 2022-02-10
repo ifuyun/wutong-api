@@ -1,13 +1,14 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
-import { LinkTarget, LinkVisible } from '../../common/common.enum';
+import { Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
-import { ID_REG } from '../../common/constants';
 import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
+import Roles from '../../decorators/roles.decorator';
 import Search from '../../decorators/search.decorator';
 import { LinkDto, RemoveLinkDto } from '../../dtos/link.dto';
 import CustomException from '../../exceptions/custom.exception';
+import RolesGuard from '../../guards/roles.guard';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import LowerCasePipe from '../../pipes/lower-case.pipe';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
@@ -19,6 +20,8 @@ import TaxonomiesService from '../../services/taxonomies.service';
 import UtilService from '../../services/util.service';
 
 @Controller('admin/link')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminLinkController {
   constructor(
     private readonly linkService: LinksService,

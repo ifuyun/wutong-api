@@ -1,6 +1,11 @@
-import { Controller, Get, HttpStatus, Redirect } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Redirect, UseGuards } from '@nestjs/common';
+import { Role } from '../../common/common.enum';
+import Roles from '../../decorators/roles.decorator';
+import RolesGuard from '../../guards/roles.guard';
 
 @Controller('admin')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminController {
   @Get()
   @Redirect('/admin/post', HttpStatus.FOUND)

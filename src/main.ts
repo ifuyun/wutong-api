@@ -80,7 +80,7 @@ async function bootstrap() {
     const redisClient = createClient(redisConfig.port, redisConfig.host, { 'auth_pass': redisConfig.password });
     const RedisStore = connectRedis(session);
     app.use(session({
-      name: 'jsid',
+      name: appConfig.sessionKey,
       store: new RedisStore({
         client: redisClient,
         ttl: 7 * 24 * 60 * 60

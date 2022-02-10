@@ -1,11 +1,13 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
-import { CommentStatus, CommentStatusDesc } from '../../common/common.enum';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CommentStatus, CommentStatusDesc, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
 import IdParams from '../../decorators/id-params.decorator';
 import Referer from '../../decorators/referer.decorator';
+import Roles from '../../decorators/roles.decorator';
 import Search from '../../decorators/search.decorator';
 import User from '../../decorators/user.decorator';
 import CustomException from '../../exceptions/custom.exception';
+import RolesGuard from '../../guards/roles.guard';
 import { getEnumKeyByValue } from '../../helpers/helper';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import ParseIntPipe from '../../pipes/parse-int.pipe';
@@ -16,6 +18,8 @@ import PaginatorService from '../../services/paginator.service';
 import UtilService from '../../services/util.service';
 
 @Controller('admin/comment')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminCommentController {
   constructor(
     private readonly commentsService: CommentsService,

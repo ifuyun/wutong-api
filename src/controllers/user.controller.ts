@@ -25,7 +25,7 @@ export default class UserController {
     @Session() session,
     @Referer() referer
   ) {
-    if (session.user) {
+    if (session.user && req.cookies.rememberMe === '1') {
       return res.redirect(referer || '/');
     }
     session.loginReferer = referer;
@@ -100,7 +100,15 @@ export default class UserController {
   }
 
   @Get('logout')
-  async logout(@Req() req, @Res() res, @Referer() referer) {
+  async logout(
+    @Req() req,
+    @Res() res,
+    @Referer() referer,
+  ) {
+    /**
+     * req.session和@Session()并不相同，
+     * req.session.destroy后，req.session为空，但@Session()仍能取到值
+     */
     req.session.destroy((err) => {
       if (err) {
         throw new CustomException({

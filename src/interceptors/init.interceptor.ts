@@ -8,17 +8,11 @@ export default class InitInterceptor implements NestInterceptor {
   }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    /* 拦截器内不能调用req.session.save()，否则会导致session无法注销 */
     const req = context.switchToHttp().getRequest();
-    const rememberMe = req.cookies.rememberMe;
     const user = req.session.user;
     const isLogin = !!user;
-    if (isLogin && rememberMe && rememberMe === '1') {
-      req.session.cookie.expires = new Date(Date.now() + this.configService.get('app.cookieExpires'));
-      req.session.cookie.maxAge = this.configService.get('app.cookieExpires');
-      req.session.save();
-    }
-
-    // 全局变量在通过res.render显式调用时无法获取，因此仍需要通过res.locals方式设置
+    // todo: 全局变量在通过res.render显式调用时无法获取，因此仍需要通过res.locals方式设置
     const res = context.switchToHttp().getResponse();
     res.locals.isLogin = isLogin;
     // for copyright

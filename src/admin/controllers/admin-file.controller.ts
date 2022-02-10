@@ -1,16 +1,18 @@
-import { Controller, Get, Header, HttpStatus, Post, Render, Req, Session } from '@nestjs/common';
+import { Controller, Get, Header, HttpStatus, Post, Render, Req, Session, UseGuards } from '@nestjs/common';
 import * as formidable from 'formidable';
 import * as fs from 'fs';
 import * as mkdirp from 'mkdirp';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as xss from 'sanitizer';
-import { PostStatus, PostType } from '../../common/common.enum';
+import { PostStatus, PostType, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
 import Referer from '../../decorators/referer.decorator';
+import Roles from '../../decorators/roles.decorator';
 import User from '../../decorators/user.decorator';
 import { PostFileDto } from '../../dtos/post.dto';
 import CustomException from '../../exceptions/custom.exception';
+import RolesGuard from '../../guards/roles.guard';
 import { getFileExt, getUuid } from '../../helpers/helper';
 import CommonService from '../../services/common.service';
 import OptionsService from '../../services/options.service';
@@ -18,6 +20,8 @@ import PostsService from '../../services/posts.service';
 import UtilService from '../../services/util.service';
 
 @Controller('admin/file')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminFileController {
   constructor(
     private readonly commonService: CommonService,

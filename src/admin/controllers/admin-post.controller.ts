@@ -1,15 +1,17 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
 import * as xss from 'sanitizer';
-import { CommentFlag, PostOriginal, PostStatus, PostStatusDesc, PostType, TaxonomyType } from '../../common/common.enum';
+import { CommentFlag, PostOriginal, PostStatus, PostStatusDesc, PostType, Role, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-codes.enum';
 import IdParams from '../../decorators/id-params.decorator';
 import IsAdmin from '../../decorators/is-admin.decorator';
 import Referer from '../../decorators/referer.decorator';
+import Roles from '../../decorators/roles.decorator';
 import Search from '../../decorators/search.decorator';
 import User from '../../decorators/user.decorator';
 import { PostDto } from '../../dtos/post.dto';
 import CustomException from '../../exceptions/custom.exception';
+import RolesGuard from '../../guards/roles.guard';
 import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
 import CheckIdInterceptor from '../../interceptors/check-id.interceptor';
 import PostModel from '../../models/post.model';
@@ -25,6 +27,8 @@ import UsersService from '../../services/users.service';
 import UtilService from '../../services/util.service';
 
 @Controller('admin/post')
+@UseGuards(RolesGuard)
+@Roles(Role.ADMIN)
 export default class AdminPostController {
   constructor(
     private readonly postsService: PostsService,
