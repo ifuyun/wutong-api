@@ -1,5 +1,5 @@
 {
-  "name": "ant-blog",
+  "name": "antblog",
   "version": "1.0.0",
   "description": "Blog app based on Node.js & nest.js & mysql.",
   "author": {
@@ -7,7 +7,7 @@
     "url": "http://www.ifuyun.com/"
   },
   "private": true,
-  "license": "GPL",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
