@@ -1,11 +1,11 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import CommentModel from './comment.model';
+import { CommentModel } from './comment.model';
 
 @Table({
   tableName: 'comment_meta',
   timestamps: false
 })
-export default class CommentMetaModel extends Model {
+export class CommentMetaModel extends Model {
   @PrimaryKey
   @Column({
     field: 'meta_id',

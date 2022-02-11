@@ -5,7 +5,7 @@ import { Column, CreatedAt, DataType, Model, PrimaryKey, Sequelize, Table } from
   updatedAt: false,
   deletedAt: false
 })
-export default class MaterialModel extends Model {
+export class MaterialModel extends Model {
   @PrimaryKey
   @Column({
     field: 'material_id',

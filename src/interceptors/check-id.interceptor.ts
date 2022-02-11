@@ -2,10 +2,10 @@ import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor 
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ResponseCode } from '../common/response-codes.enum';
-import CustomException from '../exceptions/custom.exception';
+import { CustomException } from '../exceptions/custom.exception';
 
 @Injectable()
-export default class CheckIdInterceptor implements NestInterceptor {
+export class CheckIdInterceptor implements NestInterceptor {
   constructor(private reflector: Reflector) {
   }
 

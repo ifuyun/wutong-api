@@ -7,7 +7,7 @@ import { IsGuid } from '../validators/is-guid.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
-import { IsPostExist } from '../validators/is-post-exist.validator';
+import { IsPostExist } from '../validators/async/is-post-exist.validator';
 import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
 
 export class BasicPostDto {

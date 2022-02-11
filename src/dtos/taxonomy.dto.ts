@@ -6,8 +6,8 @@ import { getEnumStringValues } from '../helpers/helper';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
-import { IsTaxonomyExist } from '../validators/is-taxonomy-exist.validator';
-import { IsSlugExist } from '../validators/is-slug-exist.validator';
+import { IsTaxonomyExist } from '../validators/async/is-taxonomy-exist.validator';
+import { IsSlugExist } from '../validators/async/is-slug-exist.validator';
 
 export class BasicTaxonomyDto {
   // 验证顺序根据注解声明顺序从下往上

@@ -1,12 +1,12 @@
 import { Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table } from 'Sequelize-typescript';
-import NoteModel from './note.model';
+import { NoteModel } from './note.model';
 
 @Table({
   tableName: 'books',
   updatedAt: false,
   deletedAt: false
 })
-export default class BookModel extends Model {
+export class BookModel extends Model {
   @PrimaryKey
   @Column({
     field: 'book_id',

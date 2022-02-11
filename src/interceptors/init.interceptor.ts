@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Observable } from 'rxjs';
 
 @Injectable()
-export default class InitInterceptor implements NestInterceptor {
+export class InitInterceptor implements NestInterceptor {
   constructor(private readonly configService: ConfigService) {
   }
 

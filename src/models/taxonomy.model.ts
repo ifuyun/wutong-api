@@ -1,13 +1,13 @@
 import { BelongsToMany, Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table, Unique, UpdatedAt } from 'sequelize-typescript';
-import TaxonomyRelationshipModel from './taxonomy-relationship.model';
-import PostModel from './post.model';
-import LinkModel from './link.model';
+import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
+import { PostModel } from './post.model';
+import { LinkModel } from './link.model';
 
 @Table({
   tableName: 'term_taxonomy',
   deletedAt: false
 })
-export default class TaxonomyModel extends Model {
+export class TaxonomyModel extends Model {
   @PrimaryKey
   @Column({
     field: 'taxonomy_id',

@@ -4,7 +4,7 @@ import { Column, DataType, Model, Table } from 'Sequelize-typescript';
   tableName: 'v_post_views_average',
   timestamps: false
 })
-export default class VPostViewAverageModel extends Model {
+export class VPostViewAverageModel extends Model {
   @Column({
     field: 'post_id',
     type: DataType.CHAR(16),

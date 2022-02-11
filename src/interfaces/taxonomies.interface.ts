@@ -1,4 +1,4 @@
-import TaxonomyModel from '../models/taxonomy.model';
+import { TaxonomyModel } from '../models/taxonomy.model';
 
 export interface TaxonomyNode {
   name?: string;

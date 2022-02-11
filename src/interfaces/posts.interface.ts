@@ -1,5 +1,5 @@
-import PostModel from '../models/post.model';
-import TaxonomyModel from '../models/taxonomy.model';
+import { PostModel } from '../models/post.model';
+import { TaxonomyModel } from '../models/taxonomy.model';
 
 export interface PostVo {
   post: PostModel;

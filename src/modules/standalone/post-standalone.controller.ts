@@ -1,22 +1,22 @@
 import { Controller, Get, HttpException, HttpStatus, Render, Req } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
+import { CommentsService } from '../comment/comments.service';
+import { UtilService } from '../common/util.service';
+import { LoggerService } from '../logger/logger.service';
+import { PostsService } from '../post/posts.service';
+import { PostCommonService } from '../post/post-common.service';
 import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
 import { Messages } from '../../common/messages.enum';
-import IsAdmin from '../../decorators/is-admin.decorator';
-import ReqPath from '../../decorators/req-path.decorator';
-import User from '../../decorators/user.decorator';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
+import { ReqPath } from '../../decorators/req-path.decorator';
+import { User } from '../../decorators/user.decorator';
 import { appendUrlRef, cutStr, filterHtmlTag } from '../../helpers/helper';
-import CommentsService from '../../services/comments.service';
-import CommonService from '../../services/common.service';
-import LoggerService from '../../services/logger.service';
-import PostsService from '../../services/posts.service';
-import UtilService from '../../services/util.service';
 
 @Controller()
-export default class PostStandaloneController {
+export class PostStandaloneController {
   constructor(
     private readonly postsService: PostsService,
-    private readonly commonService: CommonService,
+    private readonly commonService: PostCommonService,
     private readonly logger: LoggerService,
     private readonly utilService: UtilService,
     private readonly commentsService: CommentsService

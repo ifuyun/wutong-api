@@ -1,11 +1,11 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import CustomException from '../exceptions/custom.exception';
+import { CustomException } from '../exceptions/custom.exception';
 import { CustomExceptionResponse, CustomExceptionResponseParam } from '../interfaces/exception.interface';
-import LoggerService from '../services/logger.service';
+import { LoggerService } from '../modules/logger/logger.service';
 
 @Catch()
-export default class AllExceptionsFilter<T> implements ExceptionFilter {
+export class AllExceptionsFilter<T> implements ExceptionFilter {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: LoggerService

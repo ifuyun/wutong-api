@@ -4,7 +4,7 @@ import { Column, DataType, Model, Table } from 'Sequelize-typescript';
   tableName: 'v_post_date_archive',
   timestamps: false
 })
-export default class VPostDateArchiveModel extends Model {
+export class VPostDateArchiveModel extends Model {
   @Column({
     field: 'post_id',
     type: DataType.CHAR(16),

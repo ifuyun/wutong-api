@@ -1,9 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { ResponseCode } from '../common/response-codes.enum';
-import CustomException from '../exceptions/custom.exception';
+import { CustomException } from '../exceptions/custom.exception';
 
-export default function ExceptionFactory(errors: ValidationError[]) {
+export function ExceptionFactory(errors: ValidationError[]) {
   const messages: string[] = [];
   errors.forEach((error) => {
     Object.keys(error.constraints).forEach((key) => messages.push(error.constraints[key]));

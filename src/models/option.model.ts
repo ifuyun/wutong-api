@@ -4,7 +4,7 @@ import { Column, DataType, Model, PrimaryKey, Table, Unique } from 'sequelize-ty
   tableName: 'options',
   timestamps: false
 })
-export default class OptionModel extends Model {
+export class OptionModel extends Model {
   @PrimaryKey
   @Column({
     field: 'option_id',

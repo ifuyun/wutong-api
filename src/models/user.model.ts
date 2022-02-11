@@ -1,13 +1,13 @@
 import { Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
-import PostModel from './post.model';
-import UserMetaModel from './user-meta.model';
+import { PostModel } from './post.model';
+import { UserMetaModel } from './user-meta.model';
 
 @Table({
   tableName: 'users',
   updatedAt: false,
   deletedAt: false
 })
-export default class UserModel extends Model {
+export class UserModel extends Model {
   @PrimaryKey
   @Column({
     field: 'user_id',

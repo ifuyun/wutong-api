@@ -11,6 +11,9 @@ export function IsId(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: string | string[]) {
+          if (!value) {
+            return true;
+          }
           if (typeof value === 'string') {
             return !value || ID_REG.test(value);
           }

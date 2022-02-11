@@ -1,11 +1,11 @@
 import { Column, DataType, ForeignKey, Model, PrimaryKey, Table, Unique } from 'Sequelize-typescript';
-import PostModel from './post.model';
+import { PostModel } from './post.model';
 
 @Table({
   tableName: 'v_tag_visible_taxonomy',
   timestamps: false
 })
-export default class VTagVisibleTaxonomyModel extends Model {
+export class VTagVisibleTaxonomyModel extends Model {
   @ForeignKey(() => PostModel)
   @PrimaryKey
   @Column({

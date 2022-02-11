@@ -1,13 +1,13 @@
 import { BelongsTo, Column, CreatedAt, DataType, ForeignKey, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
-import CommentModel from './comment.model';
-import PostModel from './post.model';
+import { CommentModel } from './comment.model';
+import { PostModel } from './post.model';
 
 @Table({
   tableName: 'votes',
   updatedAt: false,
   deletedAt: false
 })
-export default class VoteModel extends Model {
+export class VoteModel extends Model {
   @PrimaryKey
   @Column({
     field: 'vote_id',

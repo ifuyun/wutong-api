@@ -1,13 +1,13 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import PostModel from './post.model';
-import TaxonomyModel from './taxonomy.model';
-import LinkModel from './link.model';
+import { PostModel } from './post.model';
+import { TaxonomyModel } from './taxonomy.model';
+import { LinkModel } from './link.model';
 
 @Table({
   tableName: 'term_relationships',
   timestamps: false
 })
-export default class TaxonomyRelationshipModel extends Model {
+export class TaxonomyRelationshipModel extends Model {
   @ForeignKey(() => PostModel)
   @ForeignKey(() => LinkModel)
   @PrimaryKey

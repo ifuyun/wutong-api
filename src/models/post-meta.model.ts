@@ -1,11 +1,11 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import PostModel from './post.model';
+import { PostModel } from './post.model';
 
 @Table({
   tableName: 'post_meta',
   timestamps: false
 })
-export default class PostMetaModel extends Model {
+export class PostMetaModel extends Model {
   @PrimaryKey
   @Column({
     field: 'meta_id',

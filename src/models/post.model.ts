@@ -1,18 +1,18 @@
 import { BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, HasMany, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
 import { DataType } from 'sequelize-typescript';
-import UserModel from './user.model';
-import CommentModel from './comment.model';
-import TaxonomyRelationshipModel from './taxonomy-relationship.model';
-import TaxonomyModel from './taxonomy.model';
-import PostMetaModel from './post-meta.model';
-import VoteModel from './vote.model';
+import { UserModel } from './user.model';
+import { CommentModel } from './comment.model';
+import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
+import { TaxonomyModel } from './taxonomy.model';
+import { PostMetaModel } from './post-meta.model';
+import { VoteModel } from './vote.model';
 
 @Table({
   tableName: 'posts',
   updatedAt: false,
   deletedAt: false
 })
-export default class PostModel extends Model {
+export class PostModel extends Model {
   @PrimaryKey
   @Column({
     field: 'post_id',

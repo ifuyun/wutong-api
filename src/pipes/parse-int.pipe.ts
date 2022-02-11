@@ -1,7 +1,7 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 
 @Injectable()
-export default class ParseIntPipe implements PipeTransform<string, number> {
+export class ParseIntPipe implements PipeTransform<string, number> {
   private defaultValue: number;
 
   constructor(defaultValue?: number) {

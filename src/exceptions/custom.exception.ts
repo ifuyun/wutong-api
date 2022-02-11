@@ -2,7 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ResponseCode } from '../common/response-codes.enum';
 import { CustomExceptionResponseParam } from '../interfaces/exception.interface';
 
-export default class CustomException extends HttpException {
+export class CustomException extends HttpException {
   constructor(response: string | CustomExceptionResponseParam | number, httpStatus?: number, message?: string) {
     let res: CustomExceptionResponseParam;
     if (typeof response === 'string') {

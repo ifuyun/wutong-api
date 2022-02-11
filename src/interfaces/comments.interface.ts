@@ -1,4 +1,4 @@
-import CommentModel from '../models/comment.model';
+import { CommentModel } from '../models/comment.model';
 
 export interface CommentStatusMap {
   name: string;

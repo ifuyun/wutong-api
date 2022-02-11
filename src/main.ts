@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
@@ -16,12 +17,11 @@ import { join } from 'path';
 import { createClient } from 'redis';
 import * as favicon from 'serve-favicon';
 import { AppModule } from './app.module';
+import { LogLevel } from './common/common.enum';
 import AppConfig from './config/app.config';
 import RedisConfig from './config/redis.config';
-import LoggerService from './services/logger.service';
-import { LogLevel } from './common/common.enum';
-import { ValidationPipe } from '@nestjs/common';
-import ExceptionFactory from './validators/exception-factory';
+import { LoggerService } from './modules/logger/logger.service';
+import { ExceptionFactory } from './validators/exception-factory';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

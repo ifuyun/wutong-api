@@ -1,11 +1,11 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import UserModel from './user.model';
+import { UserModel } from './user.model';
 
 @Table({
   tableName: 'user_meta',
   timestamps: false
 })
-export default class UserMetaModel extends Model {
+export class UserMetaModel extends Model {
   @PrimaryKey
   @Column({
     field: 'meta_id',

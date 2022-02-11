@@ -1,12 +1,12 @@
 import { BelongsToMany, Column, CreatedAt, DataType, Model, PrimaryKey, Sequelize, Table, UpdatedAt } from 'sequelize-typescript';
-import TaxonomyModel from './taxonomy.model';
-import TaxonomyRelationshipModel from './taxonomy-relationship.model';
+import { TaxonomyModel } from './taxonomy.model';
+import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
 
 @Table({
   tableName: 'links',
   deletedAt: false
 })
-export default class LinkModel extends Model {
+export class LinkModel extends Model {
   @PrimaryKey
   @Column({
     field: 'link_id',

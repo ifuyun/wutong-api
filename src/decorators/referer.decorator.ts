@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-const Referer = createParamDecorator((data, ctx: ExecutionContext) => {
+export const Referer = createParamDecorator((data, ctx: ExecutionContext) => {
   const req = ctx.switchToHttp().getRequest();
   let referer: string = req.headers.referer || req.headers.referrer;
   if (typeof data === 'boolean' && data) {
@@ -8,4 +8,3 @@ const Referer = createParamDecorator((data, ctx: ExecutionContext) => {
   }
   return referer;
 });
-export default Referer;
