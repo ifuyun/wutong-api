@@ -2,7 +2,7 @@
 
 Blog application, powered by [Nest](https://github.com/nestjs/nest), based on MySQL & Redis.
 
-Have a quick look on: [ifuyun.com](https://www.ifuyun.com)
+Have a quick look on: [ifuyun.com](http://www.ifuyun.com)
 
 ## Installation
 

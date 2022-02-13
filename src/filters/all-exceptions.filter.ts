@@ -18,7 +18,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     const req = ctx.getRequest();
     const res = ctx.getResponse();
     const isXhr = req.xhr;
-    const isDev = this.configService.get('app.isDev');
+    const isDev = this.configService.get('env.isDev');
     // 返回给终端的响应数据
     let errData: CustomExceptionResponse;
     const unknownErrorMsg = 'Unknown error.';

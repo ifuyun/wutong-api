@@ -8,7 +8,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SequelizeModuleOptions, SequelizeOptionsFactory } from '@nestjs/sequelize';
 import { LoggerService } from '../logger/logger.service';
-import credentials from '../../config/credentials.config';
 
 interface DbConfigOptions {
   development: SequelizeModuleOptions,
@@ -32,8 +31,8 @@ export class DbConfigService implements SequelizeOptionsFactory {
       dialect: 'mysql',
       host: 'localhost',
       port: 3306,
-      username: credentials().db.development.username,
-      password: credentials().db.development.password,
+      username: this.configService.get('credentials.db.development.username'),
+      password: this.configService.get('credentials.db.development.password'),
       database: 'ifuyun',
       timezone: '+08:00',
       pool: {
@@ -51,8 +50,8 @@ export class DbConfigService implements SequelizeOptionsFactory {
       dialect: 'mysql',
       host: 'localhost',
       port: 3306,
-      username: credentials().db.production.username,
-      password: credentials().db.production.password,
+      username: this.configService.get('credentials.db.development.username'),
+      password: this.configService.get('credentials.db.development.password'),
       database: 'ifuyun',
       timezone: '+08:00',
       pool: {
@@ -61,10 +60,7 @@ export class DbConfigService implements SequelizeOptionsFactory {
         idle: 30000
       },
       synchronize: false,
-      autoLoadModels: true,
-      logging: (sql) => {
-        this.logger.dbLogger.trace(sql);
-      }
+      autoLoadModels: true
     }
   };
 
@@ -73,6 +69,6 @@ export class DbConfigService implements SequelizeOptionsFactory {
   }
 
   createSequelizeOptions(): SequelizeModuleOptions {
-    return this.getDbConfig(this.configService.get('app.env'));
+    return this.getDbConfig(this.configService.get('env.environment'));
   }
 }

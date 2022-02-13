@@ -19,6 +19,7 @@ import * as favicon from 'serve-favicon';
 import { AppModule } from './app.module';
 import { LogLevel } from './common/common.enum';
 import AppConfig from './config/app.config';
+import EnvConfig from './config/env.config';
 import RedisConfig from './config/redis.config';
 import { LoggerService } from './modules/logger/logger.service';
 import { ExceptionFactory } from './validators/exception-factory';
@@ -59,7 +60,13 @@ async function bootstrap() {
     app.use(cookieParser(appConfig.cookieSecret));
 
     const redisConfig = RedisConfig();
-    const redisClient = createClient(redisConfig.port, redisConfig.host, { 'auth_pass': redisConfig.password });
+    const redisClient = createClient({
+      url: `redis://:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`,
+      legacyMode: true
+    });
+    await redisClient.connect().catch((err) => sysLogger.info(transformLogData({
+      message: `Redis Client Error: ${err.message}`
+    })));
     const RedisStore = connectRedis(session);
     app.use(session({
       name: appConfig.sessionKey,
@@ -75,13 +82,8 @@ async function bootstrap() {
       }
     }));
 
-    app.use(bodyParser.json({
-      limit: '20mb'
-    }));
-    app.use(bodyParser.urlencoded({
-      limit: '20mb',
-      extended: true
-    }));
+    app.use(bodyParser.json({ limit: '2mb' }));
+    app.use(bodyParser.urlencoded({ extended: true }));
     app.enable('trust proxy');
     app.use(csrf({ cookie: true }));
     app.use(helmet({
@@ -96,9 +98,10 @@ async function bootstrap() {
     }));
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
+    const envConfig = EnvConfig();
     app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
     app.useStaticAssets(join(__dirname, '..', 'web', 'public', 'static'));
-    app.useStaticAssets(join(__dirname, '..', 'web', 'public', appConfig.isDev ? 'dev' : 'dist'));
+    app.useStaticAssets(join(__dirname, '..', 'web', 'public', envConfig.isDev ? 'dev' : 'dist'));
     app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', appConfig.viewsPath));
 
     app.use((req, res, next) => {

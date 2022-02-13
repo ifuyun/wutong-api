@@ -5,6 +5,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StandaloneModule } from './modules/standalone/standalone.module';
 import appConfig from './config/app.config';
 import credentialsConfig from './config/credentials.config';
+import envConfig from './config/env.config';
 import redisConfig from './config/redis.config';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { InitInterceptor } from './interceptors/init.interceptor';
@@ -21,7 +22,7 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appConfig, credentialsConfig, redisConfig]
+      load: [appConfig, envConfig, credentialsConfig, redisConfig]
     }),
     AsyncValidatorModule,
     PostModule,
