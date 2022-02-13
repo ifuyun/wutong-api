@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ResponseCode } from '../../common/response-codes.enum';
+import { CustomException } from '../../exceptions/custom.exception';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -14,6 +16,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    if (!payload || !payload.userName) {
+      throw new CustomException(ResponseCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, 'Unauthorized');
+    }
     return {
       userName: payload.userName,
       userEmail: payload.userEmail,
