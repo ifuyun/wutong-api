@@ -4,25 +4,24 @@
  * @since 1.0.0
  */
 import { registerAs } from '@nestjs/config';
-import CredentialsConfig from './credentials.config';
-import EnvConfig from './env.config';
+import { CREDENTIALS_CONFIG } from './credentials.config';
+import { ENV_CONFIG } from './env.config';
 
-const credentials = CredentialsConfig();
-const envConfig = EnvConfig();
-const appConfig = {
+
+export const APP_CONFIG = {
   // todo: to be removed & replaced with db-options
   siteName: '爱浮云',
   sessionKey: 'sid',
-  sessionSecret: credentials.sessionSecret,
-  cookieSecret: credentials.cookieSecret,
+  sessionSecret: CREDENTIALS_CONFIG.sessionSecret,
+  cookieSecret: CREDENTIALS_CONFIG.cookieSecret,
   cookieExpires: 1000 * 60 * 60 * 24 * 7,
-  cookieDomain: envConfig.isDev ? 'localhost' : 'ifuyun.com',
+  cookieDomain: ENV_CONFIG.isDev ? 'localhost' : 'ifuyun.com',
   host: '127.0.0.1',
   port: 2016,
   domain: 'www.ifuyun.com',
-  viewsPath: envConfig.isDev ? 'src' : 'dist',
-  logLevel: envConfig.isDev ? 'TRACE' : 'INFO',
-  isCluster: envConfig.isProd,
+  viewsPath: ENV_CONFIG.isDev ? 'src' : 'dist',
+  logLevel: ENV_CONFIG.isDev ? 'TRACE' : 'INFO',
+  isCluster: ENV_CONFIG.isProd,
   enableWxSdk: false
 };
-export default registerAs('app', () => appConfig);
+export default registerAs('app', () => APP_CONFIG);

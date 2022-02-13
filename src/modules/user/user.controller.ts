@@ -7,6 +7,7 @@ import { ResponseCode } from '../../common/response-codes.enum';
 import { Referer } from '../../decorators/referer.decorator';
 import { UserLoginDto } from '../../dtos/user-login.dto';
 import { CustomException } from '../../exceptions/custom.exception';
+import { getMd5 } from '../../helpers/helper';
 
 @Controller('user')
 export class UserController {
@@ -52,8 +53,9 @@ export class UserController {
     @Session() session,
     @Body() loginDto: UserLoginDto
   ) {
-    const user = await this.usersService.login(loginDto);
-    if (!user) {
+    const user = await this.usersService.getUserByName(loginDto.username);
+    const password = user && getMd5(`${user.userPassSalt}${loginDto.password}`) || '';
+    if (!user || password !== user.userPass) {
       throw new CustomException({
         data: {
           code: ResponseCode.LOGIN_ERROR,

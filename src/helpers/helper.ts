@@ -47,15 +47,13 @@ export function filterHtmlTag(srcStr) {
 
 /**
  * md5加密字符串
- * @param {string} str 源字符串
+ * @param {string} value 源内容
  * @return {string} 加密结果
  * @version 1.0.0
  * @since 1.0.0
  */
-export function md5(str) {
-  let md5sum = createHash('md5');
-  md5sum.update(str);
-  return md5sum.digest('hex');
+export function getMd5(value) {
+  return createHash('md5').update(value).digest('hex');
 }
 
 /**

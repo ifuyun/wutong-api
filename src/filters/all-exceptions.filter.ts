@@ -10,7 +10,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     private readonly configService: ConfigService,
     private readonly logger: LoggerService
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
+    logger.setLogger(logger.sysLogger);
   }
 
   catch(exception: T, host: ArgumentsHost) {

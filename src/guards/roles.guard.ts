@@ -17,7 +17,7 @@ export class RolesGuard implements CanActivate {
     }
     const req = context.switchToHttp().getRequest();
     const user = req.session?.user;
-    const role = user?.userMeta?.roles;
+    const role = user?.meta?.roles;
 
     // 目前用户角色只限制为一个，因此简单通过includes判断
     return roles.includes(role);

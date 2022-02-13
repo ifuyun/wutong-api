@@ -5,5 +5,5 @@ export const IsAdmin = createParamDecorator((data, ctx: ExecutionContext) => {
   const req = ctx.switchToHttp().getRequest();
   const user = req.session.user;
 
-  return user && user.userMeta && user.userMeta.roles === Role.ADMIN;
+  return user && user.meta && user.meta.roles === Role.ADMIN;
 });

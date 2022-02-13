@@ -18,17 +18,16 @@ import { createClient } from 'redis';
 import * as favicon from 'serve-favicon';
 import { AppModule } from './app.module';
 import { LogLevel } from './common/common.enum';
-import AppConfig from './config/app.config';
-import EnvConfig from './config/env.config';
-import RedisConfig from './config/redis.config';
+import { APP_CONFIG } from './config/app.config';
+import { ENV_CONFIG } from './config/env.config';
+import { REDIS_CONFIG } from './config/redis.config';
 import { LoggerService } from './modules/logger/logger.service';
 import { ExceptionFactory } from './validators/exception-factory';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const loggerService = app.select(AppModule).get(LoggerService, { strict: true });
-  const appConfig = AppConfig();
-  const isCluster = appConfig.isCluster;
+  const isCluster = APP_CONFIG.isCluster;
   const { accessLogger, threadLogger, sysLogger, transformLogData } = loggerService;
   /* cluster模式必须在app实例化之后，否则将缺少master进程，导致log4js报错，因此无法通过ClusterService.clusterize方式调用 */
   if ((cluster as any).isPrimary && isCluster) {
@@ -57,11 +56,10 @@ async function bootstrap() {
     ejs.delimiter = '?';
     app.setViewEngine('ejs');
     app.use(compress());
-    app.use(cookieParser(appConfig.cookieSecret));
+    app.use(cookieParser(APP_CONFIG.cookieSecret));
 
-    const redisConfig = RedisConfig();
     const redisClient = createClient({
-      url: `redis://:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`,
+      url: `redis://:${REDIS_CONFIG.password}@${REDIS_CONFIG.host}:${REDIS_CONFIG.port}`,
       legacyMode: true
     });
     await redisClient.connect().catch((err) => sysLogger.info(transformLogData({
@@ -69,16 +67,16 @@ async function bootstrap() {
     })));
     const RedisStore = connectRedis(session);
     app.use(session({
-      name: appConfig.sessionKey,
+      name: APP_CONFIG.sessionKey,
       store: new RedisStore({
         client: redisClient,
         ttl: 7 * 24 * 60 * 60
       }),
-      secret: appConfig.sessionSecret,
+      secret: APP_CONFIG.sessionSecret,
       resave: false,
       saveUninitialized: false,
       cookie: { // 默认domain：当前登录域ifuyun.com，设置后为.ifuyun.com
-        maxAge: appConfig.cookieExpires // 默认7天
+        maxAge: APP_CONFIG.cookieExpires // 默认7天
       }
     }));
 
@@ -98,11 +96,10 @@ async function bootstrap() {
     }));
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-    const envConfig = EnvConfig();
     app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
     app.useStaticAssets(join(__dirname, '..', 'web', 'public', 'static'));
-    app.useStaticAssets(join(__dirname, '..', 'web', 'public', envConfig.isDev ? 'dev' : 'dist'));
-    app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', appConfig.viewsPath));
+    app.useStaticAssets(join(__dirname, '..', 'web', 'public', ENV_CONFIG.isDev ? 'dev' : 'dist'));
+    app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', APP_CONFIG.viewsPath));
 
     app.use((req, res, next) => {
       loggerService.updateContext();
@@ -116,8 +113,8 @@ async function bootstrap() {
       format: ':remote-addr - :method :status HTTP/:http-version :url - [:response-time ms/:content-length B] ":referrer" ":user-agent"'
     }));
 
-    await app.listen(appConfig.port, appConfig.host, () => sysLogger.info(transformLogData({
-      message: `Server listening on: ${appConfig.host}:${appConfig.port}`
+    await app.listen(APP_CONFIG.port, APP_CONFIG.host, () => sysLogger.info(transformLogData({
+      message: `Server listening on: ${APP_CONFIG.host}:${APP_CONFIG.port}`
     })[0]));
   }
 }

@@ -1,8 +1,5 @@
-export interface UserVo {
-  userId?: string;
-  userLogin?: string;
-  userNiceName: string;
-  userEmail?: string;
-  userStatus?: number;
-  userMeta?: Record<string, string>;
+import { UserModel } from '../models/user.model';
+
+export interface UserVo extends UserModel {
+  meta?: Record<string, string>;
 }

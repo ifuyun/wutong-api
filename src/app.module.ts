@@ -3,12 +3,14 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StandaloneModule } from './modules/standalone/standalone.module';
-import appConfig from './config/app.config';
-import credentialsConfig from './config/credentials.config';
-import envConfig from './config/env.config';
-import redisConfig from './config/redis.config';
+import APP_CONFIG from './config/app.config';
+import AUTH_CONFIG from './config/auth.config';
+import CREDENTIALS_CONFIG from './config/credentials.config';
+import ENV_CONFIG from './config/env.config';
+import REDIS_CONFIG from './config/redis.config';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { InitInterceptor } from './interceptors/init.interceptor';
+import { AuthModule } from './modules/auth/auth.module';
 import { PostModule } from './modules/post/post.module';
 import { LinkModule } from './modules/link/link.module';
 import { CommentModule } from './modules/comment/comment.module';
@@ -22,13 +24,14 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appConfig, envConfig, credentialsConfig, redisConfig]
+      load: [APP_CONFIG, CREDENTIALS_CONFIG, ENV_CONFIG, AUTH_CONFIG, REDIS_CONFIG]
     }),
     AsyncValidatorModule,
+    AuthModule,
     PostModule,
+    UserModule,
     CommentModule,
     VoteModule,
-    UserModule,
     DashboardModule,
     TaxonomyModule,
     LinkModule,
@@ -45,7 +48,7 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
       provide: APP_FILTER,
       useClass: AllExceptionsFilter
     },
-    LoggerService,
+    LoggerService
   ]
 })
 export class AppModule {

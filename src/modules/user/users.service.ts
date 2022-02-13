@@ -15,18 +15,20 @@ export class UsersService {
   ) {
   }
 
-  async login(loginDto: UserLoginDto): Promise<UserVo> {
+  async getUserByName(username: string): Promise<UserVo> {
     return this.userModel.findOne({
-      attributes: ['userId', 'userLogin', 'userNiceName', 'userEmail', 'userLink', 'userRegistered', 'userStatus', 'userDisplayName'],
+      attributes: [
+        'userId', 'userLogin', 'userPass', 'userPassSalt', 'userNiceName',
+        'userEmail', 'userLink', 'userRegistered', 'userStatus'
+      ],
       include: [{
         model: UserMetaModel,
         attributes: ['metaId', 'userId', 'metaKey', 'metaValue']
       }],
       where: {
         userLogin: {
-          [Op.eq]: loginDto.username
-        },
-        userPass: Sequelize.fn('md5', Sequelize.fn('concat', Sequelize.col('user_pass_salt'), loginDto.password))
+          [Op.eq]: username
+        }
       }
     }).then((user) => {
       const userMeta: Record<string, string> = {};
@@ -38,7 +40,7 @@ export class UsersService {
           ...user.get({
             plain: true
           }),
-          userMeta
+          meta: userMeta
         });
       }
       return Promise.resolve(null);

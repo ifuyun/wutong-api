@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { configure, getLogger, Logger } from 'log4js';
 import * as moment from 'moment';
 import { LogCategory } from '../../common/common.enum';
-import appConfig from '../../config/app.config';
 import { LogData } from '../../interfaces/logger.interface';
 
 @Injectable()
@@ -16,12 +16,12 @@ export class LoggerService {
 
   logDay: string = moment().format('YYYY-MM-DD');
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     let appenders = {};
     let categories = {
       default: {
         appenders: ['system'],
-        level: appConfig().logLevel
+        level: configService.get('app.logLevel')
       }
     };
     for (let label in LogCategory) {
@@ -38,7 +38,7 @@ export class LoggerService {
         };
         categories[category] = {
           appenders: [category],
-          level: appConfig().logLevel
+          level: configService.get('app.logLevel')
         };
       }
     }

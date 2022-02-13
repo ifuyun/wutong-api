@@ -6,11 +6,12 @@
  */
 import { registerAs } from '@nestjs/config';
 
-const credentialsConfig = {
+export const CREDENTIALS_CONFIG = {
   sessionSecret: '[session-secret]',
   cookieSecret: '[cookie-secret]',
   wxMpAppID: '[wechat-mp-app-id]',
   wxMpAppSecret: '[wechat-mp-app-secret]',
+  authSecret: '[auth-secret-for-jwt-token]',
   redis: {
     development: {
       password: '[redis-dev-pwd]'
@@ -29,11 +30,8 @@ const credentialsConfig = {
       password: '[db-prd-pwd]'
     }
   },
-  book: {
-    excelPath: '[/path/to/books-excel]'
-  },
   watermark: {
     fontPath: '[/path/to/font-file]'
   }
 };
-export default registerAs('credentials', () => credentialsConfig);
+export default registerAs('credentials', () => CREDENTIALS_CONFIG);
