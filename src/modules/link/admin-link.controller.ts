@@ -6,7 +6,7 @@ import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../common/util.service';
 import { Role } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';

@@ -6,7 +6,7 @@ import { LoggerService } from '../logger/logger.service';
 import { PostsService } from '../post/posts.service';
 import { PostCommonService } from '../post/post-common.service';
 import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
-import { Messages } from '../../common/messages.enum';
+import { Message } from '../../common/message.enum';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { ReqPath } from '../../decorators/req-path.decorator';
 import { User } from '../../decorators/user.decorator';
@@ -35,11 +35,11 @@ export class PostStandaloneController {
     // todo: move to validation
     const isLikePost = this.utilService.isUrlPathLikePostSlug(reqPath);
     if (!isLikePost) {
-      throw new HttpException(Messages.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new HttpException(Message.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const post = await this.postsService.getPostBySlug(reqPath);
     if (!post) {
-      throw new HttpException(Messages.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new HttpException(Message.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const { comments, commonData } = await Promise.all([
       this.commentsService.getCommentsByPostId(post.postId),

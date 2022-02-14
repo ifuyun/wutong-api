@@ -1,4 +1,4 @@
-export enum Messages {
+export enum Message {
   PAGE_NOT_FOUND = 'Page not found.',
   UNKNOWN_ERROR = 'Unknown error.'
 }

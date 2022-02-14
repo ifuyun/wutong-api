@@ -9,7 +9,7 @@ import { PostsService } from './posts.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UsersService } from '../user/users.service';
 import { CommentFlag, PostOriginal, PostStatus, PostStatusDesc, PostType, Role, TaxonomyType } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Referer } from '../../decorators/referer.decorator';

@@ -8,8 +8,8 @@ import { CrumbService } from '../crumb/crumb.service';
 import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
-import { ResponseCode } from '../../common/response-codes.enum';
-import { Messages } from '../../common/messages.enum';
+import { ResponseCode } from '../../common/response-code.enum';
+import { Message } from '../../common/message.enum';
 import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Ip } from '../../decorators/ip.decorator';
@@ -131,7 +131,7 @@ export class PostController {
         data: {
           code: ResponseCode.UNAUTHORIZED,
           status: HttpStatus.NOT_FOUND,
-          message: Messages.PAGE_NOT_FOUND
+          message: Message.PAGE_NOT_FOUND
         },
         log: {
           msg: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
@@ -149,7 +149,7 @@ export class PostController {
         data: {
           code: ResponseCode.TAXONOMY_NOT_FOUND,
           status: HttpStatus.NOT_FOUND,
-          message: Messages.PAGE_NOT_FOUND
+          message: Message.PAGE_NOT_FOUND
         },
         log: {
           msg: 'Taxonomy not exist.',
@@ -175,7 +175,7 @@ export class PostController {
         data: {
           code: ResponseCode.TAXONOMY_INVISIBLE,
           status: HttpStatus.NOT_FOUND,
-          message: Messages.PAGE_NOT_FOUND
+          message: Message.PAGE_NOT_FOUND
         },
         log: {
           msg: 'Taxonomy is invisible.',

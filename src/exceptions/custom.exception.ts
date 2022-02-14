@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { ResponseCode } from '../common/response-codes.enum';
+import { ResponseCode } from '../common/response-code.enum';
 import { CustomExceptionResponseParam } from '../interfaces/exception.interface';
 
 export class CustomException extends HttpException {

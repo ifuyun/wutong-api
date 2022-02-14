@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CommentStatus, CommentStatusDesc, Role } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { UtilService } from '../common/util.service';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';

@@ -2,7 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { CustomException } from '../../exceptions/custom.exception';
 
 @Injectable()

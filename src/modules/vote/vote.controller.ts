@@ -2,7 +2,7 @@ import { Body, Controller, Header, HttpStatus, Post, Req } from '@nestjs/common'
 import { VotesService } from './votes.service';
 import { CommentsService } from '../comment/comments.service';
 import { VoteType } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { VoteDto } from '../../dtos/vote.dto';
 import { Ip } from '../../decorators/ip.decorator';
 import { User } from '../../decorators/user.decorator';

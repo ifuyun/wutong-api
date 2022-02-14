@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../user/users.service';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { UserLoginDto } from '../../dtos/user-login.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { getMd5 } from '../../helpers/helper';

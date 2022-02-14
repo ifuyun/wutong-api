@@ -11,7 +11,7 @@ import { PostCommonService } from './post-common.service';
 import { UtilService } from '../common/util.service';
 import { WatermarkService } from '../common/watermark.service';
 import { PostStatus, PostType, Role } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { User } from '../../decorators/user.decorator';

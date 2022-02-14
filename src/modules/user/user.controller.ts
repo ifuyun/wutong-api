@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
 import { UtilService } from '../common/util.service';
 import { OptionsService } from '../option/options.service';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { Referer } from '../../decorators/referer.decorator';
 import { UserLoginDto } from '../../dtos/user-login.dto';
 import { CustomException } from '../../exceptions/custom.exception';

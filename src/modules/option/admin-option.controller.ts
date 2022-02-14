@@ -3,7 +3,7 @@ import * as xss from 'sanitizer';
 import { OptionsService } from './options.service';
 import { UtilService } from '../common/util.service';
 import { Role } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { Roles } from '../../decorators/roles.decorator';
 import { OptionDto } from '../../dtos/option.dto';
 import { CustomException } from '../../exceptions/custom.exception';

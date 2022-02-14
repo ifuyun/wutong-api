@@ -1,7 +1,7 @@
 import { Body, Controller, Header, HttpStatus, Post, Req, Session } from '@nestjs/common';
 import * as xss from 'sanitizer';
 import { CommentFlag } from '../../common/common.enum';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { Ip } from '../../decorators/ip.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { User } from '../../decorators/user.decorator';

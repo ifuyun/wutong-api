@@ -10,7 +10,7 @@ import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { POST_EXCERPT_LENGTH } from '../../common/constants';
-import { ResponseCode } from '../../common/response-codes.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { cutStr, filterHtmlTag, getEnumKeyByValue, getUuid } from '../../helpers/helper';

@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { ResponseCode } from '../common/response-codes.enum';
+import { ResponseCode } from '../common/response-code.enum';
 import { CustomException } from '../exceptions/custom.exception';
 
 @Injectable()
