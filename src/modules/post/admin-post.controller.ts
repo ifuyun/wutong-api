@@ -57,20 +57,20 @@ export class AdminPostController {
   ) {
     postType = postType || PostType.POST;
     if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType)) {
-      throw new CustomException(ResponseCode.POST_TYPE_INVALID, HttpStatus.FORBIDDEN, '查询参数有误');
+      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.POST_TYPE_INVALID);
     }
     const searchParams: string[] = [];
     if (category) {
       const taxonomy = await this.taxonomiesService.getTaxonomyBySlug(category);
       if (!taxonomy) {
-        throw new CustomException(ResponseCode.TAXONOMY_NOT_FOUND, HttpStatus.NOT_FOUND, 'Taxonomy not found.');
+        throw new CustomException('Taxonomy not found.', HttpStatus.NOT_FOUND, ResponseCode.TAXONOMY_NOT_FOUND);
       }
       searchParams.push(taxonomy.name);
     }
     if (author) {
       const user = await this.usersService.getUserById(author);
       if (!user) {
-        throw new CustomException(ResponseCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND, 'User not found.');
+        throw new CustomException('User not found.', HttpStatus.NOT_FOUND, ResponseCode.USER_NOT_FOUND);
       }
       searchParams.push(user.userNiceName);
     }
@@ -164,10 +164,10 @@ export class AdminPostController {
   ) {
     postType = postType || PostType.POST;
     if (!['create', 'edit'].includes(action)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     if (![PostType.POST, PostType.PAGE].includes(postType)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     let post: PostModel;
     const postTags: string[] = [];
@@ -175,7 +175,7 @@ export class AdminPostController {
     if (action === 'edit' && postId) {
       post = await this.postsService.getPostById(postId, isAdmin);
       if (!post) {
-        throw new CustomException(ResponseCode.POST_NOT_FOUND, HttpStatus.NOT_FOUND, '文章不存在');
+        throw new CustomException('文章不存在', HttpStatus.NOT_FOUND, ResponseCode.POST_NOT_FOUND);
       }
       // in edit mode, postType is not required
       postType = post.postType;
@@ -261,7 +261,7 @@ export class AdminPostController {
     }
     const isPostGuidExist = await this.postsService.checkPostGuidExist(postData.postGuid, postData.postId);
     if (isPostGuidExist) {
-      throw new CustomException(ResponseCode.POST_GUID_CONFLICT, HttpStatus.OK, 'URL已存在，请重新输入。');
+      throw new CustomException('URL已存在，请重新输入。', HttpStatus.OK, ResponseCode.POST_GUID_CONFLICT);
     }
 
     const nowTime = new Date();
@@ -312,7 +312,7 @@ export class AdminPostController {
       postTags
     });
     if (!result) {
-      throw new CustomException(ResponseCode.POST_SAVE_ERROR, HttpStatus.OK, '保存失败。');
+      throw new CustomException('保存失败。', HttpStatus.OK, ResponseCode.POST_SAVE_ERROR);
     }
 
     const referer = session.postReferer;

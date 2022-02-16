@@ -85,10 +85,10 @@ export class AdminCommentController {
     @Session() session
   ) {
     if (!commentId) {
-      throw new CustomException(ResponseCode.BAD_REQUEST, HttpStatus.BAD_REQUEST, '请求参数错误。');
+      throw new CustomException('请求参数错误。', HttpStatus.BAD_REQUEST, ResponseCode.BAD_REQUEST);
     }
     if (!['show', 'edit', 'reply'].includes(action)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     const options = await this.optionsService.getOptions();
     const comment = await this.commentsService.getCommentById(commentId);
@@ -119,11 +119,11 @@ export class AdminCommentController {
     @Referer() referer
   ) {
     if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     const result = await this.commentsService.auditComment(data.commentId, data.action);
     if (result[0] < 1) {
-      throw new CustomException(ResponseCode.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, '操作失败。');
+      throw new CustomException('操作失败。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.INTERNAL_SERVER_ERROR);
     }
     return {
       status: HttpStatus.OK,

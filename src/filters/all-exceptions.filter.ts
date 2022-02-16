@@ -1,8 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CustomException } from '../exceptions/custom.exception';
-import { CustomExceptionResponse, CustomExceptionResponseParam } from '../interfaces/exception.interface';
+import { CustomExceptionResponse } from '../interfaces/exception.interface';
+import { HttpResponseEntity } from '../interfaces/http-response';
 import { LoggerService } from '../modules/logger/logger.service';
+import { ResponseCode } from '../common/response-code.enum';
 
 @Catch()
 export class AllExceptionsFilter<T> implements ExceptionFilter {
@@ -20,14 +22,16 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     const isXhr = req.xhr;
     const isDev = this.configService.get('env.isDev');
     // 返回给终端的响应数据
-    let errData: CustomExceptionResponse;
+    let resData: HttpResponseEntity;
+    let resStatus: number;
     const unknownErrorMsg = 'Unknown error.';
 
     if (exception instanceof CustomException) {
-      const err = (<CustomExceptionResponseParam> exception.getResponse());
+      const err = <CustomExceptionResponse> exception.getResponse();
       const errLog = err.log;
       const errStack = errLog && <string>errLog.stack || '';
-      errData = err.data;
+      resStatus = exception.getStatus();
+      resData = err.data;
 
       if (isDev) {
         if (errLog) {
@@ -43,9 +47,9 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     } else if (exception instanceof HttpException) {
       const errRes = <string | Record<string, any>> exception.getResponse();
       const msg = typeof errRes === 'string' ? errRes : errRes.message || errRes.error || exception.message || unknownErrorMsg;
-      errData = {
+      resStatus = exception.getStatus();
+      resData = {
         code: exception.getStatus(),
-        status: exception.getStatus(),
         message: msg
       };
       if (isDev) {
@@ -57,13 +61,13 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
         });
       }
     } else {
-      errData = {
-        code: HttpStatus.INTERNAL_SERVER_ERROR,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      resStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+      resData = {
+        code: ResponseCode.INTERNAL_SERVER_ERROR,
         message: unknownErrorMsg
       };
       if (exception instanceof Error) {
-        errData.message = exception.message;
+        resData.message = exception.message;
         if (isDev) {
           console.error(exception.stack);
         } else {
@@ -75,10 +79,10 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     }
 
     if (isXhr) {
-      res.status(errData.status).json({ ...errData, token: req.csrfToken() });
+      res.status(resStatus).json({ ...resData, token: req.csrfToken() });
     } else {
-      res.status(errData.status).type('text/html');
-      res.render('errors/error', errData);
+      res.status(resStatus).type('text/html');
+      res.render('errors/error', resData);
     }
   }
 }

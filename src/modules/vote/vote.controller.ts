@@ -37,7 +37,7 @@ export class VoteController {
     };
     const result = await this.votesService.saveVote(voteDto);
     if (!result) {
-      throw new CustomException(ResponseCode.VOTE_FAILURE, HttpStatus.OK, '请求失败，请刷新页面重试。');
+      throw new CustomException('请求失败，请刷新页面重试。', HttpStatus.OK, ResponseCode.VOTE_FAILURE);
     }
     const comment = await this.commentsService.getCommentById(voteDto.objectId);
 

@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Header, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
 import { PostsService } from './posts.service';
 import { PostCommonService } from './post-common.service';
@@ -21,8 +21,9 @@ import { UserAgent } from '../../decorators/user-agent.decorator';
 import { CustomException } from '../../exceptions/custom.exception';
 import { appendUrlRef, cutStr, filterHtmlTag } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { CrumbData } from '../../interfaces/crumb.interface';
+import { CrumbEntity } from '../../interfaces/crumb.interface';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
+import { getSuccessResponse } from '../../transformers/response.transformers';
 
 @Controller()
 export class PostController {
@@ -37,6 +38,23 @@ export class PostController {
     private readonly crumbService: CrumbService
   ) {
     this.logger.setLogger(this.logger.sysLogger);
+  }
+
+  @Get(['/api/posts'])
+  @Header('Content-Type', 'application/json')
+  async getPosts(
+    @Req() req,
+    @Param('page', new ParseIntPipe(1)) page,
+    @Query() query,
+    @IsAdmin() isAdmin
+  ) {
+    const postList = await this.postsService.getPosts({
+      page,
+      postType: 'post',
+      isAdmin,
+      keyword: query.keyword
+    });
+    return getSuccessResponse(postList);
   }
 
   @Get(['', '/+', 'post/page-:page'])
@@ -118,9 +136,9 @@ export class PostController {
     const post = await this.postsService.getPostById(postId, isAdmin);
     if (!post || !post.postId) {
       throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
         data: {
           code: ResponseCode.POST_NOT_FOUND,
-          status: HttpStatus.NOT_FOUND,
           message: `Post: ${postId} is not exist.`
         }
       });
@@ -128,9 +146,9 @@ export class PostController {
     // 无管理员权限不允许访问非公开文章(包括草稿)
     if (!isAdmin && post.postStatus !== 'publish') {
       throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
         data: {
           code: ResponseCode.UNAUTHORIZED,
-          status: HttpStatus.NOT_FOUND,
           message: Message.PAGE_NOT_FOUND
         },
         log: {
@@ -146,9 +164,9 @@ export class PostController {
     });
     if (taxonomies.length < 1) {
       throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
         data: {
           code: ResponseCode.TAXONOMY_NOT_FOUND,
-          status: HttpStatus.NOT_FOUND,
           message: Message.PAGE_NOT_FOUND
         },
         log: {
@@ -172,9 +190,9 @@ export class PostController {
     }
     if (!isAdmin && !crumbTaxonomyId) {
       throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
         data: {
           code: ResponseCode.TAXONOMY_INVISIBLE,
-          status: HttpStatus.NOT_FOUND,
           message: Message.PAGE_NOT_FOUND
         },
         log: {
@@ -284,7 +302,7 @@ export class PostController {
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
-    const curTaxonomyName = crumbs[crumbs.length - 1].title;
+    const curTaxonomyName = crumbs[crumbs.length - 1].label;
     const siteDesc = this.utilService.getSiteDescription(options);
     const resData = {
       curNav: crumbs[0].slug,
@@ -339,13 +357,13 @@ export class PostController {
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
     const siteDesc = this.utilService.getSiteDescription(options);
-    const crumbs: CrumbData[] = [{
-      'title': '标签',
+    const crumbs: CrumbEntity[] = [{
+      'label': '标签',
       'tooltip': '标签',
       'url': '',
       'headerFlag': false
     }, {
-      'title': tag,
+      'label': tag,
       'tooltip': tag,
       'url': '/tag/' + tag,
       'headerFlag': true
@@ -414,20 +432,20 @@ export class PostController {
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
     const siteDesc = this.utilService.getSiteDescription(options);
-    const crumbs: CrumbData[] = [{
-      'title': '文章归档',
+    const crumbs: CrumbEntity[] = [{
+      'label': '文章归档',
       'tooltip': '文章归档',
       'url': '/archive',
       'headerFlag': false
     }, {
-      'title': `${year}年`,
+      'label': `${year}年`,
       'tooltip': `${year}年`,
       'url': '/archive/' + year,
       'headerFlag': !month
     }];
     if (month) {
       crumbs.push({
-        'title': `${parseInt(month, 10)}月`,
+        'label': `${parseInt(month, 10)}月`,
         'tooltip': `${year}年${month}月`,
         'url': `/archive/${year}/${month}`,
         'headerFlag': true
@@ -471,13 +489,13 @@ export class PostController {
       isAdmin,
       archiveLimit: 0
     });
-    const crumbs: CrumbData[] = [{
-      'title': '文章归档',
+    const crumbs: CrumbEntity[] = [{
+      'label': '文章归档',
       'tooltip': '文章归档',
       'url': '/archive',
       'headerFlag': false
     }, {
-      'title': '归档历史',
+      'label': '归档历史',
       'tooltip': '归档历史',
       'url': '',
       'headerFlag': true

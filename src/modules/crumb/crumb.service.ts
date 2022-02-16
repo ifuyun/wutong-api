@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CrumbData } from '../../interfaces/crumb.interface';
+import { CrumbEntity } from '../../interfaces/crumb.interface';
 
 @Injectable()
 export class CrumbService {
@@ -13,21 +13,21 @@ export class CrumbService {
    * @param {string} separator 分隔符
    * @return {string} 面包屑HTML
    */
-  generateCrumb(crumbData: CrumbData[], separator: string = '&nbsp;→&nbsp;'): string {
+  generateCrumb(crumbData: CrumbEntity[], separator: string = '&nbsp;→&nbsp;'): string {
     let crumbArr = [];
     crumbData.unshift({
-      'title': '首页',
+      'label': '首页',
       'url': '/',
       'tooltip': this.configService.get('app.siteName'),
       'headerFlag': false
     });
     crumbData.forEach((crumb) => {
       if (crumb.url !== '' && !crumb.headerFlag) {
-        crumbArr.push('<a title="' + crumb.tooltip + '" href="' + crumb.url + '">' + crumb.title + '</a>');
+        crumbArr.push('<a title="' + crumb.tooltip + '" href="' + crumb.url + '">' + crumb.label + '</a>');
       } else if (crumb.url !== '' && crumb.headerFlag) {
-        crumbArr.push('<h3><a title="' + crumb.tooltip + '" href="' + crumb.url + '">' + crumb.title + '</a></h3>');
+        crumbArr.push('<h3><a title="' + crumb.tooltip + '" href="' + crumb.url + '">' + crumb.label + '</a></h3>');
       } else {
-        crumbArr.push('<span title="' + crumb.tooltip + '">' + crumb.title + '</span>');
+        crumbArr.push('<span title="' + crumb.tooltip + '">' + crumb.label + '</span>');
       }
     });
     return crumbArr.join(separator);

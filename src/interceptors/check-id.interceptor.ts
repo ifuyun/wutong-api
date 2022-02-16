@@ -14,9 +14,9 @@ export class CheckIdInterceptor implements NestInterceptor {
     const idParams = this.reflector.get<{ idInParams?: string[], idInQuery?: string[], idInBody?: string[] }>('idParams', context.getHandler());
     if (!idParams) {
       throw new CustomException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
         data: {
           code: ResponseCode.INTERNAL_SERVER_ERROR,
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
           message: '无法获取ID参数列表，需要和@IdParams配合使用。'
         }
       });
@@ -41,10 +41,10 @@ export class CheckIdInterceptor implements NestInterceptor {
     ids.forEach((id) => {
       if (!id || !/^[0-9a-fA-F]{16}$/i.test(id)) {
         throw new CustomException({
+          status: HttpStatus.BAD_REQUEST,
           data: {
             code: ResponseCode.REQUEST_PARAM_ILLEGAL,
-            message: `Request param: ${id} is invalid.`,
-            status: HttpStatus.BAD_REQUEST
+            message: `Request param: ${id} is invalid.`
           }
         });
       }

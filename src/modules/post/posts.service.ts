@@ -121,7 +121,7 @@ export class PostsService {
   transformCopyright(type: number | string): string {
     type = type.toString();
     if (!Object.keys(CopyrightType).map((k) => CopyrightType[k].toString()).includes(type)) {
-      throw new CustomException(ResponseCode.COPYRIGHT_ILLEGAL, HttpStatus.INTERNAL_SERVER_ERROR, '数据错误。');
+      throw new CustomException('数据错误。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.COPYRIGHT_ILLEGAL);
     }
     return CopyrightTypeDesc[getEnumKeyByValue(CopyrightType, parseInt(type, 10))];
   }

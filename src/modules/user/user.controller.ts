@@ -57,9 +57,9 @@ export class UserController {
     const password = user && getMd5(`${user.userPassSalt}${loginDto.password}`) || '';
     if (!user || password !== user.userPass) {
       throw new CustomException({
+        status: HttpStatus.BAD_REQUEST,
         data: {
           code: ResponseCode.LOGIN_ERROR,
-          status: HttpStatus.BAD_REQUEST,
           message: '用户名或密码错误'
         },
         log: {
@@ -114,9 +114,9 @@ export class UserController {
     req.session.destroy((err) => {
       if (err) {
         throw new CustomException({
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
           data: {
             code: ResponseCode.SESSION_DESTROY_ERROR,
-            status: HttpStatus.INTERNAL_SERVER_ERROR,
             message: '登出失败，请重试。'
           },
           log: {

@@ -16,7 +16,7 @@ export const APP_CONFIG = {
   cookieSecret: CREDENTIALS_CONFIG.cookieSecret,
   cookieExpires: 1000 * 60 * 60 * 24 * 7,
   cookieDomain: ENV_CONFIG.isDev ? 'localhost' : 'ifuyun.com',
-  host: '127.0.0.1',
+  host: 'localhost',
   port: 2016,
   domain: 'www.ifuyun.com',
   viewsPath: ENV_CONFIG.isDev ? 'src' : 'dist',

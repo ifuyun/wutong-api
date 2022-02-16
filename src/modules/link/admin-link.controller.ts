@@ -76,13 +76,13 @@ export class AdminLinkController {
     @Session() session
   ) {
     if (!['create', 'edit'].includes(action)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     let link = { taxonomies: [{}] };
     if (action === 'edit') {
       link = await this.linkService.getLinkById(linkId);
       if (!link) {
-        throw new CustomException(ResponseCode.LINK_NOT_FOUND, HttpStatus.NOT_FOUND, '链接不存在。');
+        throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
     const taxonomyData = await this.taxonomiesService.getAllTaxonomies([], 'link');
@@ -134,7 +134,7 @@ export class AdminLinkController {
     };
     const result = await this.linkService.saveLink(linkDto);
     if (!result) {
-      throw new CustomException(ResponseCode.LINK_SAVE_ERROR, HttpStatus.OK, '保存失败。');
+      throw new CustomException('保存失败。', HttpStatus.OK, ResponseCode.LINK_SAVE_ERROR);
     }
     const referer = session.linkReferer;
     delete session.linkReferer;
@@ -155,7 +155,7 @@ export class AdminLinkController {
   ) {
     const result = await this.linkService.removeLinks(removeLinkDto.linkIds);
     if (!result) {
-      throw new CustomException(ResponseCode.LINK_REMOVE_ERROR, HttpStatus.OK, '删除失败。');
+      throw new CustomException('删除失败。', HttpStatus.OK, ResponseCode.LINK_REMOVE_ERROR);
     }
 
     return {

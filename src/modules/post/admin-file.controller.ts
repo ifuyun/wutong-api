@@ -101,7 +101,7 @@ export class AdminFileController {
     const postGuid = `${options.upload_url_prefix.value}/${curYear}/${curMonth}/${result['fileName']}`;
     const isPostGuidExist = await this.postsService.checkPostGuidExist(postGuid);
     if (isPostGuidExist) {
-      throw new CustomException(ResponseCode.UPLOAD_PATH_CONFLICT, HttpStatus.OK, '文件上传错误，请重新上传。');
+      throw new CustomException('文件上传错误，请重新上传。', HttpStatus.OK, ResponseCode.UPLOAD_PATH_CONFLICT);
     }
     const fileDesc = xss.sanitize(result['rawName']);
     const fileData: PostFileDto = {
@@ -118,7 +118,7 @@ export class AdminFileController {
     };
     const post = await this.postsService.saveFile(fileData);
     if (!post) {
-      throw new CustomException(ResponseCode.UPLOAD_ERROR, HttpStatus.OK, '文件上传错误，请重新上传。');
+      throw new CustomException('文件上传错误，请重新上传。', HttpStatus.OK, ResponseCode.UPLOAD_ERROR);
     }
     const referer = session.uploadReferer;
     delete session.uploadReferer;

@@ -43,10 +43,10 @@ export class AdminTaxonomyController {
     @Search() search
   ) {
     if (!type || !Object.keys(TaxonomyType).map((key) => TaxonomyType[key]).includes(type)) {
-      throw new CustomException(ResponseCode.TAXONOMY_TYPE_INVALID, HttpStatus.FORBIDDEN, '查询参数有误');
+      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_TYPE_INVALID);
     }
     if (status && !this.taxonomiesService.getAllTaxonomyStatusValues().includes(status)) {
-      throw new CustomException(ResponseCode.TAXONOMY_STATUS_INVALID, HttpStatus.FORBIDDEN, '查询参数有误');
+      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_STATUS_INVALID);
     }
     const options = await this.optionsService.getOptions();
     const taxonomyList = await this.taxonomiesService.getTaxonomies({ page, type, status, keyword });
@@ -100,10 +100,10 @@ export class AdminTaxonomyController {
     @Session() session
   ) {
     if (!['create', 'edit'].includes(action)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.FORBIDDEN, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     let taxonomy = {
       parent: parentId || ''
@@ -112,7 +112,7 @@ export class AdminTaxonomyController {
     if (action === 'edit') {
       taxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyId);
       if (!taxonomy) {
-        throw new CustomException(ResponseCode.TAXONOMY_NOT_FOUND, HttpStatus.NOT_FOUND, `${typeDesc}不存在。`);
+        throw new CustomException(`${typeDesc}不存在。`, HttpStatus.NOT_FOUND, ResponseCode.TAXONOMY_NOT_FOUND);
       }
     }
     let taxonomyList: TaxonomyNode[] = [];
@@ -171,7 +171,7 @@ export class AdminTaxonomyController {
     };
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);
     if (!result) {
-      throw new CustomException(ResponseCode.TAXONOMY_SAVE_ERROR, HttpStatus.OK, '保存失败。');
+      throw new CustomException('保存失败。', HttpStatus.OK, ResponseCode.TAXONOMY_SAVE_ERROR);
     }
     const referer = session.taxonomyReferer;
     delete session.taxonomyReferer;
@@ -192,11 +192,11 @@ export class AdminTaxonomyController {
     @Referer() referer
   ) {
     if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
-      throw new CustomException(ResponseCode.FORBIDDEN, HttpStatus.OK, '操作不允许。');
+      throw new CustomException('操作不允许。', HttpStatus.OK, ResponseCode.FORBIDDEN);
     }
     const result = await this.taxonomiesService.removeTaxonomies(type, removeTaxonomyDto.taxonomyIds);
     if (!result) {
-      throw new CustomException(ResponseCode.TAXONOMY_DELETE_ERROR, HttpStatus.OK, '删除失败。');
+      throw new CustomException('删除失败。', HttpStatus.OK, ResponseCode.TAXONOMY_DELETE_ERROR);
     }
 
     return {

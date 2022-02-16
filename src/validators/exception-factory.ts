@@ -9,9 +9,9 @@ export function ExceptionFactory(errors: ValidationError[]) {
     Object.keys(error.constraints).forEach((key) => messages.push(error.constraints[key]));
   });
   throw new CustomException({
+    status: HttpStatus.OK,
     data: {
       code: ResponseCode.BAD_REQUEST,
-      status: HttpStatus.OK,
       message: messages[0]
     },
     log: {

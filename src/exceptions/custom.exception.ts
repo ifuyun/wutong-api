@@ -1,32 +1,27 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ResponseCode } from '../common/response-code.enum';
-import { CustomExceptionResponseParam } from '../interfaces/exception.interface';
+import { CustomExceptionResponse } from '../interfaces/exception.interface';
 
 export class CustomException extends HttpException {
-  constructor(response: string | CustomExceptionResponseParam | number, httpStatus?: number, message?: string) {
-    let res: CustomExceptionResponseParam;
+  constructor(
+    response: string | CustomExceptionResponse,
+    httpStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+    resCode: ResponseCode = ResponseCode.UNKNOWN_ERROR
+  ) {
+    let res: CustomExceptionResponse;
     if (typeof response === 'string') {
-      // 只有一个参数时，为message
-      res = {
-        data: {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          code: ResponseCode.UNKNOWN_ERROR,
-          message: response
-        }
-      };
-    } else if(typeof response === 'number') {
       // 快捷方式，传参数列表，不带log信息
       res = {
         data: {
-          status: httpStatus,
-          code: response,
-          message
+          code: resCode,
+          message: response
         }
       };
     } else {
       // 参数为对象
       res = response;
+      httpStatus = res.status || httpStatus || HttpStatus.INTERNAL_SERVER_ERROR;
     }
-    super(res, res.data.status);
+    super(res, httpStatus);
   }
 }

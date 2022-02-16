@@ -1,5 +1,5 @@
-export interface CrumbData {
-  title: string;
+export interface CrumbEntity {
+  label: string;
   url: string;
   tooltip: string;
   headerFlag: boolean;

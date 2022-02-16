@@ -1,9 +1,5 @@
-export interface CustomExceptionResponse {
-  status: number;
-  code: number;
-  message: string;
-  data?: any;
-}
+import { HttpResponseEntity } from './http-response';
+import { HttpStatus } from '@nestjs/common';
 
 export interface CustomExceptionLog {
   msg?: string;
@@ -11,7 +7,8 @@ export interface CustomExceptionLog {
   data?: any;
 }
 
-export interface CustomExceptionResponseParam {
-  data: CustomExceptionResponse,
+export interface CustomExceptionResponse {
+  status?: HttpStatus;
+  data: HttpResponseEntity,
   log?: CustomExceptionLog
 }

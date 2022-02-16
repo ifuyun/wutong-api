@@ -57,7 +57,7 @@ export class AdminOptionController {
     };
     const result = await this.optionsService.saveOptions(data);
     if (!result) {
-      throw new CustomException(ResponseCode.OPTION_SAVE_ERROR, HttpStatus.OK, '保存失败。');
+      throw new CustomException('保存失败。', HttpStatus.OK, ResponseCode.OPTION_SAVE_ERROR);
     }
 
     return {

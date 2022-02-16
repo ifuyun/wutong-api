@@ -53,19 +53,19 @@ export class CommentController {
     // 不是管理员，或，不是在后台修改、回复评论时
     const shouldCheckCaptcha = !isAdmin || !commentData.commentId && !commentData.parentId;
     if (shouldCheckCaptcha && (!commentData.captchaCode || !session.captcha)) {
-      throw new CustomException(ResponseCode.CAPTCHA_INPUT_ERROR, HttpStatus.OK, '请输入验证码');
+      throw new CustomException('请输入验证码', HttpStatus.OK, ResponseCode.CAPTCHA_INPUT_ERROR);
     }
     if (shouldCheckCaptcha && (session.captcha.toLowerCase() !== commentData.captchaCode.toLowerCase())) {
-      throw new CustomException(ResponseCode.CAPTCHA_INPUT_ERROR, HttpStatus.OK, '验证码输入有误，请重新输入');
+      throw new CustomException('验证码输入有误，请重新输入', HttpStatus.OK, ResponseCode.CAPTCHA_INPUT_ERROR);
     }
     const post = await this.postsService.getPostById(commentData.postId);
     if (post.commentFlag === CommentFlag.CLOSE && !isAdmin) {
-      throw new CustomException(ResponseCode.POST_COMMENT_CLOSED, HttpStatus.OK, '该文章禁止评论');
+      throw new CustomException('该文章禁止评论', HttpStatus.OK, ResponseCode.POST_COMMENT_CLOSED);
     }
 
     const result = await this.commentsService.saveComment(commentData);
     if (result < 1) {
-      throw new CustomException(ResponseCode.COMMENT_SAVE_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, '评论保存失败。');
+      throw new CustomException('评论保存失败。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.COMMENT_SAVE_ERROR);
     }
 
     const referer = session.commentReferer;

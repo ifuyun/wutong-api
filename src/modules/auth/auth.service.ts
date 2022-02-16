@@ -28,6 +28,6 @@ export class AuthService {
         };
       }
     }
-    throw new CustomException(ResponseCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, 'Unauthorized');
+    throw new CustomException('Unauthorized', HttpStatus.UNAUTHORIZED, ResponseCode.UNAUTHORIZED);
   }
 }

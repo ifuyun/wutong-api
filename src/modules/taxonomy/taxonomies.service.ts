@@ -8,7 +8,7 @@ import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common
 import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../../common/common.enum';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { getEnumKeyByValue, getUuid, isEmptyObject } from '../../helpers/helper';
-import { CrumbData } from '../../interfaces/crumb.interface';
+import { CrumbEntity } from '../../interfaces/crumb.interface';
 import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyTree } from '../../interfaces/taxonomies.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -74,9 +74,9 @@ export class TaxonomiesService {
     };
   }
 
-  getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): CrumbData[] {
+  getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): CrumbEntity[] {
     let { taxonomyData, slug, taxonomyId } = param;
-    const crumbs: CrumbData[] = [];
+    const crumbs: CrumbEntity[] = [];
 
     if (slug) {
       // 根据slug获取ID
@@ -94,7 +94,7 @@ export class TaxonomiesService {
         if (curNode.taxonomyId === taxonomyId) {
           taxonomyId = curNode.parentId;
           crumbs.unshift({
-            'title': curNode.name,
+            'label': curNode.name,
             'tooltip': curNode.description,
             'slug': curNode.slug,
             'url': '/category/' + curNode.slug,
