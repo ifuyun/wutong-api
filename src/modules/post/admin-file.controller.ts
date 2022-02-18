@@ -65,6 +65,7 @@ export class AdminFileController {
     const now = moment();
     const curYear = now.format('YYYY');
     const curMonth = now.format('MM');
+    // todo: move to database:options
     const uploadPath = path.join(__dirname, '../../..', 'web/public/upload', curYear, curMonth);
     mkdirp.sync(uploadPath);
 

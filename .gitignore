@@ -37,10 +37,9 @@ lerna-debug.log*
 # Project
 *.tmp
 *.css.map
-*.ttc
 package-lock.json
 ifuyun
-credentials.config.ts
+/env
 /web/public/dist/**
 /web/public/dev/**
 /web/public/static/**

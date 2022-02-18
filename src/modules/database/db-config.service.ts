@@ -9,11 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { SequelizeModuleOptions, SequelizeOptionsFactory } from '@nestjs/sequelize';
 import { LoggerService } from '../logger/logger.service';
 
-interface DbConfigOptions {
-  development: SequelizeModuleOptions,
-  production: SequelizeModuleOptions
-}
-
 /**
  * Can't return config directly, it must be defined as a Class,
  * otherwise, LoggerService will be undefined.
@@ -26,49 +21,29 @@ export class DbConfigService implements SequelizeOptionsFactory {
   ) {
   }
 
-  private dbConfig: DbConfigOptions = {
-    development: {
-      dialect: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: this.configService.get('credentials.db.development.username'),
-      password: this.configService.get('credentials.db.development.password'),
-      database: 'ifuyun',
-      timezone: '+08:00',
-      pool: {
-        max: 10,
-        min: 0,
-        idle: 30000
-      },
-      synchronize: false,
-      autoLoadModels: true,
-      logging: (sql) => {
-        this.logger.dbLogger.trace(sql);
-      }
+  private dbConfig: SequelizeModuleOptions = {
+    dialect: 'mysql',
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT, 10) || 3306,
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+    timezone: '+08:00',
+    pool: {
+      max: 10,
+      min: 0,
+      idle: 30000
     },
-    production: {
-      dialect: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: this.configService.get('credentials.db.development.username'),
-      password: this.configService.get('credentials.db.development.password'),
-      database: 'ifuyun',
-      timezone: '+08:00',
-      pool: {
-        max: 10,
-        min: 0,
-        idle: 30000
-      },
-      synchronize: false,
-      autoLoadModels: true
-    }
+    synchronize: false,
+    autoLoadModels: true
   };
 
-  getDbConfig(env: string): SequelizeModuleOptions {
-    return this.dbConfig[env];
-  }
-
   createSequelizeOptions(): SequelizeModuleOptions {
-    return this.getDbConfig(this.configService.get('env.environment'));
+    if (this.configService.get('env.isDev')) {
+      this.dbConfig.logging = (sql) => {
+        this.logger.dbLogger.trace(sql);
+      };
+    }
+    return this.dbConfig;
   }
 }

@@ -37,7 +37,7 @@ export class AuthService {
     throw new UnauthorizedException();
   }
 
-  async parse(token: string): Promise<AuthUserEntity> {
+  parse(token: string): AuthUserEntity {
     if (token) {
       token = token.split(' ')[1];
       try {

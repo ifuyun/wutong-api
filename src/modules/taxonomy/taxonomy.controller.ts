@@ -19,9 +19,9 @@ import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
-import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { AuthUser } from '../../decorators/auth-user.decorator';
+import { AuthUserEntity } from '../../interfaces/auth.interface';
 
 @Controller('')
 export class TaxonomyController {
@@ -35,8 +35,8 @@ export class TaxonomyController {
 
   @Get('api/taxonomies')
   @Header('Content-Type', 'application/json')
-  async getTaxonomyTree(@IsAdmin() isAdmin) {
-    const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
+  async getTaxonomyTree(@AuthUser() user: AuthUserEntity) {
+    const taxonomies = await this.taxonomiesService.getAllTaxonomies(user.isAdmin ? [0, 1] : 1);
     const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
 
     return getSuccessResponse(taxonomyTree);

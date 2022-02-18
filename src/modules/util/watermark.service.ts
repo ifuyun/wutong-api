@@ -20,7 +20,7 @@ export class WatermarkService {
       const copy = `@${this.configService.get('app.siteName')}`;
       const site = this.configService.get('app.domain');
       // todo: move to db.options
-      const fontPath = this.configService.get('credentials.watermark.fontPath');
+      const fontPath = process.env.WATERMARK_FONT_PATH;
       let imgWidth;
       let imgHeight;
       let markedWidth;

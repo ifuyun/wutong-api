@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StandaloneModule } from './modules/standalone/standalone.module';
 import APP_CONFIG from './config/app.config';
 import AUTH_CONFIG from './config/auth.config';
-import CREDENTIALS_CONFIG from './config/credentials.config';
 import ENV_CONFIG from './config/env.config';
 import REDIS_CONFIG from './config/redis.config';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
@@ -24,7 +23,8 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [APP_CONFIG, CREDENTIALS_CONFIG, ENV_CONFIG, AUTH_CONFIG, REDIS_CONFIG]
+      envFilePath: `env/${process.env.ENV}.env`,
+      load: [APP_CONFIG, ENV_CONFIG, AUTH_CONFIG, REDIS_CONFIG]
     }),
     AsyncValidatorModule,
     AuthModule,
@@ -48,6 +48,7 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
       provide: APP_FILTER,
       useClass: AllExceptionsFilter
     },
+    ConfigService,
     LoggerService
   ]
 })

@@ -6,15 +6,12 @@
 import { registerAs } from '@nestjs/config';
 
 const environment = (process.env.ENV && process.env.ENV.trim()) || 'development';
-const isDev = environment === 'development';
-const isProd = environment === 'production';
-
-// todo: move to environments config file
-export const ENV_CONFIG = {
+const ENV_CONFIG = () => ({
   environment,
-  isDev,
-  isProd,
-  isCluster: isProd,
+  isDev: environment === 'development',
+  isProd: environment === 'production',
+  isCluster: process.env.IS_CLUSTER.toLowerCase().trim() === 'true',
   isApiMode: true
-};
-export default registerAs('env', () => ENV_CONFIG);
+});
+
+export default registerAs('env', ENV_CONFIG);
