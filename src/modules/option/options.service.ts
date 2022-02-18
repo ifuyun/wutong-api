@@ -4,7 +4,7 @@ import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { LoggerService } from '../logger/logger.service';
 import { LinkDto } from '../../dtos/link.dto';
-import { OptionData } from '../../interfaces/options.interface';
+import { OptionEntity } from '../../interfaces/options.interface';
 import { OptionModel } from '../../models/option.model';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class OptionsService {
   ) {
   }
 
-  async getOptions(onlyAutoLoad: boolean = true): Promise<Record<string, OptionData>> {
+  async getOptions(onlyAutoLoad: boolean = true): Promise<OptionEntity> {
     const queryOpt: any = {
       attributes: ['blogId', 'optionName', 'optionValue', 'autoload']
     };
@@ -29,14 +29,10 @@ export class OptionsService {
       };
     }
 
-    // todo: remove blogId
     return this.optionModel.findAll(queryOpt).then((data) => {
-      let options: Record<string, OptionData> = {};
+      let options: OptionEntity = {};
       data.forEach((item) => {
-        options[item.optionName] = {
-          value: item.optionValue,
-          blogId: item.blogId
-        };
+        options[item.optionName] = item.optionValue;
       });
       return Promise.resolve(options);
     });

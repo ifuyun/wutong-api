@@ -7,9 +7,9 @@ import { PaginatorService } from '../paginator/paginator.service';
 import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common/constants';
 import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../../common/common.enum';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
-import { getEnumKeyByValue, getUuid, isEmptyObject } from '../../helpers/helper';
+import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
-import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyTree } from '../../interfaces/taxonomies.interface';
+import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyMap, TaxonomyEntity } from '../../interfaces/taxonomies.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 
@@ -27,20 +27,20 @@ export class TaxonomiesService {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  generateTaxonomyTree(taxonomyData: TaxonomyNode[]): Record<string, TaxonomyNode> {
-    const tree: Record<string, TaxonomyNode> = {};
+  generateTaxonomyTree(taxonomyData: TaxonomyEntity[]): TaxonomyNode[] {
+    const tree: TaxonomyNode[] = [];
     const iteratedIds: string[] = [];
-    const iterator = (treeData: TaxonomyNode[], parentId: string, parentNode: TaxonomyNode, level: number) => {
+    const iterator = (treeData: TaxonomyNode[], parentId: string, parentNode: TaxonomyNode[], level: number) => {
       treeData.map(item => {
         if (!iteratedIds.includes(item.taxonomyId)) {
           if (item.parentId === parentId) {
-            parentNode[item.taxonomyId] = {
+            parentNode.push({
               ...item,
               level,
-              children: {}
-            };
+              children: []
+            });
             iteratedIds.push(item.taxonomyId);
-            iterator(treeData, item.taxonomyId, parentNode[item.taxonomyId].children, level + 1);
+            iterator(treeData, item.taxonomyId, parentNode[parentNode.length - 1].children, level + 1);
           }
         }
       });
@@ -49,23 +49,23 @@ export class TaxonomiesService {
     return tree;
   }
 
-  flattenTaxonomyTree(tree: Record<string, TaxonomyNode>, output: TaxonomyNode[]): TaxonomyNode[] {
-    Object.keys(tree).forEach((key) => {
-      const curNode = tree[key];
+  flattenTaxonomyTree(tree: TaxonomyNode[], output: TaxonomyNode[]): TaxonomyNode[] {
+    tree.forEach((curNode) => {
       output.push({
         name: curNode.name,
         slug: curNode.slug,
         taxonomyId: curNode.taxonomyId,
         level: curNode.level
       });
-      if (!isEmptyObject(curNode.children)) {
+      if (curNode.hasChildren) {
         this.flattenTaxonomyTree(curNode.children, output);
       }
     });
     return output;
   }
 
-  getTaxonomyTree(data: TaxonomyNode[]): TaxonomyTree {
+  // todo: redundant
+  getTaxonomyTree(data: TaxonomyEntity[]): TaxonomyMap {
     const tree = this.generateTaxonomyTree(data);
     return {
       taxonomyData: data,
@@ -111,13 +111,12 @@ export class TaxonomiesService {
     return crumbs;
   }
 
-  getSubTaxonomies(param: { taxonomyTree: Record<string, TaxonomyNode>, taxonomyData: TaxonomyNode[], slug: string }) {
+  getSubTaxonomies(param: { taxonomyTree: TaxonomyNode[], taxonomyData: TaxonomyNode[], slug: string }) {
     const subTaxonomyIds: string[] = [];
-    const iterator = (nodes: Record<string, TaxonomyNode>, checked = false, slug?: string) => {
-      Object.keys(nodes).forEach((key) => {
-        const curNode = nodes[key];
+    const iterator = (nodes: TaxonomyNode[], checked = false, slug?: string) => {
+      nodes.forEach((curNode) => {
         if (checked || curNode.slug === slug) {
-          subTaxonomyIds.push(key);
+          subTaxonomyIds.push(curNode.taxonomyId);
           if (curNode.hasChildren) {
             iterator(curNode.children, true);
           }
@@ -154,15 +153,13 @@ export class TaxonomiesService {
     return Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).map((key) => TaxonomyStatus[key]);
   }
 
-  async getAllTaxonomies(status?: number[], type: string = 'post'): Promise<TaxonomyNode[]> {
+  async getAllTaxonomies(status: number | number[] = 1, type: string = 'post'): Promise<TaxonomyNode[]> {
     let where: WhereOptions = {
       type: {
         [Op.eq]: type
-      }
+      },
+      status
     };
-    if (status && status.length > 0) {
-      where.status = status;
-    }
     return this.taxonomyModel.findAll({
       attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'status', 'count', 'termOrder'],
       where,

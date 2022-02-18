@@ -1,25 +1,35 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { OptionsService } from '../option/options.service';
 import { ResponseCode } from '../../common/response-code.enum';
 import { Referer } from '../../decorators/referer.decorator';
 import { UserLoginDto } from '../../dtos/user-login.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { getMd5 } from '../../helpers/helper';
+import { getSuccessResponse } from '../../transformers/response.transformers';
+import { AuthService } from '../auth/auth.service';
 
-@Controller('user')
+@Controller('')
 export class UserController {
   constructor(
     private readonly usersService: UsersService,
     private readonly optionsService: OptionsService,
     private readonly utilService: UtilService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService
   ) {
   }
 
-  @Get('login')
+  @Post('api/login')
+  @Header('Content-Type', 'application/json')
+  async doLogin(@Body() loginDto: UserLoginDto) {
+    const result = await this.authService.login(loginDto);
+    return getSuccessResponse(result);
+  }
+
+  @Get('user/login')
   async showLogin(
     @Req() req,
     @Res() res,
@@ -39,13 +49,13 @@ export class UserController {
       meta: {
         title: this.utilService.getTitle(['用户登录']),
         description: '用户登录',
-        keywords: options.site_keywords.value,
-        author: options.site_author.value
+        keywords: options.site_keywords,
+        author: options.site_author
       }
     });
   }
 
-  @Post('login')
+  @Post('user/login')
   @Header('Content-Type', 'application/json')
   async login(
     @Req() req,
@@ -91,17 +101,12 @@ export class UserController {
     req.session.user = user;
     req.session.save();
 
-    return {
-      status: HttpStatus.OK,
-      code: ResponseCode.SUCCESS,
-      message: null,
-      data: {
-        url: referer || '/'
-      }
-    };
+    return getSuccessResponse({
+      url: referer || '/'
+    });
   }
 
-  @Get('logout')
+  @Get('user/logout')
   async logout(
     @Req() req,
     @Res() res,

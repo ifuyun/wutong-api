@@ -3,7 +3,7 @@ import * as unique from 'lodash/uniq';
 import { PostsService } from './posts.service';
 import { PostCommonService } from './post-common.service';
 import { CommentsService } from '../comment/comments.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { CrumbService } from '../crumb/crumb.service';
 import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
@@ -40,7 +40,7 @@ export class PostController {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  @Get(['/api/posts'])
+  @Get(['api/posts'])
   @Header('Content-Type', 'application/json')
   async getPosts(
     @Req() req,
@@ -90,9 +90,9 @@ export class PostController {
       showCrumb: false,
       meta: {
         title: '',
-        author: options.site_author.value,
-        keywords: options.site_keywords.value,
-        description: (page > 1 ? `${options.site_name.value}文章列表(第${page}页)。` : '') + siteDesc
+        author: options.site_author,
+        keywords: options.site_keywords,
+        description: (page > 1 ? `${options.site_name}文章列表(第${page}页)。` : '') + siteDesc
       },
       token: req.csrfToken(),
       ...commonData,
@@ -104,7 +104,7 @@ export class PostController {
         linkParam: query.keyword ? '?keyword=' + query.keyword : ''
       }
     };
-    const titles = [options.site_name.value];
+    const titles = [options.site_name];
     if (query.keyword) {
       titles.unshift('搜索结果');
       if (page > 1) {
@@ -112,7 +112,7 @@ export class PostController {
       }
       titles.unshift(query.keyword);
     } else {
-      titles.unshift(options.site_slogan.value);
+      titles.unshift(options.site_slogan);
       if (page > 1) {
         titles.unshift(`第${page}页`);
       }
@@ -236,10 +236,10 @@ export class PostController {
       curPos: this.crumbService.generateCrumb(crumbs),
       showCrumb: true,
       meta: {
-        title: this.utilService.getTitle([post.postTitle, options.site_name.value]),
+        title: this.utilService.getTitle([post.postTitle, options.site_name]),
         description: post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_DESCRIPTION_LENGTH),
-        author: options.site_author.value,
-        keywords: options.site_keywords.value
+        author: options.site_author,
+        keywords: options.site_keywords
       },
       token: req.csrfToken(),
       ...commonData,
@@ -252,7 +252,7 @@ export class PostController {
       postTaxonomies: [],
       postTags: [],
       comments, prevPost, nextPost,
-      urlShare: appendUrlRef(options.site_url.value, post.postGuid, 'qrcode')
+      urlShare: appendUrlRef(options.site_url, post.postGuid, 'qrcode')
     };
     const keywords = [];
     post.taxonomies.forEach((v) => {
@@ -263,7 +263,7 @@ export class PostController {
         resData.postTaxonomies.push(v);
       }
     });
-    keywords.push(options.site_keywords.value);
+    keywords.push(options.site_keywords);
     resData.meta.keywords = unique(keywords).join(',');
 
     if (user) {
@@ -311,8 +311,8 @@ export class PostController {
       meta: {
         title: '',
         description: `「${curTaxonomyName}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
-        author: options.site_author.value,
-        keywords: unique(`${curTaxonomyName},${options.site_keywords.value}`.split(',')).join(',')
+        author: options.site_author,
+        keywords: unique(`${curTaxonomyName},${options.site_keywords}`.split(',')).join(',')
       },
       token: req.csrfToken(),
       ...commonData,
@@ -324,7 +324,7 @@ export class PostController {
         linkParam: ''
       }
     };
-    const titles = [curTaxonomyName, '分类目录', options.site_name.value];
+    const titles = [curTaxonomyName, '分类目录', options.site_name];
     if (page > 1) {
       titles.unshift(`第${page}页`);
     }
@@ -375,8 +375,8 @@ export class PostController {
       meta: {
         title: '',
         description: `「${tag}」相关文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
-        author: options.site_author.value,
-        keywords: unique(`${tag},${options.site_keywords.value}`.split(',')).join(',')
+        author: options.site_author,
+        keywords: unique(`${tag},${options.site_keywords}`.split(',')).join(',')
       },
       token: req.csrfToken(),
       ...commonData,
@@ -388,7 +388,7 @@ export class PostController {
         linkParam: ''
       }
     };
-    const titles = [tag, '标签', options.site_name.value];
+    const titles = [tag, '标签', options.site_name];
     if (page > 1) {
       titles.unshift(`第${page}页`);
     }
@@ -458,9 +458,9 @@ export class PostController {
       showCrumb: true,
       meta: {
         title: '',
-        description: `${options.site_name.value}${title}文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
-        author: options.site_author.value,
-        keywords: options.site_keywords.value
+        description: `${options.site_name}${title}文章` + (page > 1 ? `(第${page}页)` : '') + '。' + siteDesc,
+        author: options.site_author,
+        keywords: options.site_keywords
       },
       token: req.csrfToken(),
       ...commonData,
@@ -472,7 +472,7 @@ export class PostController {
         linkParam: ''
       }
     };
-    const titles = [title, '文章归档', options.site_name.value];
+    const titles = [title, '文章归档', options.site_name];
     if (page > 1) {
       titles.unshift(`第${page}页`);
     }
@@ -509,10 +509,10 @@ export class PostController {
       curPos: this.crumbService.generateCrumb(crumbs),
       showCrumb: true,
       meta: {
-        title: this.utilService.getTitle(['文章归档', options.site_name.value]),
-        description: `${options.site_name.value}文章归档，查看${options.site_name.value}全部历史文章。` + siteDesc,
-        author: options.site_author.value,
-        keywords: options.site_keywords.value
+        title: this.utilService.getTitle(['文章归档', options.site_name]),
+        description: `${options.site_name}文章归档，查看${options.site_name}全部历史文章。` + siteDesc,
+        author: options.site_author,
+        keywords: options.site_keywords
       },
       token: req.csrfToken(),
       ...commonData,

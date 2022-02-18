@@ -1,7 +1,6 @@
-import { ExecutionContext, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ResponseCode } from '../common/response-code.enum';
-import { CustomException } from '../exceptions/custom.exception';
+import { UnauthorizedException } from '../exceptions/unauthorized.exception';
 
 /**
  * JwtAuthGuard只负责校验登录状态，权限校验在AuthGuard
@@ -14,7 +13,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err, user, info) {
     if (err || !user) {
-      throw err || new CustomException('Unauthorized', HttpStatus.UNAUTHORIZED, ResponseCode.UNAUTHORIZED);
+      throw err || new UnauthorizedException();
     }
     return user;
   }

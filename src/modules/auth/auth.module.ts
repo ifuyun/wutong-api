@@ -20,6 +20,7 @@ import { UserModule } from '../user/user.module';
         secret: configService.get('auth.secret'),
         signOptions: {
           expiresIn: configService.get('auth.expiresIn')
+          // todo: algorithm: 'RS256'
         }
       })
     })

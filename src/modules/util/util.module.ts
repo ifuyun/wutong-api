@@ -14,5 +14,5 @@ import { UtilService } from './util.service';
     WatermarkService
   ]
 })
-export class CommonModule {
+export class UtilModule {
 }

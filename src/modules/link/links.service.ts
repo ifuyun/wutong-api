@@ -29,7 +29,7 @@ export class LinksService {
 
   async getLinks(param: { slug: string, visible: string[] }): Promise<LinkModel[]> {
     return this.linkModel.findAll({
-      attributes: ['linkDescription', 'linkUrl', 'linkTarget', 'linkName'],
+      attributes: ['linkName', 'linkUrl', 'linkDescription', 'linkTarget'],
       include: [{
         model: TaxonomyModel,
         attributes: ['created', 'modified'],

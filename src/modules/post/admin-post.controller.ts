@@ -2,7 +2,7 @@ import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, 
 import * as unique from 'lodash/uniq';
 import * as xss from 'sanitizer';
 import { CommentsService } from '../comment/comments.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { PostsService } from './posts.service';
@@ -97,7 +97,7 @@ export class AdminPostController {
     const options = await this.optionsService.getOptions();
     const archiveDates = await this.postsService.getArchiveDates({ postType, limit: 0 });
 
-    const taxonomyData = await this.taxonomiesService.getAllTaxonomies();
+    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0 ,1]);
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
     const { taxonomyList } = taxonomies;
     if (postType === PostType.POST && category) {
@@ -113,7 +113,7 @@ export class AdminPostController {
     const { posts, count, postIds } = postList;
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
-    const titles = [postType === PostType.PAGE ? '页面列表' : '文章列表', '管理后台', options.site_name.value];
+    const titles = [postType === PostType.PAGE ? '页面列表' : '文章列表', '管理后台', options.site_name];
 
     keyword && searchParams.push(keyword);
     tag && searchParams.push(tag);
@@ -125,8 +125,8 @@ export class AdminPostController {
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       pageBar: {
         paginator: this.paginatorService.getPaginator(page, count),
@@ -190,7 +190,7 @@ export class AdminPostController {
       }
     }
     const options = await this.optionsService.getOptions();
-    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([], TaxonomyType.POST);
+    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0 ,1], TaxonomyType.POST);
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
     taxonomies.taxonomyList.forEach((node) => {
       if (postTaxonomies.includes(node.taxonomyId)) {
@@ -210,7 +210,7 @@ export class AdminPostController {
       commentFlag: CommentFlag.VERIFY
     };
     const title = `${action === 'create' ? '撰写新' : '编辑'}${postType === PostType.POST ? '文章' : '页面'}`;
-    const titles = [title, '管理后台', options.site_name.value];
+    const titles = [title, '管理后台', options.site_name];
     if (post) {
       titles.unshift(post.postTitle);
     }
@@ -219,8 +219,8 @@ export class AdminPostController {
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       token: req.csrfToken(),
       curNav: postType,

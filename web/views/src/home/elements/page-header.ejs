@@ -1,10 +1,10 @@
 <div class="m-header">
     <div class="m-header-bg">&nbsp;</div>
     <div class="m-nav f-clearfix">
-        <a class="u-logo" href="/" title="<?- options.site_name.value ?>">
-            <img src="/style/img/logo.png" width="100%" alt="<?- options.site_name.value ?>" /></a>
+        <a class="u-logo" href="/" title="<?- options.site_name ?>">
+            <img src="/style/img/logo.png" width="100%" alt="<?- options.site_name ?>" /></a>
         <ul class="f-list-none m-nav-main">
-            <? if(curNav === 'index'){ ?><li class="active"><? } else { ?><li><? } ?><a title="返回<?- options.site_name.value ?>首页" href="/">首页</a></li>
+            <? if(curNav === 'index'){ ?><li class="active"><? } else { ?><li><? } ?><a title="返回<?- options.site_name ?>首页" href="/">首页</a></li>
             <? for(var navIdx in taxonomies.taxonomyTree){ ?>
             <? var nav = taxonomies.taxonomyTree[navIdx]; ?>
             <? if(nav.slug === curNav){ ?><li class="active"><? } else { ?><li><? } ?>
@@ -22,19 +22,19 @@
         </ul>
         <ul class="f-list-none m-nav-tool">
             <? quickLinks.forEach(function(link){ ?>
-            <li><a title="<?- link.link_description ?>" href="<?= link.link_url ?>"><?- link.link_name ?></a></li>
+            <li><a title="<?- link.linkDescription ?>" href="<?= link.linkUrl ?>"><?- link.linkName ?></a></li>
             <? }) ?>
             <? if (isLogin){ ?>
             <li><a href="/admin" title="管理后台" target="_blank">管理</a></li>
             <li><a href="/user/logout" title="退出登录">登出</a></li>
             <? } else { ?>
-            <li><a href="/user/login" title="登录<?- options.site_name.value ?>" rel="nofollow">登录</a></li>
+            <li><a href="/user/login" title="登录<?- options.site_name ?>" rel="nofollow">登录</a></li>
             <? } ?>
         </ul>
     </div>
     <div class="m-nav-wap f-clearfix">
-        <a class="u-logo" href="/" title="<?- options.site_name.value ?>">
-            <img src="/style/img/logo.png" width="100%" alt="<?- options.site_name.value ?>" /></a>
+        <a class="u-logo" href="/" title="<?- options.site_name ?>">
+            <img src="/style/img/logo.png" width="100%" alt="<?- options.site_name ?>" /></a>
         <span class="u-icon-list j-nav-btn">
             <svg width="1em" height="1em" fill="#666" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
               <path d="M2.5 11.5A.5.5 0 013 11h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5zm0-4A.5.5 0 013 7h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5zm0-4A.5.5 0 013 3h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5z"></path>
@@ -44,7 +44,7 @@
             <div class="u-nav-split"></div>
             <ul class="f-list-none m-nav-list">
                 <li class="j-nav-item<? if(curNav === 'index'){ ?> active<? } ?>">
-                    <a class="j-nav-item" href="javascript:" data-index="home" data-url="/" title="返回<?- options.site_name.value ?>首页">首页</a>
+                    <a class="j-nav-item" href="javascript:" data-index="home" data-url="/" title="返回<?- options.site_name ?>首页">首页</a>
                 </li>
                 <? var itemIdx = 0; ?>
                 <? for(var navIdx in taxonomies.taxonomyTree){ ?>

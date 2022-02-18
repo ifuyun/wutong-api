@@ -27,7 +27,7 @@ import { ExceptionFactory } from './validators/exception-factory';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const loggerService = app.select(AppModule).get(LoggerService, { strict: true });
-  const isCluster = APP_CONFIG.isCluster;
+  const isCluster = ENV_CONFIG.isCluster;
   const { accessLogger, threadLogger, sysLogger, transformLogData } = loggerService;
   /* cluster模式必须在app实例化之后，否则将缺少master进程，导致log4js报错，因此无法通过ClusterService.clusterize方式调用 */
   if ((cluster as any).isPrimary && isCluster) {
@@ -83,7 +83,10 @@ async function bootstrap() {
     app.use(bodyParser.json({ limit: '2mb' }));
     app.use(bodyParser.urlencoded({ extended: true }));
     app.enable('trust proxy');
-    app.use(csrf({ cookie: true }));
+    if (!ENV_CONFIG.isApiMode) {
+      // API服务在应用层做CSRF控制
+      app.use(csrf({ cookie: { key: APP_CONFIG.cookieCsrfKey } }));
+    }
     app.use(helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false

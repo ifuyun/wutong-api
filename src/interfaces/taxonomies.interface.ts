@@ -1,22 +1,25 @@
 import { TaxonomyModel } from '../models/taxonomy.model';
 
-export interface TaxonomyNode {
-  name?: string;
+export interface TaxonomyEntity {
+  name: string;
   description?: string;
-  slug?: string;
-  count?: number;
-  taxonomyId?: string;
+  slug: string;
+  taxonomyId: string;
   parentId?: string;
   status?: number;
-  level?: number
-  children?: Record<string, TaxonomyNode>;
+  count?: number;
   hasChildren?: boolean;
+}
+
+export interface TaxonomyNode extends TaxonomyEntity {
+  level?: number
+  children?: TaxonomyNode[];
   isChecked?: boolean;
 }
 
-export interface TaxonomyTree {
-  taxonomyData: TaxonomyNode[];
-  taxonomyTree: Record<string, TaxonomyNode>;
+export interface TaxonomyMap {
+  taxonomyData: TaxonomyEntity[];
+  taxonomyTree: TaxonomyNode[];
   taxonomyList: TaxonomyNode[];
 }
 

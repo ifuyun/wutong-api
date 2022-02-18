@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import * as xss from 'sanitizer';
 import { TaxonomiesService } from './taxonomies.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
@@ -19,11 +19,12 @@ import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
+import { getSuccessResponse } from '../../transformers/response.transformers';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 
-@Controller('admin/taxonomy')
-@UseGuards(RolesGuard)
-@Roles(Role.ADMIN)
-export class AdminTaxonomyController {
+@Controller('')
+export class TaxonomyController {
   constructor(
     private readonly taxonomiesService: TaxonomiesService,
     private readonly optionsService: OptionsService,
@@ -32,7 +33,18 @@ export class AdminTaxonomyController {
   ) {
   }
 
-  @Get(['', 'page-:page'])
+  @Get('api/taxonomies')
+  @Header('Content-Type', 'application/json')
+  async getTaxonomyTree(@IsAdmin() isAdmin) {
+    const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
+    const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
+
+    return getSuccessResponse(taxonomyTree);
+  }
+
+  @Get(['admin/taxonomy', 'admin/taxonomy/page-:page'])
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Render('admin/pages/taxonomy-list')
   async showTaxonomies(
     @Req() req,
@@ -58,7 +70,7 @@ export class AdminTaxonomyController {
     status && searchParams.push(TaxonomyStatusDesc[getEnumKeyByValue(TaxonomyStatus, status)]);
 
     const taxonomyType = TaxonomyTypeDesc[getEnumKeyByValue(TaxonomyType, type)];
-    const titles = ['管理后台', options.site_name.value];
+    const titles = ['管理后台', options.site_name];
     titles.unshift(taxonomyType);
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));
     page > 1 && titles.unshift(`第${page}页`);
@@ -66,8 +78,8 @@ export class AdminTaxonomyController {
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       pageBar: {
         paginator: this.paginatorService.getPaginator(page, count),
@@ -86,7 +98,9 @@ export class AdminTaxonomyController {
     };
   }
 
-  @Get('detail')
+  @Get('admin/taxonomy/detail')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Render('admin/pages/taxonomy-form')
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['id'] })
@@ -117,12 +131,12 @@ export class AdminTaxonomyController {
     }
     let taxonomyList: TaxonomyNode[] = [];
     if (type !== TaxonomyType.TAG) {
-      const taxonomyData = await this.taxonomiesService.getAllTaxonomies([], type);
+      const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0 ,1], type);
       const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
       taxonomyList = taxonomies.taxonomyList;
     }
     const options = await this.optionsService.getOptions();
-    const titles = ['管理后台', options.site_name.value];
+    const titles = ['管理后台', options.site_name];
     let title = '';
     if (action === 'create') {
       title = `新增${typeDesc}`;
@@ -136,8 +150,8 @@ export class AdminTaxonomyController {
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       curNav: `taxonomy-${type}`,
       token: req.csrfToken(),
@@ -149,7 +163,9 @@ export class AdminTaxonomyController {
     };
   }
 
-  @Post('save')
+  @Post('admin/taxonomy/save')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async saveTaxonomy(
     @Req() req,
@@ -184,7 +200,9 @@ export class AdminTaxonomyController {
     };
   }
 
-  @Post('remove')
+  @Post('admin/taxonomy/remove')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   async removeTaxonomies(
     @Req() req,
     @Query('type', new TrimPipe(), new LowerCasePipe()) type,

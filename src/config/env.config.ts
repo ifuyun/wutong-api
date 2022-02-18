@@ -9,9 +9,12 @@ const environment = (process.env.ENV && process.env.ENV.trim()) || 'development'
 const isDev = environment === 'development';
 const isProd = environment === 'production';
 
+// todo: move to environments config file
 export const ENV_CONFIG = {
   environment,
   isDev,
-  isProd
+  isProd,
+  isCluster: isProd,
+  isApiMode: true
 };
 export default registerAs('env', () => ENV_CONFIG);

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CommentStatus, CommentStatusDesc, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
@@ -47,15 +47,15 @@ export class AdminCommentController {
     keyword && searchParams.push(keyword);
     status && searchParams.push(CommentStatusDesc[getEnumKeyByValue(CommentStatus, status)]);
 
-    const titles = ['评论列表', '管理后台', options.site_name.value];
+    const titles = ['评论列表', '管理后台', options.site_name];
     searchParams.length > 0 && titles.unshift(searchParams.join(' | '));
     page > 1 && titles.unshift(`第${page}页`);
 
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       pageBar: {
         paginator: this.paginatorService.getPaginator(page, count),
@@ -96,9 +96,9 @@ export class AdminCommentController {
     session.commentReferer = referer;
     return {
       meta: {
-        title: this.utilService.getTitle([title, '管理后台', options.site_name.value]),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        title: this.utilService.getTitle([title, '管理后台', options.site_name]),
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       curNav: 'comment',
       token: req.csrfToken(),

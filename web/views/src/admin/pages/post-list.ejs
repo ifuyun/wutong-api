@@ -118,8 +118,8 @@
                                 <? var post = postItem.post ?>
                                 <tr<? if(rowIdx % 2 === 0) { ?> class="alternate"<? } ?>>
                                     <td class="column-check"><input type="checkbox" class="checkRow" /></td>
-                                    <td><a rel="bookmark" title="<?- post.postTitle ?>" href="<?= options.static_host.value + post.postGuid ?>" target="_blank"><?- post.postTitle ?></a></td>
-                                    <td><a href="<?= options.static_host.value + post.postGuid ?>" target="_blank"><?= post.postGuid ?></a></td>
+                                    <td><a rel="bookmark" title="<?- post.postTitle ?>" href="<?= options.static_host + post.postGuid ?>" target="_blank"><?- post.postTitle ?></a></td>
+                                    <td><a href="<?= options.static_host + post.postGuid ?>" target="_blank"><?= post.postGuid ?></a></td>
                                     <td title="<?= post.postModifiedText ?>"><?= post.postModifiedText ?></td>
                                     <td title="<?= post.postCreatedText ?>"><?= post.postCreatedText ?></td>
                                     <td><a href="/admin/media?status=<?= post.postStatus ?>"><?= post.postStatusDesc ?></a></td>

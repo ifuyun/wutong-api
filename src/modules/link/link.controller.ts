@@ -4,7 +4,7 @@ import { LinksService } from './links.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
@@ -18,11 +18,10 @@ import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
+import { getSuccessResponse } from '../../transformers/response.transformers';
 
-@Controller('admin/link')
-@UseGuards(RolesGuard)
-@Roles(Role.ADMIN)
-export class AdminLinkController {
+@Controller('')
+export class LinkController {
   constructor(
     private readonly linkService: LinksService,
     private readonly optionsService: OptionsService,
@@ -32,7 +31,16 @@ export class AdminLinkController {
   ) {
   }
 
-  @Get(['', 'page-:page'])
+  @Get('api/links/quick')
+  @Header('Content-Type', 'application/json')
+  async getQuickLinks() {
+    const links = await this.linkService.getQuickLinks();
+    return getSuccessResponse(links);
+  }
+
+  @Get(['admin/link', 'admin/link/page-:page'])
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Render('admin/pages/link-list')
   async showLinks(
     @Req() req,
@@ -42,15 +50,15 @@ export class AdminLinkController {
     const linkList = await this.linkService.getLinksByPage(page);
     const { links, count } = linkList;
     const options = await this.optionsService.getOptions();
-    const titles = ['链接列表', '管理后台', options.site_name.value];
+    const titles = ['链接列表', '管理后台', options.site_name];
     page = linkList.page;
     page > 1 && titles.unshift(`第${page}页`);
 
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       pageBar: {
         paginator: this.paginatorService.getPaginator(page, count),
@@ -64,9 +72,11 @@ export class AdminLinkController {
     };
   }
 
-  @Get('detail')
-  @Render('admin/pages/link-form')
+  @Get('admin/link/detail')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @UseInterceptors(CheckIdInterceptor)
+  @Render('admin/pages/link-form')
   @IdParams({ idInQuery: ['id'] })
   async editLink(
     @Req() req,
@@ -85,11 +95,11 @@ export class AdminLinkController {
         throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
-    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([], 'link');
+    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0 ,1], 'link');
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
 
     const options = await this.optionsService.getOptions();
-    const titles = ['管理后台', options.site_name.value];
+    const titles = ['管理后台', options.site_name];
     let title = '';
     if (action === 'create') {
       title = '新增链接';
@@ -103,8 +113,8 @@ export class AdminLinkController {
     return {
       meta: {
         title: this.utilService.getTitle(titles),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       token: req.csrfToken(),
       curNav: 'taxonomy-link',
@@ -115,7 +125,9 @@ export class AdminLinkController {
     };
   }
 
-  @Post('save')
+  @Post('admin/link/save')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async saveLink(
     @Req() req,
@@ -147,7 +159,9 @@ export class AdminLinkController {
     };
   }
 
-  @Post('remove')
+  @Post('admin/link/remove')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   async removeLinks(
     @Req() req,
     @Body(new TrimPipe()) removeLinkDto: RemoveLinkDto,

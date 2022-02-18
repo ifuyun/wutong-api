@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminOptionController } from './admin-option.controller';
 import { OptionsService } from './options.service';
-import { CommonModule } from '../common/common.module';
+import { UtilModule } from '../util/util.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
 import { OptionController } from './option.controller';
@@ -10,7 +10,7 @@ import { OptionController } from './option.controller';
   imports: [
     DatabaseModule,
     LoggerModule,
-    CommonModule
+    UtilModule
   ],
   controllers: [AdminOptionController, OptionController],
   providers: [OptionsService],

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Render, Req, UseGuards } from '@nestjs/common';
 import * as xss from 'sanitizer';
 import { OptionsService } from './options.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { Roles } from '../../decorators/roles.decorator';
@@ -28,9 +28,9 @@ export class AdminOptionController {
 
     return {
       meta: {
-        title: this.utilService.getTitle([title, '站点设置', '管理后台', options.site_name.value]),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        title: this.utilService.getTitle([title, '站点设置', '管理后台', options.site_name]),
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       curNav: 'setting',
       token: req.csrfToken(),

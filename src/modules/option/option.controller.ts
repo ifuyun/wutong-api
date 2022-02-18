@@ -1,4 +1,4 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Header, Query } from '@nestjs/common';
 import { OptionsService } from './options.service';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 
@@ -9,8 +9,9 @@ export class OptionController {
 
   @Get('options')
   @Header('Content-Type', 'application/json')
-  async getOptions() {
-    const options = await this.optionsService.getOptions(false);
+  async getOptions(@Query() query) {
+    const auto: boolean = typeof query.auto === 'boolean' ? query.auto : true;
+    const options = await this.optionsService.getOptions(auto);
     return getSuccessResponse(options);
   }
 }

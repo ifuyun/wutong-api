@@ -9,7 +9,7 @@ import { LoggerModule } from '../logger/logger.module';
 import { OptionModule } from '../option/option.module';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { PaginatorModule } from '../paginator/paginator.module';
-import { CommonModule } from '../common/common.module';
+import { UtilModule } from '../util/util.module';
 import { PostCommonService } from './post-common.service';
 import { LinkModule } from '../link/link.module';
 import { CommentModule } from '../comment/comment.module';
@@ -21,7 +21,7 @@ import { UserModule } from '../user/user.module';
   imports: [
     DatabaseModule,
     LoggerModule,
-    CommonModule,
+    UtilModule,
     PaginatorModule,
     CrumbModule,
     OptionModule,

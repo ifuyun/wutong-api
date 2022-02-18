@@ -8,8 +8,8 @@ import * as xss from 'sanitizer';
 import { OptionsService } from '../option/options.service';
 import { PostsService } from './posts.service';
 import { PostCommonService } from './post-common.service';
-import { UtilService } from '../common/util.service';
-import { WatermarkService } from '../common/watermark.service';
+import { UtilService } from '../util/util.service';
+import { WatermarkService } from '../util/watermark.service';
 import { PostStatus, PostType, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { Referer } from '../../decorators/referer.decorator';
@@ -45,9 +45,9 @@ export class AdminFileController {
 
     return {
       meta: {
-        title: this.utilService.getTitle(['上传文件', '管理后台', options.site_name.value]),
-        description: `${options.site_name.value}管理后台`,
-        author: options.site_author.value
+        title: this.utilService.getTitle(['上传文件', '管理后台', options.site_name]),
+        description: `${options.site_name}管理后台`,
+        author: options.site_author
       },
       token: req.csrfToken(),
       curNav: `attachment`,
@@ -98,7 +98,7 @@ export class AdminFileController {
       await this.watermarkService.watermark(result['filePath']);
     }
     const options = await this.optionsService.getOptions(false);
-    const postGuid = `${options.upload_url_prefix.value}/${curYear}/${curMonth}/${result['fileName']}`;
+    const postGuid = `${options.upload_url_prefix}/${curYear}/${curMonth}/${result['fileName']}`;
     const isPostGuidExist = await this.postsService.checkPostGuidExist(postGuid);
     if (isPostGuidExist) {
       throw new CustomException('文件上传错误，请重新上传。', HttpStatus.OK, ResponseCode.UPLOAD_PATH_CONFLICT);

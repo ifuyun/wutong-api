@@ -1,7 +1,7 @@
 import { Controller, Get, HttpException, HttpStatus, Render, Req } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
 import { CommentsService } from '../comment/comments.service';
-import { UtilService } from '../common/util.service';
+import { UtilService } from '../util/util.service';
 import { LoggerService } from '../logger/logger.service';
 import { PostsService } from '../post/posts.service';
 import { PostCommonService } from '../post/post-common.service';
@@ -68,10 +68,10 @@ export class PostStandaloneController {
       curNav: '',
       showCrumb: false,
       meta: {
-        title: this.utilService.getTitle([post.postTitle, options.site_name.value]),
+        title: this.utilService.getTitle([post.postTitle, options.site_name]),
         description: post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_DESCRIPTION_LENGTH),
-        author: options.site_author.value,
-        keywords: unique(`${post.postTitle},${options.site_keywords.value}`.split(',')).join(',')
+        author: options.site_author,
+        keywords: unique(`${post.postTitle},${options.site_keywords}`.split(',')).join(',')
       },
       token: req.csrfToken(),
       ...commonData,
@@ -82,7 +82,7 @@ export class PostStandaloneController {
       post,
       postMeta,
       comments,
-      urlShare: appendUrlRef(options.site_url.value, post.postGuid, 'qrcode')
+      urlShare: appendUrlRef(options.site_url, post.postGuid, 'qrcode')
     };
     if (user) {
       resData.user.userName = user.userNiceName;

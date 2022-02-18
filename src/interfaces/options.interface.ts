@@ -1,4 +1,3 @@
-export interface OptionData {
-  value: string;
-  blogId?: string;
+export interface OptionEntity {
+  [key: string]: string;
 }

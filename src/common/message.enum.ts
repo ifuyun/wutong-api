@@ -1,4 +1,5 @@
 export enum Message {
   PAGE_NOT_FOUND = 'Page not found.',
-  UNKNOWN_ERROR = 'Unknown error.'
+  UNKNOWN_ERROR = 'Unknown error.',
+  UNAUTHORIZED = 'Unauthorized.'
 }
