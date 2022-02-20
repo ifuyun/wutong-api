@@ -24,8 +24,14 @@ export class UserController {
 
   @Post('api/login')
   @Header('Content-Type', 'application/json')
-  async doLogin(@Body() loginDto: UserLoginDto) {
+  async doLogin(@Req() req, @Body() loginDto: UserLoginDto) {
     const result = await this.authService.login(loginDto);
+    if (result && result.accessToken) {
+      req.session.auth = {
+        token: result.accessToken,
+        expires: result.expiresIn
+      };
+    }
     return getSuccessResponse(result);
   }
 
@@ -69,7 +75,7 @@ export class UserController {
       throw new CustomException({
         status: HttpStatus.BAD_REQUEST,
         data: {
-          code: ResponseCode.LOGIN_ERROR,
+          code: ResponseCode.LOGIN_REJECT,
           message: '用户名或密码错误'
         },
         log: {

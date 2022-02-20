@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { DbConfigService } from './db-config.service';
 import { LoggerModule } from '../logger/logger.module';
@@ -24,7 +24,7 @@ import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
 @Module({
   imports: [
     SequelizeModule.forRootAsync({
-      imports: [ConfigModule, LoggerModule],
+      imports: [LoggerModule],
       inject: [ConfigService, LoggerService],
       useClass: DbConfigService
     }),

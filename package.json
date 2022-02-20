@@ -1,12 +1,11 @@
 {
   "name": "antblog",
   "version": "1.0.0",
-  "description": "Blog app based on Node.js & nest.js & mysql.",
+  "description": "RESTful API service for ifuyun.com blog",
   "author": {
     "name": "Fuyun",
     "url": "http://www.ifuyun.com/"
   },
-  "private": true,
   "license": "MIT",
   "homepage": "https://github.com/ifuyun/antblog#readme",
   "repository": {

@@ -23,8 +23,10 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
+      isGlobal: true,
       envFilePath: `env/${process.env.ENV}.env`,
-      load: [APP_CONFIG, ENV_CONFIG, AUTH_CONFIG, REDIS_CONFIG]
+      // todo: validationSchema
+      load: [ENV_CONFIG, REDIS_CONFIG, APP_CONFIG, AUTH_CONFIG]
     }),
     AsyncValidatorModule,
     AuthModule,

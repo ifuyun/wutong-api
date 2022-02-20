@@ -24,10 +24,10 @@ import { ExceptionFactory } from './validators/exception-factory';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const loggerService = app.select(AppModule).get(LoggerService, { strict: true });
-  const configService = app.select(AppModule).get(ConfigService, { strict: true });
-  const isCluster = configService.get('env.isCluster');
-  const { accessLogger, threadLogger, sysLogger, transformLogData } = loggerService;
+  const logger = app.select(AppModule).get(LoggerService, { strict: true });
+  const config = app.select(AppModule).get(ConfigService, { strict: true });
+  const isCluster = config.get('env.isCluster');
+  const { accessLogger, threadLogger, sysLogger, transformLogData } = logger;
   /* cluster模式必须在app实例化之后，否则将缺少master进程，导致log4js报错，因此无法通过ClusterService.clusterize方式调用 */
   if ((cluster as any).isPrimary && isCluster) {
     const workerSize = Math.max(cpus().length, 2);
@@ -55,10 +55,10 @@ async function bootstrap() {
     ejs.delimiter = '?';
     app.setViewEngine('ejs');
     app.use(compress());
-    app.use(cookieParser(configService.get('app.cookieSecret')));
+    app.use(cookieParser(config.get('app.cookieSecret')));
 
     const redisClient = createClient({
-      url: `redis://:${configService.get('redis.password')}@${configService.get('redis.host')}:${configService.get('redis.port')}`,
+      url: `redis://:${config.get('redis.password')}@${config.get('redis.host')}:${config.get('redis.port')}`,
       legacyMode: true
     });
     await redisClient.connect().catch((err) => sysLogger.info(transformLogData({
@@ -66,16 +66,16 @@ async function bootstrap() {
     })));
     const RedisStore = connectRedis(session);
     app.use(session({
-      name: configService.get('app.sessionKey'),
+      name: config.get('app.sessionKey'),
       store: new RedisStore({
         client: redisClient,
         ttl: 7 * 24 * 60 * 60
       }),
-      secret: configService.get('app.sessionSecret'),
+      secret: config.get('app.sessionSecret'),
       resave: false,
       saveUninitialized: false,
       cookie: { // 默认domain：当前登录域ifuyun.com，设置后为.ifuyun.com
-        maxAge: configService.get('app.cookieExpires') // 默认7天
+        maxAge: config.get('app.cookieExpires') // 默认7天
       }
     }));
 
@@ -94,18 +94,18 @@ async function bootstrap() {
     }));
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-    if (!configService.get('env.isApiMode')) {
+    if (!config.get('env.isApiMode')) {
       /* API服务在应用层做CSRF控制 */
-      app.use(csrf({ cookie: { key: configService.get('app.cookieCsrfKey') } }));
+      app.use(csrf({ cookie: { key: config.get('app.cookieCsrfKey') } }));
       /* API服务不需要静态资源 */
       app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
       app.useStaticAssets(join(__dirname, '..', 'web', 'public', 'static'));
-      app.useStaticAssets(join(__dirname, '..', 'web', 'public', configService.get('env.isDev') ? 'dev' : 'dist'));
-      app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', configService.get('app.viewsPath')));
+      app.useStaticAssets(join(__dirname, '..', 'web', 'public', config.get('env.isDev') ? 'dev' : 'dist'));
+      app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', config.get('app.viewsPath')));
     }
 
     app.use((req, res, next) => {
-      loggerService.updateContext();
+      logger.updateContext();
       threadLogger.trace(transformLogData({
         message: `Request [${req.url}] is processed by ${isCluster ? 'Worker: ' + (cluster as any).worker.id : 'Master'}.`
       })[0]);
@@ -116,8 +116,8 @@ async function bootstrap() {
       format: ':remote-addr - :method :status HTTP/:http-version :url - [:response-time ms/:content-length B] ":referrer" ":user-agent"'
     }));
 
-    await app.listen(configService.get('app.port'), configService.get('app.host'), () => sysLogger.info(transformLogData({
-      message: `Server listening on: ${configService.get('app.host')}:${configService.get('app.port')}`
+    await app.listen(config.get('app.port'), config.get('app.host'), () => sysLogger.info(transformLogData({
+      message: `Server listening on: ${config.get('app.host')}:${config.get('app.port')}`
     })[0]));
   }
 }

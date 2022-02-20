@@ -1,5 +1,4 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { UserController } from './user.controller';
 import { UsersService } from './users.service';
 import { AuthModule } from '../auth/auth.module';
@@ -11,7 +10,6 @@ import { OptionModule } from '../option/option.module';
   imports: [
     DatabaseModule,
     UtilModule,
-    ConfigModule,
     OptionModule,
     forwardRef(() => AuthModule)
   ],

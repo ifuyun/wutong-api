@@ -9,7 +9,6 @@ import { PaginatorModule } from '../paginator/paginator.module';
 import { ParseTokenPipe } from '../../pipes/parse-token.pipe';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -19,8 +18,7 @@ import { ConfigModule } from '@nestjs/config';
     UtilModule,
     OptionModule,
     AuthModule,
-    UserModule,
-    ConfigModule
+    UserModule
   ],
   controllers: [TaxonomyController],
   providers: [

@@ -8,6 +8,8 @@ import { getMd5 } from '../../helpers/helper';
 import { CustomException } from '../../exceptions/custom.exception';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { Message } from '../../common/message.enum';
 
 @Injectable()
 export class AuthService {
@@ -32,9 +34,9 @@ export class AuthService {
           expiresIn: this.configService.get('auth.expiresIn')
         };
       }
-      throw new UnauthorizedException();
+      throw new BadRequestException(Message.LOGIN_REJECT, HttpStatus.BAD_REQUEST, ResponseCode.LOGIN_REJECT);
     }
-    throw new UnauthorizedException();
+    throw new BadRequestException(Message.LOGIN_REJECT, HttpStatus.BAD_REQUEST, ResponseCode.LOGIN_REJECT);
   }
 
   parse(token: string): AuthUserEntity {
