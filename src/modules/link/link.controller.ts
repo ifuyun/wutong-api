@@ -5,7 +5,7 @@ import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../util/util.service';
-import { Role } from '../../common/common.enum';
+import { LinkVisible, Role, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
@@ -19,6 +19,8 @@ import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getSuccessResponse } from '../../transformers/response.transformers';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { Message } from '../../common/message.enum';
 
 @Controller('')
 export class LinkController {
@@ -35,6 +37,26 @@ export class LinkController {
   @Header('Content-Type', 'application/json')
   async getQuickLinks() {
     const links = await this.linkService.getQuickLinks();
+    return getSuccessResponse(links);
+  }
+
+  @Get('api/links/friend')
+  @Header('Content-Type', 'application/json')
+  async getFriendLinks(
+    @Query('visible') visible: string | string[],
+    @Query('isHome') isHome: string
+  ) {
+    if (visible) {
+      visible = Array.isArray(visible) ? visible : visible.split(',') || [];
+      visible.forEach((v: LinkVisible) => {
+        if (![LinkVisible.HOMEPAGE, LinkVisible.SITE].includes(v)) {
+          throw new BadRequestException(Message.ILLEGAL_PARAM);
+        }
+      });
+    } else {
+      visible = isHome === '1' || isHome === 'true' ? [LinkVisible.HOMEPAGE, LinkVisible.SITE] : LinkVisible.SITE;
+    }
+    const links = await this.linkService.getFriendLinks(<LinkVisible | LinkVisible[]> visible);
     return getSuccessResponse(links);
   }
 
@@ -66,7 +88,7 @@ export class LinkController {
         linkParam: search
       },
       curNav: 'taxonomy-link',
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       options,
       links
     };
@@ -95,7 +117,7 @@ export class LinkController {
         throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
-    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0 ,1], 'link');
+    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0, 1], TaxonomyType.LINK);
     const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
 
     const options = await this.optionsService.getOptions();
@@ -116,7 +138,7 @@ export class LinkController {
         description: `${options.site_name}管理后台`,
         author: options.site_author
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       curNav: 'taxonomy-link',
       title,
       link,

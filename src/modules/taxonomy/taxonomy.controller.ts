@@ -86,7 +86,7 @@ export class TaxonomyController {
         linkUrl: '/admin/taxonomy/page-',
         linkParam: search
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       curNav: `taxonomy-${type}`,
       options,
       taxonomies,
@@ -120,7 +120,7 @@ export class TaxonomyController {
       throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
     }
     let taxonomy = {
-      parent: parentId || ''
+      parentId: parentId || ''
     };
     const typeDesc: string = type === TaxonomyType.TAG ? '标签' : '分类';
     if (action === 'edit') {
@@ -154,7 +154,7 @@ export class TaxonomyController {
         author: options.site_author
       },
       curNav: `taxonomy-${type}`,
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       title,
       type,
       options,
@@ -180,7 +180,7 @@ export class TaxonomyController {
       name: xss.sanitize(taxonomyDto.name),
       slug: xss.sanitize(taxonomyDto.slug),
       description: xss.sanitize(taxonomyDto.description),
-      parent: type !== TaxonomyType.TAG ? taxonomyDto.parent : '',
+      parentId: type !== TaxonomyType.TAG ? taxonomyDto.parentId : '',
       termOrder: taxonomyDto.termOrder,
       status: taxonomyDto.status,
       type

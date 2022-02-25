@@ -146,7 +146,7 @@ export class PostsService {
     });
   }
 
-  async getRandPosts(): Promise<PostModel[]> {
+  async getRandomPosts(): Promise<PostModel[]> {
     return this.postModel.findAll({
       attributes: ['postId', 'postTitle', 'postGuid'],
       where: {
@@ -184,8 +184,14 @@ export class PostsService {
     });
   }
 
-  async getArchiveDates(param: { postType: string, showCount?: boolean, isAdmin?: boolean, limit?: number }): Promise<VPostDateArchiveModel[]> {
-    const postType = param.postType || 'post';
+  async getArchiveDates(
+    {
+      postType = PostType.POST,
+      showCount = false,
+      isAdmin = false,
+      limit = 10
+    }
+  ): Promise<VPostDateArchiveModel[]> {
     const queryOpt: any = {
       attributes: ['dateText', 'dateTitle'],
       where: {
@@ -200,14 +206,14 @@ export class PostsService {
       order: [['dateText', 'desc']]
     };
     // 0 is no limit, and default is 10
-    if (param.limit !== 0) {
-      queryOpt.limit = param.limit || 10;
+    if (limit !== 0) {
+      queryOpt.limit = limit || 10;
       queryOpt.offset = 0;
     }
-    if (param.showCount) {
+    if (showCount) {
       queryOpt.attributes.push([Sequelize.fn('count', 1), 'count']);
       queryOpt.group = ['dateText', 'status'];
-      if (!param.isAdmin) {
+      if (!isAdmin) {
         queryOpt.having = {
           status: {
             [Op.eq]: 1
@@ -235,14 +241,14 @@ export class PostsService {
   async getPosts(param: {
     page: number,
     isAdmin: boolean,
-    postType?: string,
+    postType?: PostType,
     from?: string,
     keyword?: string,
     subTaxonomyIds?: string[],
     tag?: string;
     year?: string;
     month?: string;
-    status?: string;
+    status?: PostStatus;
     author?: string;
   }): Promise<PostListVo> {
     const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, author } = param;
@@ -258,9 +264,9 @@ export class PostsService {
     };
     if (isAdmin && from === 'admin') {
       if (status) {
-        where.postStatus[Op.in] = status === 'draft' ? ['draft', 'auto-draft'] : [status];
+        where.postStatus[Op.eq] = status === 'draft' ? [PostStatus.DRAFT, PostStatus.AUTO_DRAFT] : status;
       } else {
-        where.postStatus[Op.in] = ['publish', 'private', 'draft', 'auto-draft', 'trash'];
+        where.postStatus[Op.eq] = [PostStatus.PUBLISH, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
       }
     }
     if (keyword) {
@@ -294,10 +300,11 @@ export class PostsService {
     if (postType === PostType.POST) {
       includeOpt.push({
         model: TaxonomyModel,
+        through: { attributes: []},
         attributes: ['taxonomyId', 'status'],
         where: {
           type: {
-            [Op.eq]: PostType.POST
+            [Op.eq]: TaxonomyType.POST
           },
           status: {
             [Op.in]: isAdmin ? [0, 1] : [1]
@@ -307,7 +314,7 @@ export class PostsService {
       if (tag) {
         includeOpt[0].where = {
           type: {
-            [Op.eq]: 'tag'
+            [Op.eq]: TaxonomyType.TAG
           },
           status: {
             [Op.eq]: TaxonomyStatus.OPEN
@@ -408,7 +415,7 @@ export class PostsService {
       }, {
         model: TaxonomyModel,
         as: 'taxonomies',
-        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'termOrder', 'status', 'count'],
+        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'status', 'count'],
         where,
         // force to use left join
         required: false
@@ -460,7 +467,7 @@ export class PostsService {
   }
 
   async incrementPostView(postId: string) {
-    this.postModel.increment({ postViewCount: 1 }, {
+    return this.postModel.increment({ postViewCount: 1 }, {
       where: {
         postId
       }

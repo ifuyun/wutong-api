@@ -5,7 +5,7 @@ import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
-import { LinkTarget, LinkTargetDesc, LinkVisible, LinkVisibleDesc } from '../../common/common.enum';
+import { LinkTarget, LinkTargetDesc, LinkVisible, LinkVisibleDesc, TaxonomyType } from '../../common/common.enum';
 import { LinkDto } from '../../dtos/link.dto';
 import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
 import { LinkListVo } from '../../interfaces/links.interface';
@@ -27,11 +27,12 @@ export class LinksService {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  async getLinks(param: { slug: string, visible: string[] }): Promise<LinkModel[]> {
+  async getLinks(param: { slug: string, visible: LinkVisible | LinkVisible[] }): Promise<LinkModel[]> {
     return this.linkModel.findAll({
       attributes: ['linkName', 'linkUrl', 'linkDescription', 'linkTarget'],
       include: [{
         model: TaxonomyModel,
+        through: { attributes: []},
         attributes: ['created', 'modified'],
         where: {
           slug: {
@@ -51,17 +52,17 @@ export class LinksService {
     });
   }
 
-  async getFriendLinks(param: { page?: number, from?: string }): Promise<LinkModel[]> {
+  async getFriendLinks(visible: LinkVisible | LinkVisible[]): Promise<LinkModel[]> {
     return this.getLinks({
       slug: 'friendlink',
-      visible: param.from !== 'list' || param.page > 1 ? ['site'] : ['homepage', 'site']
+      visible: visible
     });
   }
 
   async getQuickLinks(): Promise<LinkModel[]> {
     return this.getLinks({
       slug: 'quicklink',
-      visible: ['homepage', 'site']
+      visible: [LinkVisible.HOMEPAGE, LinkVisible.SITE]
     });
   }
 
@@ -88,10 +89,10 @@ export class LinksService {
       attributes: ['linkId', 'linkUrl', 'linkName', 'linkTarget', 'linkDescription', 'linkVisible', 'linkOrder'],
       include: [{
         model: TaxonomyModel,
-        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'termOrder', 'count'],
+        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'count'],
         where: {
           type: {
-            [Op.eq]: 'link'
+            [Op.eq]: TaxonomyType.LINK
           }
         }
       }]

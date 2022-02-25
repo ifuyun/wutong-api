@@ -37,7 +37,7 @@ export class BasicTaxonomyDto {
 
   @IsTaxonomyExist({ message: '父节点不存在' })
   @IsId({ message: '参数非法' })
-  parent?: string;
+  parentId?: string;
 
   @ValidateIf(o => o.type !== TaxonomyType.TAG)
   @IsNumber({ message: '排序必须为数字' })

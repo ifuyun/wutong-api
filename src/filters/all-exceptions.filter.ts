@@ -79,11 +79,12 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     }
 
     if (isXhr) {
-      res.cookie(this.configService.get('app.cookieCsrfKey'), req.csrfToken(), {
-        path: '/',
-        domain: this.configService.get('app.cookieDomain'),
-        maxAge: this.configService.get('app.cookieExpires')
-      });
+      // todo: only if isApiMode is closed
+      // res.cookie(this.configService.get('app.cookieCsrfKey'), req.csrfToken(), {
+      //   path: '/',
+      //   domain: this.configService.get('app.cookieDomain'),
+      //   maxAge: this.configService.get('app.cookieExpires')
+      // });
       res.status(resStatus).json(resData);
     } else if(this.configService.get('env.isApiMode')) {
       res.status(resStatus).json(resData);

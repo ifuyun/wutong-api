@@ -49,7 +49,7 @@ export class AdminFileController {
         description: `${options.site_name}管理后台`,
         author: options.site_author
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       curNav: `attachment`,
       options
     };

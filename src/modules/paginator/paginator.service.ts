@@ -10,10 +10,6 @@ export class PaginatorService {
     return this.pageSize;
   }
 
-  setPageSize(pageSize: number) {
-    this.pageSize = pageSize;
-  }
-
   /**
    * 获取分页数据
    * @param {number} page 请求页
@@ -54,22 +50,19 @@ export class PaginatorService {
    * 生成分页对象
    * @param {number|string} [page=1] 请求页
    * @param {number} [count] 总记录数
-   * @param {number} [paginationSize=9] 每页显示页数
    * @return {Object} 分页对象
    * @version 1.0.0
    * @since 1.0.0
    */
-  getPaginator(page: string | number, count: number, paginationSize?: number): PaginatorData {
+  getPaginator(page: string | number, count: number): PaginatorData {
     let pages = Math.ceil(count / this.pageSize);// 总页数
     if (typeof page === 'string') {// page是字符串
       page = parseInt(page, 10);
     }
-    page = page || 1;
     pages = pages || 1;
-    paginationSize = paginationSize || this.paginationSize;
-    page = Math.min(pages, page);
+    page = Math.min(pages, page || 1);
 
-    const pageData = this.getPageData(page, pages, paginationSize);
+    const pageData = this.getPageData(page, pages, this.paginationSize);
 
     return {
       startPage: pageData.start,

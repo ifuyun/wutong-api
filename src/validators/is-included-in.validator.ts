@@ -12,7 +12,9 @@ export function IsIncludedIn(
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: string | number) {// todo: add error description
+        validate(value: string | number) {
+          // todo: add error description
+          // todo: throw exception when options.range is undefined or is not an array
           // 默认忽略大小写
           if (typeof options.ignoreCase !== 'boolean') {
             options.ignoreCase = true;

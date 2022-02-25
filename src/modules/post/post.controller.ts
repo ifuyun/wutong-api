@@ -24,6 +24,12 @@ import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { getSuccessResponse } from '../../transformers/response.transformers';
+import { AuthUser } from '../../decorators/auth-user.decorator';
+import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { PostType } from '../../common/common.enum';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { TrimPipe } from '../../pipes/trim.pipe';
+import { PostQueryParam } from '../../interfaces/posts.interface';
 
 @Controller()
 export class PostController {
@@ -40,21 +46,93 @@ export class PostController {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  @Get(['api/posts'])
+  @Get('api/posts')
   @Header('Content-Type', 'application/json')
   async getPosts(
     @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Query() query,
+    @Query('page', new ParseIntPipe(1)) page: number,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('category', new TrimPipe()) category: string,
+    @Query('tag', new TrimPipe()) tag: string,
+    @Query('year', new TrimPipe()) year: string,
+    @Query('month', new ParseIntPipe()) month: number,
     @IsAdmin() isAdmin
   ) {
-    const postList = await this.postsService.getPosts({
+    const param: PostQueryParam = {
       page,
-      postType: 'post',
-      isAdmin,
-      keyword: query.keyword
+      postType: PostType.POST,
+      isAdmin
+    };
+    if (keyword) {
+      param.keyword = keyword;
+    }
+    let crumbs: CrumbEntity[];
+    if (category) {
+      const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
+      const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
+      const result = await this.taxonomiesService.getSubTaxonomies({
+        taxonomyData: taxonomies,
+        taxonomyTree: taxonomyTree,
+        slug: category
+      });
+      param.subTaxonomyIds = result.subTaxonomyIds;
+      crumbs = result.crumbs;
+    }
+    if (tag) {
+      param.tag = tag;
+    }
+    if (year) {
+      param.year = year;
+      param.month = month ? month < 10 ? '0' + month : month.toString() : '';
+    }
+    const postList = await this.postsService.getPosts(param);
+    const commentCount = await this.commentsService.getCommentCountByPosts(postList.postIds);
+    postList.posts.map((post) => {
+      post.post.commentCount = commentCount[post.post.postId];
+      return post;
     });
-    return getSuccessResponse(postList);
+    return getSuccessResponse({ postList, crumbs });
+  }
+
+  @Get('api/archive-dates')
+  @Header('Content-Type', 'application/json')
+  async getArchiveDates(
+    @Query() query,
+    @AuthUser() user: AuthUserEntity
+  ) {
+    const { postType, showCount, limit } = query;
+    if (postType && ![PostType.POST, PostType.PAGE].includes(postType)) {
+      throw new BadRequestException(Message.ILLEGAL_PARAM);
+    }
+    const params = {
+      postType,
+      showCount: showCount === '1' || showCount === 'true',
+      isAdmin: user.isAdmin,
+      limit: parseInt(limit, 10)
+    };
+    const dateList = await this.postsService.getArchiveDates(params);
+    return getSuccessResponse(dateList);
+  }
+
+  @Get('api/posts/hot')
+  @Header('Content-Type', 'application/json')
+  async getHotPosts() {
+    const posts = await this.postsService.getHotPosts();
+    return getSuccessResponse(posts);
+  }
+
+  @Get('api/posts/random')
+  @Header('Content-Type', 'application/json')
+  async getRandomPosts() {
+    const posts = await this.postsService.getRandomPosts();
+    return getSuccessResponse(posts);
+  }
+
+  @Get('api/posts/recent')
+  @Header('Content-Type', 'application/json')
+  async getRecentPosts() {
+    const posts = await this.postsService.getRecentPosts();
+    return getSuccessResponse(posts);
   }
 
   @Get(['', '/+', 'post/page-:page'])
@@ -76,12 +154,12 @@ export class PostController {
     });
     const postList = await this.postsService.getPosts({
       page,
-      postType: 'post',
+      postType: PostType.POST,
       isAdmin,
-      keyword: query.keyword
+      keyword: query.keyword?.trim()
     });
-    const { posts, count, postIds } = postList;
     page = postList.page;
+    const { posts, count, postIds } = postList;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
     const siteDesc = this.utilService.getSiteDescription(options);
@@ -94,7 +172,7 @@ export class PostController {
         keywords: options.site_keywords,
         description: (page > 1 ? `${options.site_name}文章列表(第${page}页)。` : '') + siteDesc
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       posts,
       comments,
@@ -241,7 +319,7 @@ export class PostController {
         author: options.site_author,
         keywords: options.site_keywords
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       user: {
         userName: '',
@@ -294,7 +372,7 @@ export class PostController {
     });
     const postList = await this.postsService.getPosts({
       page,
-      postType: 'post',
+      postType: PostType.POST,
       isAdmin,
       subTaxonomyIds
     });
@@ -314,7 +392,7 @@ export class PostController {
         author: options.site_author,
         keywords: unique(`${curTaxonomyName},${options.site_keywords}`.split(',')).join(',')
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       posts,
       comments,
@@ -347,9 +425,8 @@ export class PostController {
     });
     const postList = await this.postsService.getPosts({
       page,
-      postType: 'post',
+      postType: PostType.POST,
       isAdmin,
-      from: 'tag',
       tag
     });
     const { posts, count, postIds } = postList;
@@ -378,7 +455,7 @@ export class PostController {
         author: options.site_author,
         keywords: unique(`${tag},${options.site_keywords}`.split(',')).join(',')
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       posts,
       comments,
@@ -421,9 +498,8 @@ export class PostController {
     });
     const postList = await this.postsService.getPosts({
       page,
-      postType: 'post',
+      postType: PostType.POST,
       isAdmin,
-      from: 'archive',
       year,
       month
     });
@@ -462,7 +538,7 @@ export class PostController {
         author: options.site_author,
         keywords: options.site_keywords
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       posts,
       comments,
@@ -514,7 +590,7 @@ export class PostController {
         author: options.site_author,
         keywords: options.site_keywords
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       archiveDateList,
       archiveDateYears

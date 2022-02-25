@@ -33,7 +33,7 @@ export class AdminOptionController {
         author: options.site_author
       },
       curNav: 'setting',
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       options,
       title
     };

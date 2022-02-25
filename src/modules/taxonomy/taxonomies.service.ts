@@ -153,7 +153,7 @@ export class TaxonomiesService {
     return Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).map((key) => TaxonomyStatus[key]);
   }
 
-  async getAllTaxonomies(status: number | number[] = 1, type: string = 'post'): Promise<TaxonomyNode[]> {
+  async getAllTaxonomies(status: number | number[] = 1, type: TaxonomyType = TaxonomyType.POST): Promise<TaxonomyNode[]> {
     let where: WhereOptions = {
       type: {
         [Op.eq]: type
@@ -161,7 +161,7 @@ export class TaxonomiesService {
       status
     };
     return this.taxonomyModel.findAll({
-      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'status', 'count', 'termOrder'],
+      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'status', 'count', 'termOrder'],
       where,
       order: [['termOrder', 'asc']]
     }).then((taxonomies) => {
@@ -172,11 +172,11 @@ export class TaxonomiesService {
           slug: taxonomy.slug,
           count: taxonomy.count,
           taxonomyId: taxonomy.taxonomyId,
-          parentId: taxonomy.parent,
+          parentId: taxonomy.parentId,
           status: taxonomy.status
         };
         for (let i = 0; i < taxonomies.length; i += 1) {
-          if (taxonomy.taxonomyId === taxonomies[i].parent) {
+          if (taxonomy.taxonomyId === taxonomies[i].parentId) {
             nodeData.hasChildren = true;
             break;
           }
@@ -205,7 +205,7 @@ export class TaxonomiesService {
       }]
     };
     return this.taxonomyModel.findAll({
-      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parent', 'status', 'count'],
+      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'status', 'count'],
       include: [{
         model: TaxonomyRelationshipModel,
         attributes: ['objectId', 'termTaxonomyId'],
@@ -365,10 +365,10 @@ export class TaxonomiesService {
           transaction: t
         });
         await this.taxonomyModel.update({
-          parent: type === TaxonomyType.POST ? DEFAULT_POST_TAXONOMY_ID : DEFAULT_LINK_TAXONOMY_ID
+          parentId: type === TaxonomyType.POST ? DEFAULT_POST_TAXONOMY_ID : DEFAULT_LINK_TAXONOMY_ID
         }, {
           where: {
-            parent: {
+            parentId: {
               [Op.in]: taxonomyIds
             }
           },

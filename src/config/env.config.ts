@@ -10,7 +10,7 @@ const ENV_CONFIG = () => ({
   environment,
   isDev: environment === 'development',
   isProd: environment === 'production',
-  isCluster: process.env.IS_CLUSTER.toLowerCase().trim() === 'true',
+  isCluster: process.env.IS_CLUSTER?.toLowerCase().trim() === 'true',
   isApiMode: true
 });
 

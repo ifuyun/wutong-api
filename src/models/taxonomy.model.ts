@@ -64,7 +64,7 @@ export class TaxonomyModel extends Model {
     allowNull: false,
     defaultValue: ''
   })
-  parent: string;
+  parentId: string;
 
   @Column({
     field: 'term_order',

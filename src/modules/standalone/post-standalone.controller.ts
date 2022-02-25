@@ -73,7 +73,7 @@ export class PostStandaloneController {
         author: options.site_author,
         keywords: unique(`${post.postTitle},${options.site_keywords}`.split(',')).join(',')
       },
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       ...commonData,
       user: {
         userName: '',

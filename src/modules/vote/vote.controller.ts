@@ -44,7 +44,7 @@ export class VoteController {
     return {
       status: HttpStatus.OK,
       code: ResponseCode.SUCCESS,
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       data: {
         commentVote: comment.commentVote
       }

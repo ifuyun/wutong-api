@@ -3,6 +3,7 @@ import { PostsService } from './posts.service';
 import { LinksService } from '../link/links.service';
 import { OptionsService } from '../option/options.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { LinkVisible, PostType } from '../../common/common.enum';
 
 @Injectable()
 export class PostCommonService {
@@ -15,22 +16,19 @@ export class PostCommonService {
   }
 
   async getCommonData(param: { from: string, isAdmin: boolean, postType?: string, page?: number, archiveLimit?: number }) {
+    const friendLinksVisible = param.from !== 'list' || param.page > 1 ? LinkVisible.SITE : [LinkVisible.HOMEPAGE, LinkVisible.SITE];
     return Promise.all([
       this.optionsService.getOptions(),
       this.taxonomiesService.getAllTaxonomies(param.isAdmin ? [0, 1] : 1),
-      this.linksService.getFriendLinks({
-        page: param.page,
-        from: param.from
-      }),
+      this.linksService.getFriendLinks(friendLinksVisible),
       this.linksService.getQuickLinks(),
       this.postsService.getArchiveDates({
-        postType: param.postType,
+        postType: <PostType>param.postType,
         showCount: true,
         isAdmin: param.isAdmin,
         limit: param.archiveLimit
       }),
-      this.postsService.getRecentPosts(),
-      this.postsService.getRandPosts(),
+      this.postsService.getRandomPosts(),
       this.postsService.getHotPosts()
     ]).then(results => Promise.resolve({
       options: results[0],
@@ -38,9 +36,8 @@ export class PostCommonService {
       friendLinks: results[2],
       quickLinks: results[3],
       archiveDates: results[4],
-      recentPosts: results[5],
-      randPosts: results[6],
-      hotPosts: results[7]
+      randPosts: results[5],
+      hotPosts: results[6]
     }));
   }
 }

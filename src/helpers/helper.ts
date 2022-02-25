@@ -160,3 +160,24 @@ export function getEnumValues(enumData: Record<string, string | number>): (strin
 export function getEnumStringValues(enumData: Record<string, string | number>): string[] {
   return Object.keys(enumData).filter((key) => !/^\d+$/i.test(key)).map((key) => enumData[key].toString());
 }
+
+/**
+ * 格式化字符串
+ * e.g. input: format('Hello $0, $1.', 'World', 'Fuyun')
+ *      output: Hello World, Fuyun.
+ *   or input: format('Hello $0, $1.', ['World', 'Fuyun'])
+ *      output the same: Hello World, Fuyun.
+ * Notice:
+ *     When replacement is not supplied or is undefined,
+ *     it will be replaced with empty string('')
+ * @param {string} str source string
+ * @param {(string | number)[]} params replacements
+ * @return {string} output string
+ */
+export function format(str: string, ...params: (string | number)[]): string {
+  if (Array.isArray(params[0])) {
+    params = params[0];
+  }
+  return str.replace(/\$(\d+)/ig, (matched, ...args) =>
+    params[parseInt(args[0], 10)].toString() || '');
+}

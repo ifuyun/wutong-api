@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../user/users.service';
 import { UserLoginDto } from '../../dtos/user-login.dto';
-import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { getMd5 } from '../../helpers/helper';
 import { CustomException } from '../../exceptions/custom.exception';
 import { ResponseCode } from '../../common/response-code.enum';
@@ -31,7 +30,7 @@ export class AuthService {
             userEmail: user.userEmail,
             meta: user.meta
           }),
-          expiresIn: this.configService.get('auth.expiresIn')
+          expiresAt: Date.now() + this.configService.get('auth.expiresIn') * 1000 // from 's' to 'ms'
         };
       }
       throw new BadRequestException(Message.LOGIN_REJECT, HttpStatus.BAD_REQUEST, ResponseCode.LOGIN_REJECT);
@@ -49,7 +48,8 @@ export class AuthService {
         return authData || {};
       }
       catch (e) {
-        throw new CustomException('Token get error', HttpStatus.BAD_REQUEST, ResponseCode.BAD_REQUEST);
+        // eg: e.message: jwt expired
+        return {};
       }
     }
     return {};

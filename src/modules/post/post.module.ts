@@ -16,6 +16,7 @@ import { CommentModule } from '../comment/comment.module';
 import { CrumbModule } from '../crumb/crumb.module';
 import { AdminPostController } from './admin-post.controller';
 import { UserModule } from '../user/user.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { UserModule } from '../user/user.module';
     TaxonomyModule,
     forwardRef(() => CommentModule),
     LinkModule,
-    UserModule
+    UserModule,
+    AuthModule
   ],
   controllers: [
     PostController,

@@ -63,7 +63,7 @@ export class AdminCommentController {
         linkParam: search
       },
       curNav: 'comment',
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       options,
       comments,
       commentStatus: this.commentsService.getAllCommentStatus(),
@@ -101,7 +101,7 @@ export class AdminCommentController {
         author: options.site_author
       },
       curNav: 'comment',
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       options,
       comment,
       user,

@@ -6,7 +6,7 @@
 import { registerAs } from '@nestjs/config';
 
 const AUTH_CONFIG = () => ({
-  expiresIn: 24 * 60 * 60,
+  expiresIn: process.env.AUTH_EXPIRES_IN || 24 * 60 * 60,
   secret: process.env.AUTH_SECRET
 });
 

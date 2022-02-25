@@ -29,7 +29,7 @@ export class UserController {
     if (result && result.accessToken) {
       req.session.auth = {
         token: result.accessToken,
-        expires: result.expiresIn
+        expiresAt: result.expiresAt
       };
     }
     return getSuccessResponse(result);
@@ -50,7 +50,7 @@ export class UserController {
 
     // @Render注解无法和@Redirect共存，否则将报错；但res.render和@Render并不相同
     res.render('home/pages/login', {
-      token: req.csrfToken(),
+      // token: req.csrfToken(),
       options,
       meta: {
         title: this.utilService.getTitle(['用户登录']),
