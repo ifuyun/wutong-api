@@ -19,6 +19,7 @@ import { LoggerService } from './modules/logger/logger.service';
 import { UserModule } from './modules/user/user.module';
 import { VoteModule } from './modules/vote/vote.module';
 import { AsyncValidatorModule } from './validators/async/async-validator.module';
+import { CaptchaModule } from './modules/captcha/captcha.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
     TaxonomyModule,
     LinkModule,
     OptionModule,
+    CaptchaModule,
     StandaloneModule
   ],
   controllers: [],

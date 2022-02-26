@@ -11,7 +11,11 @@ export class CheckIdInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
-    const idParams = this.reflector.get<{ idInParams?: string[], idInQuery?: string[], idInBody?: string[] }>('idParams', context.getHandler());
+    const idParams = this.reflector.get<{
+      idInParams?: string[],
+      idInQuery?: string[],
+      idInBody?: string[]
+    }>('idParams', context.getHandler());
     if (!idParams) {
       throw new CustomException({
         status: HttpStatus.INTERNAL_SERVER_ERROR,

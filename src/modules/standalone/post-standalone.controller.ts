@@ -35,11 +35,11 @@ export class PostStandaloneController {
     // todo: move to validation
     const isLikePost = this.utilService.isUrlPathLikePostSlug(reqPath);
     if (!isLikePost) {
-      throw new HttpException(Message.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new HttpException(Message.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const post = await this.postsService.getPostBySlug(reqPath);
     if (!post) {
-      throw new HttpException(Message.PAGE_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new HttpException(Message.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
     const { comments, commonData } = await Promise.all([
       this.commentsService.getCommentsByPostId(post.postId),

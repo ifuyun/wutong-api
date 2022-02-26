@@ -65,6 +65,7 @@ export class CommentsService {
         ['created', 'desc']
       ]
     }).then((comments) => {
+      // todo: to be removed
       comments.map((comment) => {
         comment.createdText = moment(comment.created).format('YYYY-MM-DD HH:mm');
       });

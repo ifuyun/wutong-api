@@ -9,7 +9,7 @@ export function ExceptionFactory(errors: ValidationError[]) {
     Object.keys(error.constraints).forEach((key) => messages.push(error.constraints[key]));
   });
   throw new CustomException({
-    status: HttpStatus.OK,
+    status: HttpStatus.BAD_REQUEST,
     data: {
       code: ResponseCode.BAD_REQUEST,
       message: messages[0]

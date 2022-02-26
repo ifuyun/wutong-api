@@ -10,6 +10,8 @@ import { CustomException } from '../../exceptions/custom.exception';
 import { getMd5 } from '../../helpers/helper';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { AuthService } from '../auth/auth.service';
+import { AuthUser } from '../../decorators/auth-user.decorator';
+import { AuthUserEntity } from '../../interfaces/auth.interface';
 
 @Controller('')
 export class UserController {
@@ -22,7 +24,7 @@ export class UserController {
   ) {
   }
 
-  @Post('api/login')
+  @Post('api/users/login')
   @Header('Content-Type', 'application/json')
   async doLogin(@Req() req, @Body() loginDto: UserLoginDto) {
     const result = await this.authService.login(loginDto);
@@ -33,6 +35,12 @@ export class UserController {
       };
     }
     return getSuccessResponse(result);
+  }
+
+  @Get('api/users/login-user')
+  @Header('Content-Type', 'application/json')
+  async getLoginUser(@AuthUser() user: AuthUserEntity): Promise<AuthUserEntity> {
+    return user;
   }
 
   @Get('user/login')

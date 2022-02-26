@@ -26,10 +26,11 @@ import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { AuthUser } from '../../decorators/auth-user.decorator';
 import { AuthUserEntity } from '../../interfaces/auth.interface';
-import { PostType } from '../../common/common.enum';
+import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { PostQueryParam } from '../../interfaces/posts.interface';
+import { TaxonomyModel } from '../../models/taxonomy.model';
 
 @Controller()
 export class PostController {
@@ -94,7 +95,7 @@ export class PostController {
     return getSuccessResponse({ postList, crumbs });
   }
 
-  @Get('api/archive-dates')
+  @Get('api/posts/archive-dates')
   @Header('Content-Type', 'application/json')
   async getArchiveDates(
     @Query() query,
@@ -133,6 +134,109 @@ export class PostController {
   async getRecentPosts() {
     const posts = await this.postsService.getRecentPosts();
     return getSuccessResponse(posts);
+  }
+
+  @Get('api/posts/prev-and-next')
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams({ idInQuery: ['postId'] })
+  async getPrevAndNext(@Query('postId', new TrimPipe()) postId: string) {
+    const prevPost = await this.postsService.getPrevPost(postId);
+    const nextPost = await this.postsService.getNextPost(postId);
+
+    return getSuccessResponse({ prevPost, nextPost });
+  }
+
+  @Get('api/posts/:postId')
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams({ idInParams: ['postId'] })
+  async getPost(
+    @Param('postId') postId,
+    @Query('from', new TrimPipe()) from: string,
+    @IsAdmin() isAdmin
+  ) {
+    const post = await this.postsService.getPostById(postId, isAdmin);
+    if (!post || !post.postId) {
+      throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
+        data: {
+          code: ResponseCode.POST_NOT_FOUND,
+          message: `Post: ${postId} is not exist.`
+        }
+      });
+    }
+    // 无管理员权限不允许访问非公开文章(包括草稿)
+    if (!isAdmin && post.postStatus !== PostStatus.PUBLISH) {
+      throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
+        data: {
+          code: ResponseCode.UNAUTHORIZED,
+          message: Message.NOT_FOUND
+        },
+        log: {
+          msg: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
+        }
+      });
+    }
+
+    let taxonomies = [];
+    post.taxonomies.forEach((v) => {
+      if (v.type === TaxonomyType.POST) {
+        taxonomies.push(v);
+      }
+    });
+    if (taxonomies.length < 1) {
+      throw new CustomException({
+        status: HttpStatus.NOT_FOUND,
+        data: {
+          code: ResponseCode.TAXONOMY_NOT_FOUND,
+          message: Message.NOT_FOUND
+        },
+        log: {
+          msg: 'Taxonomy not exist.',
+          data: {
+            postId: post.postId,
+            postTitle: post.postTitle
+          }
+        }
+      });
+    }
+    await this.postsService.incrementPostView(postId);
+
+    let crumbTaxonomyId;
+    // todo: parent category
+    const crumbTaxonomies = taxonomies.filter((item) => from.split('?')[0].endsWith(`/${item.slug}`));
+    if (crumbTaxonomies.length > 0) {
+      crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
+    } else {
+      crumbTaxonomyId = taxonomies[0].taxonomyId;
+    }
+    const allTaxonomies = await this.taxonomiesService.getAllTaxonomies(
+      isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
+    const crumbs = this.taxonomiesService.getTaxonomyPath({
+      taxonomyData: allTaxonomies,
+      taxonomyId: crumbTaxonomyId
+    });
+
+    const postMeta: Record<string, string> = {};
+    post.postMeta.forEach((meta) => {
+      postMeta[meta.metaKey] = meta.metaValue;
+    });
+    postMeta.copyrightType = this.postsService.transformCopyright(postMeta.copyright_type);
+    postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
+
+    const tags: TaxonomyModel[] = [];
+    const categories: TaxonomyModel[] = [];
+    post.taxonomies.forEach((v) => {
+      if (v.type === TaxonomyType.TAG) {
+        tags.push(v);
+      } else if (v.type === TaxonomyType.POST) {
+        categories.push(v);
+      }
+    });
+
+    return getSuccessResponse({
+      post, meta: postMeta, tags, categories, crumbs
+    });
   }
 
   @Get(['', '/+', 'post/page-:page'])
@@ -222,12 +326,12 @@ export class PostController {
       });
     }
     // 无管理员权限不允许访问非公开文章(包括草稿)
-    if (!isAdmin && post.postStatus !== 'publish') {
+    if (!isAdmin && post.postStatus !== PostStatus.PUBLISH) {
       throw new CustomException({
         status: HttpStatus.NOT_FOUND,
         data: {
           code: ResponseCode.UNAUTHORIZED,
-          message: Message.PAGE_NOT_FOUND
+          message: Message.NOT_FOUND
         },
         log: {
           msg: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
@@ -236,7 +340,7 @@ export class PostController {
     }
     let taxonomies = [];
     post.taxonomies.forEach((v) => {
-      if (v.type === 'post') {
+      if (v.type === TaxonomyType.POST) {
         taxonomies.push(v);
       }
     });
@@ -245,7 +349,7 @@ export class PostController {
         status: HttpStatus.NOT_FOUND,
         data: {
           code: ResponseCode.TAXONOMY_NOT_FOUND,
-          message: Message.PAGE_NOT_FOUND
+          message: Message.NOT_FOUND
         },
         log: {
           msg: 'Taxonomy not exist.',
@@ -256,31 +360,13 @@ export class PostController {
         }
       });
     }
-    taxonomies = taxonomies.filter((item) => item.status === 1 || isAdmin);
     let crumbTaxonomyId;
-    if (taxonomies.length > 0) {
-      // todo: parent category
-      const crumbTaxonomies = taxonomies.filter((item) => referer.endsWith(`/${item.slug}`));
-      if (crumbTaxonomies.length > 0) {
-        crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
-      }
-      crumbTaxonomyId = crumbTaxonomyId || taxonomies[0].taxonomyId;
-    }
-    if (!isAdmin && !crumbTaxonomyId) {
-      throw new CustomException({
-        status: HttpStatus.NOT_FOUND,
-        data: {
-          code: ResponseCode.TAXONOMY_INVISIBLE,
-          message: Message.PAGE_NOT_FOUND
-        },
-        log: {
-          msg: 'Taxonomy is invisible.',
-          data: {
-            postId: post.postId,
-            postTitle: post.postTitle
-          }
-        }
-      });
+    // todo: parent category
+    const crumbTaxonomies = taxonomies.filter((item) => referer.endsWith(`/${item.slug}`));
+    if (crumbTaxonomies.length > 0) {
+      crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
+    } else {
+      crumbTaxonomyId = taxonomies[0].taxonomyId;
     }
     const commonData = await this.commonService.getCommonData({
       from: 'post',

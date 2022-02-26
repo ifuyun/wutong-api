@@ -153,7 +153,10 @@ export class TaxonomiesService {
     return Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).map((key) => TaxonomyStatus[key]);
   }
 
-  async getAllTaxonomies(status: number | number[] = 1, type: TaxonomyType = TaxonomyType.POST): Promise<TaxonomyNode[]> {
+  async getAllTaxonomies(
+    status: TaxonomyStatus | TaxonomyStatus[] = TaxonomyStatus.OPEN,
+    type: TaxonomyType = TaxonomyType.POST
+  ): Promise<TaxonomyNode[]> {
     let where: WhereOptions = {
       type: {
         [Op.eq]: type

@@ -13,7 +13,7 @@ import { POST_EXCERPT_LENGTH } from '../../common/constants';
 import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
-import { cutStr, filterHtmlTag, getEnumKeyByValue, getUuid } from '../../helpers/helper';
+import { cutStr, filterHtmlTag, getEnumKeyByValue, getEnumValues, getUuid } from '../../helpers/helper';
 import { PostListVo, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
 import { PostMetaVo } from '../../interfaces/post-meta.interface';
 import { PostModel } from '../../models/post.model';
@@ -119,11 +119,12 @@ export class PostsService {
   }
 
   transformCopyright(type: number | string): string {
-    type = type.toString();
-    if (!Object.keys(CopyrightType).map((k) => CopyrightType[k].toString()).includes(type)) {
+    type = typeof type === 'string' ? parseInt(type) : type;
+    type = isNaN(type) ? CopyrightType.AUTHORIZED : type;
+    if (!getEnumValues(CopyrightType).includes(type)) {
       throw new CustomException('数据错误。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.COPYRIGHT_ILLEGAL);
     }
-    return CopyrightTypeDesc[getEnumKeyByValue(CopyrightType, parseInt(type, 10))];
+    return CopyrightTypeDesc[getEnumKeyByValue(CopyrightType, type)];
   }
 
   async getRecentPosts(): Promise<PostModel[]> {
@@ -421,6 +422,7 @@ export class PostsService {
         required: false
       }]
     }).then((post) => {
+      // todo: to be removed
       if (post) {
         post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
         post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');

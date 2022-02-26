@@ -8,10 +8,10 @@
  */
 export enum Message {
   // todo: internationalize
-  PAGE_NOT_FOUND = 'Page not found',
+  NOT_FOUND = 'Page not found',
   UNKNOWN_ERROR = 'Unknown error',
   UNAUTHORIZED = 'Unauthorized',
-  BAD_REQUEST = 'Unauthorized',
+  BAD_REQUEST = 'Bad request',
   LOGIN_REJECT = '用户名或密码错误，请重新输入',
   UNSUPPORTED_OPERATION = 'Unsupported operation',
   ILLEGAL_PARAM = 'Unsupported parameter(s)'

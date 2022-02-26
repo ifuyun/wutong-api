@@ -12,4 +12,8 @@ export class CaptchaService {
       background: '#ddd'
     });
   }
+
+  removeCaptcha(session) {
+    delete session.captcha;
+  }
 }
