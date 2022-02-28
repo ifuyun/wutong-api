@@ -1,4 +1,6 @@
 import { Body, Controller, Header, HttpStatus, Post, Req } from '@nestjs/common';
+import { Message } from '../../common/message.enum';
+import { getSuccessResponse } from '../../transformers/response.transformers';
 import { VotesService } from './votes.service';
 import { CommentsService } from '../comment/comments.service';
 import { VoteType } from '../../common/common.enum';
@@ -10,7 +12,7 @@ import { UserAgent } from '../../decorators/user-agent.decorator';
 import { CustomException } from '../../exceptions/custom.exception';
 import { TrimPipe } from '../../pipes/trim.pipe';
 
-@Controller('vote')
+@Controller()
 export class VoteController {
   constructor(
     private readonly votesService: VotesService,
@@ -18,7 +20,7 @@ export class VoteController {
   ) {
   }
 
-  @Post('save')
+  @Post(['vote/save', 'api/votes'])
   @Header('Content-Type', 'application/json')
   async saveVote(
     @Req() req,
@@ -37,17 +39,12 @@ export class VoteController {
     };
     const result = await this.votesService.saveVote(voteDto);
     if (!result) {
-      throw new CustomException('请求失败，请刷新页面重试。', HttpStatus.OK, ResponseCode.VOTE_FAILURE);
+      throw new CustomException(Message.DB_QUERY_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.VOTE_FAILURE);
     }
     const comment = await this.commentsService.getCommentById(voteDto.objectId);
 
-    return {
-      status: HttpStatus.OK,
-      code: ResponseCode.SUCCESS,
-      // token: req.csrfToken(),
-      data: {
-        commentVote: comment.commentVote
-      }
-    };
+    return getSuccessResponse({
+      vote: comment.commentVote
+    });
   }
 }

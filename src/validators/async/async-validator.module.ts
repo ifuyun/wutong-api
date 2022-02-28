@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { CommentModule } from '../../modules/comment/comment.module';
+import { IsCommentExistConstraint } from './is-comment-exist.validator';
 import { IsPostExistConstraint } from './is-post-exist.validator';
 import { IsSlugExistConstraint } from './is-slug-exist.validator';
 import { IsTaxonomyExistConstraint } from './is-taxonomy-exist.validator';
@@ -8,17 +10,20 @@ import { TaxonomyModule } from '../../modules/taxonomy/taxonomy.module';
 @Module({
   imports: [
     PostModule,
-    TaxonomyModule
+    TaxonomyModule,
+    CommentModule
   ],
   providers: [
     IsPostExistConstraint,
     IsTaxonomyExistConstraint,
-    IsSlugExistConstraint
+    IsSlugExistConstraint,
+    IsCommentExistConstraint
   ],
   exports: [
     IsPostExistConstraint,
     IsTaxonomyExistConstraint,
-    IsSlugExistConstraint
+    IsSlugExistConstraint,
+    IsCommentExistConstraint
   ]
 })
 export class AsyncValidatorModule {}

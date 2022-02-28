@@ -19,11 +19,10 @@ export class BasicVoteDto {
   )
   @IsNotEmpty({ message: '参数错误' })
   type?: string;
-
-  voteResult?: number;
 }
 
 export class AdditionalVoteDto {
+  voteResult?: number;
   userId: string;
   userIp: string;
   userAgent: string;

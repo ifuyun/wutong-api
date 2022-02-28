@@ -14,5 +14,6 @@ export enum Message {
   BAD_REQUEST = 'Bad request',
   LOGIN_REJECT = '用户名或密码错误，请重新输入',
   UNSUPPORTED_OPERATION = 'Unsupported operation',
-  ILLEGAL_PARAM = 'Unsupported parameter(s)'
+  ILLEGAL_PARAM = 'Unsupported parameter(s)',
+  DB_QUERY_ERROR = '请求失败，请刷新页面重试'
 }

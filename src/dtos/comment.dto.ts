@@ -1,6 +1,6 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IsEmail, IsNotEmpty } from 'class-validator';
-import { IsCommentExist } from '../validators/is-comment-exist.validator';
+import { IsCommentExist } from '../validators/async/is-comment-exist.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsPostExist } from '../validators/async/is-post-exist.validator';
 
