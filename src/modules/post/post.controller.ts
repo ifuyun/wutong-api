@@ -1,5 +1,6 @@
 import { Controller, Get, Header, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
+import { NotFoundException } from '../../exceptions/not-found.exception';
 import { PostsService } from './posts.service';
 import { PostCommonService } from './post-common.service';
 import { CommentsService } from '../comment/comments.service';
@@ -73,9 +74,12 @@ export class PostController {
       const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
       const result = await this.taxonomiesService.getSubTaxonomies({
         taxonomyData: taxonomies,
-        taxonomyTree: taxonomyTree,
+        taxonomyTree,
         slug: category
       });
+      if (result.subTaxonomyIds.length < 1) {
+        throw new NotFoundException();
+      }
       param.subTaxonomyIds = result.subTaxonomyIds;
       crumbs = result.crumbs;
     }
@@ -144,6 +148,31 @@ export class PostController {
     const nextPost = await this.postsService.getNextPost(postId);
 
     return getSuccessResponse({ prevPost, nextPost });
+  }
+
+  @Get('api/posts/standalone')
+  async getPostBySlug(@Query('slug', new TrimPipe()) slug: string) {
+    // todo: move to validation
+    const isLikePost = this.utilService.isUrlPathLikePostSlug(slug);
+    if (!isLikePost) {
+      throw new NotFoundException();
+    }
+    const post = await this.postsService.getPostBySlug(slug);
+    if (!post) {
+      throw new NotFoundException();
+    }
+    await this.postsService.incrementPostView(post.postId);
+
+    const postMeta: Record<string, string> = {};
+    post.postMeta.forEach((meta) => {
+      postMeta[meta.metaKey] = meta.metaValue;
+    });
+    postMeta.copyrightType = this.postsService.transformCopyright(postMeta.copyright_type);
+    postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
+
+    return getSuccessResponse({
+      post, meta: postMeta, tags: [], categories: [], crumbs: []
+    });
   }
 
   @Get('api/posts/:postId')
@@ -456,6 +485,9 @@ export class PostController {
       taxonomyTree: taxonomies.taxonomyTree,
       slug: category
     });
+    if (subTaxonomyIds.length < 1) {
+      throw new NotFoundException();
+    }
     const postList = await this.postsService.getPosts({
       page,
       postType: PostType.POST,
@@ -615,7 +647,7 @@ export class PostController {
     }
     const title = `${year}年${month ? month + '月' : ''}`;
     const resData = {
-      curNav: 'tag',
+      curNav: 'archive',
       curPos: this.crumbService.generateCrumb(crumbs),
       showCrumb: true,
       meta: {
@@ -663,7 +695,7 @@ export class PostController {
       'headerFlag': true
     }];
     const { options, archiveDates } = commonData;
-    const { archiveDateYears, archiveDateList } = this.postsService.transformArchiveDate(archiveDates);
+    const { archiveDateYears, archiveDateList } = this.postsService.transformArchiveDates(archiveDates);
     const siteDesc = this.utilService.getSiteDescription(options);
 
     return {

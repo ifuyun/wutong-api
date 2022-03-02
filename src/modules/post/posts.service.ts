@@ -59,7 +59,7 @@ export class PostsService {
     return status;
   }
 
-  transformArchiveDate(archiveDates: VPostDateArchiveModel[]) {
+  transformArchiveDates(archiveDates: VPostDateArchiveModel[]) {
     const archiveDateList = {};
     (archiveDates || []).forEach((item) => {
       const data = item.get();

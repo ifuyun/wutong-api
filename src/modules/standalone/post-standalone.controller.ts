@@ -1,16 +1,16 @@
-import { Controller, Get, HttpException, HttpStatus, Render, Req } from '@nestjs/common';
+import { Controller, Get, Render, Req } from '@nestjs/common';
 import * as unique from 'lodash/uniq';
-import { CommentsService } from '../comment/comments.service';
-import { UtilService } from '../util/util.service';
-import { LoggerService } from '../logger/logger.service';
-import { PostsService } from '../post/posts.service';
-import { PostCommonService } from '../post/post-common.service';
 import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
-import { Message } from '../../common/message.enum';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { ReqPath } from '../../decorators/req-path.decorator';
 import { User } from '../../decorators/user.decorator';
+import { NotFoundException } from '../../exceptions/not-found.exception';
 import { appendUrlRef, cutStr, filterHtmlTag } from '../../helpers/helper';
+import { CommentsService } from '../comment/comments.service';
+import { LoggerService } from '../logger/logger.service';
+import { PostCommonService } from '../post/post-common.service';
+import { PostsService } from '../post/posts.service';
+import { UtilService } from '../util/util.service';
 
 @Controller()
 export class PostStandaloneController {
@@ -35,11 +35,11 @@ export class PostStandaloneController {
     // todo: move to validation
     const isLikePost = this.utilService.isUrlPathLikePostSlug(reqPath);
     if (!isLikePost) {
-      throw new HttpException(Message.NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new NotFoundException();
     }
     const post = await this.postsService.getPostBySlug(reqPath);
     if (!post) {
-      throw new HttpException(Message.NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new NotFoundException();
     }
     const { comments, commonData } = await Promise.all([
       this.commentsService.getCommentsByPostId(post.postId),
