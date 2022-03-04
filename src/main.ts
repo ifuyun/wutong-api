@@ -51,7 +51,7 @@ async function bootstrap() {
       });
     });
   } else {
-    /* if @types/ejs is installed, it'll be a error as it's read-only */
+    /* if @types/ejs is installed, it'll be an error as it's read-only */
     ejs.delimiter = '?';
     app.setViewEngine('ejs');
     app.use(compress());

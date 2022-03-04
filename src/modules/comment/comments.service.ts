@@ -135,7 +135,7 @@ export class CommentsService {
     };
   }
 
-  async auditComment(commentId: string, status: string): Promise<[number, CommentModel[]]> {
+  async auditComment(commentId: string, status: string): Promise<[number]> {
     return this.commentModel.update({
       commentStatus: status
     }, {

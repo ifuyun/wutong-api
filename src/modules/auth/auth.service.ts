@@ -1,14 +1,13 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../user/users.service';
-import { UserLoginDto } from '../../dtos/user-login.dto';
-import { getMd5 } from '../../helpers/helper';
-import { CustomException } from '../../exceptions/custom.exception';
-import { ResponseCode } from '../../common/response-code.enum';
-import { AuthUserEntity } from '../../interfaces/auth.interface';
-import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
+import { UserLoginDto } from '../../dtos/user-login.dto';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { getMd5 } from '../../helpers/helper';
+import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { UsersService } from '../user/users.service';
 
 @Injectable()
 export class AuthService {
