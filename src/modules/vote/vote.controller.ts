@@ -1,16 +1,18 @@
 import { Body, Controller, Header, HttpStatus, Post, Req } from '@nestjs/common';
-import { Message } from '../../common/message.enum';
-import { getSuccessResponse } from '../../transformers/response.transformers';
-import { VotesService } from './votes.service';
-import { CommentsService } from '../comment/comments.service';
+import { Request } from 'express';
 import { VoteType } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
-import { VoteDto } from '../../dtos/vote.dto';
 import { Ip } from '../../decorators/ip.decorator';
-import { User } from '../../decorators/user.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
+import { User } from '../../decorators/user.decorator';
+import { VoteDto } from '../../dtos/vote.dto';
 import { CustomException } from '../../exceptions/custom.exception';
+import { UserVo } from '../../interfaces/users.interface';
 import { TrimPipe } from '../../pipes/trim.pipe';
+import { getSuccessResponse } from '../../transformers/response.transformers';
+import { CommentsService } from '../comment/comments.service';
+import { VotesService } from './votes.service';
 
 @Controller()
 export class VoteController {
@@ -23,11 +25,11 @@ export class VoteController {
   @Post(['vote/save', 'api/votes'])
   @Header('Content-Type', 'application/json')
   async saveVote(
-    @Req() req,
+    @Req() req: Request,
     @Body(new TrimPipe()) voteDto: VoteDto,
     @User() user,
-    @Ip() ip,
-    @UserAgent() agent
+    @Ip() ip: string,
+    @UserAgent() agent: string
   ) {
     user = user || {};
     voteDto = {

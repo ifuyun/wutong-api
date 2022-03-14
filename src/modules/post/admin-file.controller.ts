@@ -1,4 +1,5 @@
 import { Controller, Get, Header, HttpStatus, Post, Render, Req, Session, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import * as formidable from 'formidable';
 import * as fs from 'fs';
 import * as mkdirp from 'mkdirp';
@@ -36,9 +37,9 @@ export class AdminFileController {
   @Get('upload')
   @Render('admin/pages/upload-form')
   async showUpload(
-    @Req() req,
-    @Referer() referer,
-    @Session() session
+    @Req() req: Request,
+    @Referer() referer: string,
+    @Session() session: any
   ) {
     const options = await this.optionsService.getOptions();
     session.uploadReferer = referer;
@@ -58,9 +59,9 @@ export class AdminFileController {
   @Post('upload')
   @Header('Content-Type', 'application/json')
   async uploadFile(
-    @Req() req,
+    @Req() req: Request,
     @User() user,
-    @Session() session
+    @Session() session: any
   ) {
     const now = moment();
     const curYear = now.format('YYYY');
@@ -82,12 +83,12 @@ export class AdminFileController {
         if (err) {
           return reject(err);
         }
-        const fileExt = getFileExt(files.mediafile.originalFilename);
+        const fileExt = getFileExt(files.mediafile['originalFilename']);
         const fileName = getUuid() + fileExt;
         const filePath = path.join(uploadPath, fileName);
-        fs.renameSync(files.mediafile.filepath, filePath);
+        fs.renameSync(files.mediafile['filepath'], filePath);
         resolve({
-          rawName: files.mediafile.originalFilename,
+          rawName: files.mediafile['originalFilename'],
           fileName,
           filePath,
           fields

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { LinksService } from './links.service';
 import { OptionsService } from '../option/options.service';
@@ -48,7 +49,7 @@ export class LinkController {
   ) {
     if (visible) {
       visible = Array.isArray(visible) ? visible : visible.split(',') || [];
-      visible.forEach((v: LinkVisible) => {
+      (visible as LinkVisible[]).forEach((v: LinkVisible) => {
         if (![LinkVisible.HOMEPAGE, LinkVisible.SITE].includes(v)) {
           throw new BadRequestException(Message.ILLEGAL_PARAM);
         }
@@ -65,9 +66,9 @@ export class LinkController {
   @Roles(Role.ADMIN)
   @Render('admin/pages/link-list')
   async showLinks(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Search() search
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Search() search: string
   ) {
     const linkList = await this.linkService.getLinksByPage(page);
     const { links, count } = linkList;
@@ -101,11 +102,11 @@ export class LinkController {
   @Render('admin/pages/link-form')
   @IdParams({ idInQuery: ['id'] })
   async editLink(
-    @Req() req,
-    @Query('id', new TrimPipe()) linkId,
-    @Query('action', new TrimPipe(), new LowerCasePipe()) action,
-    @Referer() referer,
-    @Session() session
+    @Req() req: Request,
+    @Query('id', new TrimPipe()) linkId: string,
+    @Query('action', new TrimPipe(), new LowerCasePipe()) action: string,
+    @Referer() referer: string,
+    @Session() session: any
   ) {
     if (!['create', 'edit'].includes(action)) {
       throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
@@ -152,9 +153,9 @@ export class LinkController {
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async saveLink(
-    @Req() req,
+    @Req() req: Request,
     @Body(new TrimPipe()) linkDto: LinkDto,
-    @Session() session
+    @Session() session: any
   ) {
     linkDto = {
       linkId: linkDto.linkId,
@@ -185,9 +186,9 @@ export class LinkController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async removeLinks(
-    @Req() req,
+    @Req() req: Request,
     @Body(new TrimPipe()) removeLinkDto: RemoveLinkDto,
-    @Referer() referer
+    @Referer() referer: string
   ) {
     const result = await this.linkService.removeLinks(removeLinkDto.linkIds);
     if (!result) {

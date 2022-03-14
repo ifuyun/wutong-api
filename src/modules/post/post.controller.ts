@@ -1,5 +1,6 @@
 import { Controller, Get, Header, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
-import * as unique from 'lodash/uniq';
+import { Request } from 'express';
+import { uniq as unique } from 'lodash';
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { PostsService } from './posts.service';
 import { PostCommonService } from './post-common.service';
@@ -51,14 +52,14 @@ export class PostController {
   @Get('api/posts')
   @Header('Content-Type', 'application/json')
   async getPosts(
-    @Req() req,
+    @Req() req: Request,
     @Query('page', new ParseIntPipe(1)) page: number,
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('category', new TrimPipe()) category: string,
     @Query('tag', new TrimPipe()) tag: string,
     @Query('year', new TrimPipe()) year: string,
     @Query('month', new ParseIntPipe()) month: number,
-    @IsAdmin() isAdmin
+    @IsAdmin() isAdmin: boolean
   ) {
     const param: PostQueryParam = {
       page,
@@ -68,7 +69,7 @@ export class PostController {
     if (keyword) {
       param.keyword = keyword;
     }
-    let crumbs: CrumbEntity[];
+    let crumbs: CrumbEntity[] = [];
     if (category) {
       const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
       const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
@@ -102,7 +103,7 @@ export class PostController {
   @Get('api/posts/archive-dates')
   @Header('Content-Type', 'application/json')
   async getArchiveDates(
-    @Query() query,
+    @Query() query: Record<string, any>,
     @AuthUser() user: AuthUserEntity
   ) {
     const { postType, showCount, limit } = query;
@@ -179,9 +180,9 @@ export class PostController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInParams: ['postId'] })
   async getPost(
-    @Param('postId') postId,
+    @Param('postId') postId: string,
     @Query('from', new TrimPipe()) from: string,
-    @IsAdmin() isAdmin
+    @IsAdmin() isAdmin: boolean
   ) {
     const post = await this.postsService.getPostById(postId, isAdmin);
     if (!post || !post.postId) {
@@ -207,7 +208,7 @@ export class PostController {
       });
     }
 
-    let taxonomies = [];
+    let taxonomies: TaxonomyModel[] = [];
     post.taxonomies.forEach((v) => {
       if (v.type === TaxonomyType.POST) {
         taxonomies.push(v);
@@ -271,14 +272,14 @@ export class PostController {
   @Get(['', '/+', 'post/page-:page'])
   @Render('home/pages/post-list')
   async showPosts(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Query() query,
-    @Session() session,
-    @Ip() ip,
-    @UserAgent() agent,
-    @IpAndAgent() accessInfo,
-    @IsAdmin() isAdmin
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Query() query: Record<string, any>,
+    @Session() session: any,
+    @Ip() ip: string,
+    @UserAgent() agent: string,
+    @IpAndAgent() accessInfo: string,
+    @IsAdmin() isAdmin: boolean
   ) {
     const commonData = await this.commonService.getCommonData({
       from: 'list',
@@ -338,11 +339,11 @@ export class PostController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInParams: ['postId'] })
   async showPost(
-    @Req() req,
-    @Param('postId') postId,
-    @Referer(true) referer,
+    @Req() req: Request,
+    @Param('postId') postId: string,
+    @Referer(true) referer: string,
     @User() user,
-    @IsAdmin() isAdmin
+    @IsAdmin() isAdmin: boolean
   ) {
     const post = await this.postsService.getPostById(postId, isAdmin);
     if (!post || !post.postId) {
@@ -367,7 +368,7 @@ export class PostController {
         }
       });
     }
-    let taxonomies = [];
+    let taxonomies: TaxonomyModel[] = [];
     post.taxonomies.forEach((v) => {
       if (v.type === TaxonomyType.POST) {
         taxonomies.push(v);
@@ -469,10 +470,10 @@ export class PostController {
   @Get(['category/:category', 'category/:category/page-:page'])
   @Render('home/pages/post-list')
   async showPostsByTaxonomy(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Param('category') category,
-    @IsAdmin() isAdmin
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Param('category') category: string,
+    @IsAdmin() isAdmin: boolean
   ) {
     // todo: should check if category is exist
     const commonData = await this.commonService.getCommonData({
@@ -532,10 +533,10 @@ export class PostController {
   @Get(['tag/:tag', 'tag/:tag/page-:page'])
   @Render('home/pages/post-list')
   async showPostsByTag(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Param('tag') tag,
-    @IsAdmin() isAdmin
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Param('tag') tag: string,
+    @IsAdmin() isAdmin: boolean
   ) {
     const commonData = await this.commonService.getCommonData({
       from: 'tag',
@@ -600,11 +601,11 @@ export class PostController {
   ])
   @Render('home/pages/post-list')
   async showPostsByDate(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
     @Param('year', new ParseIntPipe()) year,
     @Param('month', new ParseIntPipe()) month,
-    @IsAdmin() isAdmin
+    @IsAdmin() isAdmin: boolean
   ) {
     year = year.toString();
     month = month ? month < 10 ? '0' + month : month.toString() : '';
@@ -676,7 +677,7 @@ export class PostController {
 
   @Get('archive')
   @Render('home/pages/archive-list')
-  async showArchiveList(@Req() req, @IsAdmin() isAdmin) {
+  async showArchiveList(@Req() req: Request, @IsAdmin() isAdmin: boolean) {
     const commonData = await this.commonService.getCommonData({
       from: 'archive',
       isAdmin,

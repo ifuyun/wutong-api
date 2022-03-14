@@ -9,7 +9,7 @@ export class OptionController {
 
   @Get('options')
   @Header('Content-Type', 'application/json')
-  async getOptions(@Query() query) {
+  async getOptions(@Query() query: Record<string, any>) {
     const auto: boolean = typeof query.auto === 'boolean' ? query.auto : true;
     const options = await this.optionsService.getOptions(auto);
     return getSuccessResponse(options);

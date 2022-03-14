@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Query, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { CommentFlag, CommentStatus } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
@@ -8,6 +9,7 @@ import { User } from '../../decorators/user.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
 import { CommentDto } from '../../dtos/comment.dto';
 import { CustomException } from '../../exceptions/custom.exception';
+import { UserVo } from '../../interfaces/users.interface';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { CommentsService } from './comments.service';
 import { PostsService } from '../post/posts.service';
@@ -42,13 +44,13 @@ export class CommentController {
   @Post(['comment/save', 'admin/comment/save', 'api/comments'])
   @Header('Content-Type', 'application/json')
   async saveComment(
-    @Req() req,
+    @Req() req: Request,
     @Body(new TrimPipe()) commentDto: CommentDto,
     @User() user,
-    @IsAdmin() isAdmin,
-    @Ip() ip,
-    @UserAgent() agent,
-    @Session() session
+    @IsAdmin() isAdmin: boolean,
+    @Ip() ip: string,
+    @UserAgent() agent: string,
+    @Session() session: any
   ) {
     user = user || {};
     let commentData: CommentDto = {
@@ -61,8 +63,8 @@ export class CommentController {
     if (!commentData.commentId) {
       commentData = {
         ...commentData,
-        commentAuthor: xss.sanitize(commentDto.commentAuthor) || user.userNiceName || '',
-        commentAuthorEmail: xss.sanitize(commentDto.commentAuthorEmail) || user.userEmail || '',
+        commentAuthor: xss.sanitize(commentDto.commentAuthor || '') || user.userNiceName || '',
+        commentAuthorEmail: xss.sanitize(commentDto.commentAuthorEmail || '') || user.userEmail || '',
         commentStatus: CommentStatus.PENDING,
         commentIp: ip,
         commentAgent: agent,
@@ -74,7 +76,7 @@ export class CommentController {
     if (shouldCheckCaptcha && !commentData.captchaCode) {
       throw new CustomException('请输入验证码', HttpStatus.BAD_REQUEST, ResponseCode.CAPTCHA_INPUT_ERROR);
     }
-    if (shouldCheckCaptcha && (session.captcha?.toLowerCase() !== commentData.captchaCode.toLowerCase())) {
+    if (shouldCheckCaptcha && (session.captcha?.toLowerCase() !== commentData.captchaCode?.toLowerCase())) {
       throw new CustomException('验证码输入有误，请重新输入', HttpStatus.BAD_REQUEST, ResponseCode.CAPTCHA_INPUT_ERROR);
     }
     const post = await this.postsService.getPostById(commentData.postId);

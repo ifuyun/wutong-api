@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import * as unique from 'lodash/uniq';
+import { uniq as unique } from 'lodash';
 
 /**
  * 校验数组元素或分隔符分隔的字符串去重后的数量是否在范围内
@@ -8,7 +8,7 @@ import * as unique from 'lodash/uniq';
  * @constructor
  */
 export function ArrayMaxSizePlus(options: { size: number, separator?: string | RegExp }, validationOptions?: ValidationOptions) {
-  return function(object: Object, propertyName: string) {
+  return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'ArrayMaxSizePlus',
       target: object.constructor,

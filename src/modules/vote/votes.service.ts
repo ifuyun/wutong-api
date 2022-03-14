@@ -22,7 +22,7 @@ export class VotesService {
 
   async saveVote(voteDto: VoteDto): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
-      if (voteDto.voteResult > 0) {
+      if (voteDto.voteResult && voteDto.voteResult > 0) {
         await this.commentModel.increment({ commentVote: 1 }, {
           where: {
             commentId: voteDto.objectId

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { TaxonomiesService } from './taxonomies.service';
 import { UtilService } from '../util/util.service';
@@ -47,12 +48,12 @@ export class TaxonomyController {
   @Roles(Role.ADMIN)
   @Render('admin/pages/taxonomy-list')
   async showTaxonomies(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type,
-    @Query('status', new ParseIntPipe()) status,
-    @Query('keyword', new TrimPipe()) keyword,
-    @Search() search
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
+    @Query('status', new ParseIntPipe()) status: number,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Search() search: Record<string, any>
   ) {
     if (!type || !Object.keys(TaxonomyType).map((key) => TaxonomyType[key]).includes(type)) {
       throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_TYPE_INVALID);
@@ -105,13 +106,13 @@ export class TaxonomyController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['id'] })
   async editTaxonomy(
-    @Req() req,
-    @Query('id', new TrimPipe()) taxonomyId,
-    @Query('parent', new TrimPipe()) parentId,
-    @Query('action', new TrimPipe()) action,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type,
-    @Referer() referer,
-    @Session() session
+    @Req() req: Request,
+    @Query('id', new TrimPipe()) taxonomyId: string,
+    @Query('parent', new TrimPipe()) parentId: string,
+    @Query('action', new TrimPipe()) action: string,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) type: TaxonomyType,
+    @Referer() referer: string,
+    @Session() session: any
   ) {
     if (!['create', 'edit'].includes(action)) {
       throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
@@ -168,9 +169,9 @@ export class TaxonomyController {
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async saveTaxonomy(
-    @Req() req,
+    @Req() req: Request,
     @Body(new TrimPipe()) taxonomyDto: TaxonomyDto,
-    @Session() session
+    @Session() session: any
   ) {
     const type = taxonomyDto.type.toLowerCase();
     // todo: Body参数无法完成自动类型转换，因此虽然DTO定义是number，但实际仍是string，导致无法直接调用parseInt
@@ -204,10 +205,10 @@ export class TaxonomyController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async removeTaxonomies(
-    @Req() req,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type,
+    @Req() req: Request,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
     @Body(new TrimPipe()) removeTaxonomyDto: RemoveTaxonomyDto,
-    @Referer() referer
+    @Referer() referer: string
   ) {
     if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
       throw new CustomException('操作不允许。', HttpStatus.OK, ResponseCode.FORBIDDEN);

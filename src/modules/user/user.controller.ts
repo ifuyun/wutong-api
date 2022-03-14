@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { UsersService } from './users.service';
 import { UtilService } from '../util/util.service';
 import { OptionsService } from '../option/options.service';
@@ -26,10 +27,10 @@ export class UserController {
 
   @Post('api/users/login')
   @Header('Content-Type', 'application/json')
-  async doLogin(@Req() req, @Body() loginDto: UserLoginDto) {
+  async doLogin(@Req() req: Request, @Body() loginDto: UserLoginDto) {
     const result = await this.authService.login(loginDto);
     if (result && result.accessToken) {
-      req.session.auth = {
+      req.session['auth'] = {
         token: result.accessToken,
         expiresAt: result.expiresAt
       };
@@ -45,7 +46,7 @@ export class UserController {
 
   @Get('user/login')
   async showLogin(
-    @Req() req,
+    @Req() req: Request,
     @Res() res,
     @Session() session,
     @Referer() referer
@@ -72,7 +73,7 @@ export class UserController {
   @Post('user/login')
   @Header('Content-Type', 'application/json')
   async login(
-    @Req() req,
+    @Req() req: Request,
     @Res({ passthrough: true }) res,
     @Session() session,
     @Body() loginDto: UserLoginDto
@@ -109,10 +110,11 @@ export class UserController {
     if (loginDto.rememberMe === '1') {
       req.session.cookie.expires = new Date(Date.now() + expires);
       req.session.cookie.maxAge = expires;
-    } else {
-      req.session.cookie.expires = false;
+    // todo
+    // } else {
+    //   req.session.cookie.expires = false;
     }
-    req.session.user = user;
+    req.session['user'] = user;
     req.session.save();
 
     return getSuccessResponse({
@@ -122,7 +124,7 @@ export class UserController {
 
   @Get('user/logout')
   async logout(
-    @Req() req,
+    @Req() req: Request,
     @Res() res,
     @Referer() referer
   ) {

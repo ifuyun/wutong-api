@@ -1,13 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
-import * as unique from 'lodash/uniq';
+import { Request } from 'express';
+import { uniq as unique } from 'lodash';
 import * as xss from 'sanitizer';
-import { CommentsService } from '../comment/comments.service';
-import { UtilService } from '../util/util.service';
-import { OptionsService } from '../option/options.service';
-import { PaginatorService } from '../paginator/paginator.service';
-import { PostsService } from './posts.service';
-import { TaxonomiesService } from '../taxonomy/taxonomies.service';
-import { UsersService } from '../user/users.service';
 import { CommentFlag, PostOriginal, PostStatus, PostStatusDesc, PostType, Role, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
@@ -25,6 +19,13 @@ import { PostModel } from '../../models/post.model';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
+import { CommentsService } from '../comment/comments.service';
+import { OptionsService } from '../option/options.service';
+import { PaginatorService } from '../paginator/paginator.service';
+import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { UsersService } from '../user/users.service';
+import { UtilService } from '../util/util.service';
+import { PostsService } from './posts.service';
 
 @Controller('admin/post')
 @UseGuards(RolesGuard)
@@ -44,16 +45,16 @@ export class AdminPostController {
   @Get(['', 'page-:page'])
   @Render('admin/pages/post-list')
   async showPostsForEdit(
-    @Param('page', new ParseIntPipe(1)) page,
-    @Query('status', new TrimPipe()) status,
-    @Query('author', new TrimPipe()) author,
-    @Query('date', new TrimPipe()) date,
-    @Query('keyword', new TrimPipe()) keyword,
-    @Query('tag', new TrimPipe()) tag,
-    @Query('type', new TrimPipe()) postType,
-    @Query('category', new TrimPipe()) category,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Query('status', new TrimPipe()) status: PostStatus,
+    @Query('author', new TrimPipe()) author: string,
+    @Query('date', new TrimPipe()) date: string,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('tag', new TrimPipe()) tag: string,
+    @Query('type', new TrimPipe()) postType: PostType,
+    @Query('category', new TrimPipe()) category: string,
     @Search() search,
-    @IsAdmin() isAdmin
+    @IsAdmin() isAdmin: boolean
   ) {
     postType = postType || PostType.POST;
     if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType)) {
@@ -154,13 +155,13 @@ export class AdminPostController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['postId'] })
   async editPost(
-    @Req() req,
-    @Query('postId', new TrimPipe()) postId,
-    @Query('action', new TrimPipe(), new LowerCasePipe()) action,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) postType,
-    @IsAdmin() isAdmin,
-    @Referer() referer,
-    @Session() session
+    @Req() req: Request,
+    @Query('postId', new TrimPipe()) postId: string,
+    @Query('action', new TrimPipe(), new LowerCasePipe()) action: string,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) postType: PostType,
+    @IsAdmin() isAdmin: boolean,
+    @Referer() referer: string,
+    @Session() session: any
   ) {
     postType = postType || PostType.POST;
     if (!['create', 'edit'].includes(action)) {
@@ -178,7 +179,7 @@ export class AdminPostController {
         throw new CustomException('文章不存在', HttpStatus.NOT_FOUND, ResponseCode.POST_NOT_FOUND);
       }
       // in edit mode, postType is not required
-      postType = post.postType;
+      postType = <PostType>post.postType;
       if (post.taxonomies) {
         post.taxonomies.forEach((t) => {
           if (t.type === TaxonomyType.TAG) {
@@ -237,10 +238,10 @@ export class AdminPostController {
   @Post('save')
   @Header('Content-Type', 'application/json')
   async savePost(
-    @Req() req,
+    @Req() req: Request,
     @Body(new TrimPipe()) postDto: PostDto,
     @User() user,
-    @Session() session
+    @Session() session: any
   ) {
     const newPostId = postDto.postId || getUuid();
     const postData: PostDto = {

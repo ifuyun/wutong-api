@@ -15,7 +15,7 @@ const APP_CONFIG = () => ({
   cookieExpires: 1000 * 60 * 60 * 24 * 7,
   cookieDomain: process.env.COOKIE_DOMAIN || 'localhost',
   host: process.env.HOST || 'localhost',
-  port: parseInt(process.env.PORT, 10) || 2016,
+  port: parseInt(process.env.PORT || '', 10) || 2016,
   domain: 'www.ifuyun.com',
   viewsPath: process.env.VIEWS_PATH || 'src',
   logLevel: process.env.LOG_LEVEL || 'TRACE',

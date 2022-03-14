@@ -1,5 +1,6 @@
 import { Controller, Get, Render, Req } from '@nestjs/common';
-import * as unique from 'lodash/uniq';
+import { Request } from 'express';
+import { uniq as unique } from 'lodash';
 import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { ReqPath } from '../../decorators/req-path.decorator';
@@ -27,7 +28,7 @@ export class PostStandaloneController {
   @Get('*')
   @Render('home/pages/post-standalone')
   async showPostBySlug(
-    @Req() req,
+    @Req() req: Request,
     @ReqPath() reqPath,
     @User() user,
     @IsAdmin() isAdmin

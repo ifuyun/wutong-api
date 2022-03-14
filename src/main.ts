@@ -10,6 +10,7 @@ import * as connectRedis from 'connect-redis';
 import * as cookieParser from 'cookie-parser';
 import * as csrf from 'csurf';
 import * as ejs from 'ejs';
+import { Request, Response } from 'express';
 import * as session from 'express-session';
 import helmet from 'helmet';
 import * as log4js from 'log4js';
@@ -104,7 +105,7 @@ async function bootstrap() {
       app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', config.get('app.viewsPath')));
     }
 
-    app.use((req, res, next) => {
+    app.use((req: Request, res: Response, next: Function) => {
       logger.updateContext();
       threadLogger.trace(transformLogData({
         message: `Request [${req.url}] is processed by ${isCluster ? 'Worker: ' + (cluster as any).worker.id : 'Master'}.`

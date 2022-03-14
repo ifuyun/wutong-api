@@ -41,7 +41,7 @@ export function cutStr(srcStr: string, cutLength: number) {
  * @version 1.0.0
  * @since 1.0.0
  */
-export function filterHtmlTag(srcStr) {
+export function filterHtmlTag(srcStr: string) {
   return srcStr.replace(/<\/?[^>]*>/ig, '');
 }
 
@@ -52,7 +52,7 @@ export function filterHtmlTag(srcStr) {
  * @version 1.0.0
  * @since 1.0.0
  */
-export function getMd5(value) {
+export function getMd5(value: string) {
   return createHash('md5').update(value).digest('hex');
 }
 
@@ -121,7 +121,7 @@ export function getRandomText(): string {
  * @version 1.0.0
  * @since 1.0.0
  */
-export function isEmptyObject(obj) {
+export function isEmptyObject(obj: Object) {
   for (let name in obj) {
     if (obj.hasOwnProperty(name)) {
       return false;
@@ -142,7 +142,7 @@ export function getFileExt(fileName: string): string {
 }
 
 export function getEnumKeyByValue(enumData: Record<string, string | number>, value: string | number): string {
-  let key: string;
+  let key = '';
   const keys = Object.keys(enumData);
   for (let i = 0; i < keys.length; i += 1) {
     if (enumData[keys[i]] === value) {

@@ -28,7 +28,7 @@ export class OptionDto {
   )
   @MaxLength(SITE_KEYWORDS_LENGTH, { message: '关键词长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '关键词不能为空' })
-  siteKeywords: string | string[];
+  siteKeywords: string;
 
   @MaxLength(SITE_COPYRIGHT_LENGTH, { message: '版权信息长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '版权信息不能为空' })

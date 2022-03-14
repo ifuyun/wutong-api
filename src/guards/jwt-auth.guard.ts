@@ -7,11 +7,11 @@ import { UnauthorizedException } from '../exceptions/unauthorized.exception';
  */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  canActivate(context: ExecutionContext) {
+  override canActivate(context: ExecutionContext) {
     return super.canActivate(context);
   }
 
-  handleRequest(err, user, info) {
+  override handleRequest(err: any, user: any, info: any) {
     if (err || !user) {
       throw err || new UnauthorizedException();
     }

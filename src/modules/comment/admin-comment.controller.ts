@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Request } from 'express';
 import { CommentStatus, CommentStatusDesc, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { UtilService } from '../util/util.service';
@@ -32,11 +33,11 @@ export class AdminCommentController {
   @Get(['', 'page-:page'])
   @Render('admin/pages/comment-list')
   async showComments(
-    @Req() req,
-    @Param('page', new ParseIntPipe(1)) page,
-    @Query('status', new TrimPipe()) status,
-    @Query('keyword', new TrimPipe()) keyword,
-    @Search() search
+    @Req() req: Request,
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Query('status', new TrimPipe()) status: string,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Search() search: Record<string, any>
   ) {
     const options = await this.optionsService.getOptions();
     const commentList = await this.commentsService.getComments({ page, status, keyword });
@@ -77,12 +78,12 @@ export class AdminCommentController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['id'] })
   async editOrReplyComment(
-    @Req() req,
-    @Query('id', new TrimPipe()) commentId,
-    @Query('action', new TrimPipe()) action,
+    @Req() req: Request,
+    @Query('id', new TrimPipe()) commentId: string,
+    @Query('action', new TrimPipe()) action: string,
     @User() user,
-    @Referer() referer,
-    @Session() session
+    @Referer() referer: string,
+    @Session() session: any
   ) {
     if (!commentId) {
       throw new CustomException('请求参数错误。', HttpStatus.BAD_REQUEST, ResponseCode.BAD_REQUEST);
@@ -116,7 +117,7 @@ export class AdminCommentController {
   @IdParams({ idInBody: ['commentId'] })
   async auditComment(
     @Body(new TrimPipe()) data,
-    @Referer() referer
+    @Referer() referer: string
   ) {
     if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
       throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
