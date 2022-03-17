@@ -1,8 +1,9 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 import { IsCommentExist } from '../validators/async/is-comment-exist.validator';
-import { IsId } from '../validators/is-id.validator';
 import { IsPostExist } from '../validators/async/is-post-exist.validator';
+import { IsId } from '../validators/is-id.validator';
+import { IsRequired } from '../validators/is-required.validator';
 
 export class BasicCommentDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -26,7 +27,7 @@ export class BasicCommentDto {
   @IsNotEmpty({ message: 'Email不能为空' })
   commentAuthorEmail?: string;
 
-  @IsNotEmpty({ message: '评论内容不能为空' })
+  @IsRequired({ message: '评论内容不能为空' })
   commentContent: string;
 }
 

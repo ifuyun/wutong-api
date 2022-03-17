@@ -1,4 +1,5 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
+import { trim } from 'lodash';
 
 @Injectable()
 export class TrimPipe implements PipeTransform {
@@ -7,12 +8,12 @@ export class TrimPipe implements PipeTransform {
       return '';
     }
     if (typeof data === 'string') {
-      return data.trim();
+      return trim(data);
     }
     const iterator = (obj: Record<string, any>) => {
       Object.keys(obj).forEach((k) => {
         if (typeof obj[k] === 'string') {
-          obj[k] = obj[k].trim();
+          obj[k] = trim(obj[k]);
         } else if(obj[k]) {
           iterator(obj[k]);
         }
