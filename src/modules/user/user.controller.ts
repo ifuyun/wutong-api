@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Post, Req, Res, Session } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { HttpResponseEntity } from '../../interfaces/http-response';
 import { UsersService } from './users.service';
 import { UtilService } from '../util/util.service';
 import { OptionsService } from '../option/options.service';
@@ -29,19 +30,13 @@ export class UserController {
   @Header('Content-Type', 'application/json')
   async doLogin(@Req() req: Request, @Body() loginDto: UserLoginDto) {
     const result = await this.authService.login(loginDto);
-    if (result && result.accessToken) {
-      req.session['auth'] = {
-        token: result.accessToken,
-        expiresAt: result.expiresAt
-      };
-    }
     return getSuccessResponse(result);
   }
 
   @Get('api/users/login-user')
   @Header('Content-Type', 'application/json')
-  async getLoginUser(@AuthUser() user: AuthUserEntity): Promise<AuthUserEntity> {
-    return user;
+  async getLoginUser(@AuthUser() user: AuthUserEntity): Promise<HttpResponseEntity> {
+    return getSuccessResponse(user);
   }
 
   @Get('user/login')
