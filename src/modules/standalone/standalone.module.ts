@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { PostStandaloneController } from './post-standalone.controller';
 import { CommentModule } from '../comment/comment.module';
 import { UtilModule } from '../util/util.module';
@@ -12,7 +13,8 @@ import { PostModule } from '../post/post.module';
     LoggerModule,
     UtilModule,
     PostModule,
-    CommentModule
+    CommentModule,
+    AuthModule
   ],
   controllers: [PostStandaloneController],
   providers: []

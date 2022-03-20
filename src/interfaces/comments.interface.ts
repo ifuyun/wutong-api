@@ -8,5 +8,5 @@ export interface CommentStatusMap {
 export interface CommentListVo {
   comments: CommentModel[];
   page: number;
-  count: number;
+  total: number;
 }

@@ -33,7 +33,7 @@ export class CommentsService {
 
   async getCommentCountByPosts(postIds: string[]): Promise<Record<string, number>> {
     return this.commentModel.findAll({
-      attributes: ['postId', [Sequelize.fn('count', 1), 'count']],
+      attributes: ['postId', [Sequelize.fn('count', 1), 'total']],
       where: {
         postId: postIds,
         commentStatus: {
@@ -44,7 +44,7 @@ export class CommentsService {
     }).then((comments) => {
       let result: Record<string, number> = {};
       comments.forEach((comment) => {
-        result[comment.postId] = <number> comment.get('count');
+        result[comment.postId] = <number> comment.get('total');
       });
       return Promise.resolve(result);
     });
@@ -110,8 +110,8 @@ export class CommentsService {
         [Op.like]: `%${keyword}%`
       };
     }
-    const count = await this.commentModel.count({ where });
-    const page = Math.max(Math.min(param.page, Math.ceil(count / pageSize)), 1);
+    const total = await this.commentModel.count({ where });
+    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
 
     const comments = await this.commentModel.findAll({
       where,
@@ -131,7 +131,7 @@ export class CommentsService {
     });
 
     return {
-      comments, page, count
+      comments, page, total
     };
   }
 
@@ -148,13 +148,13 @@ export class CommentsService {
   }
 
   async checkCommentExist(commentId: string): Promise<boolean> {
-    const count = await this.commentModel.count({
+    const total = await this.commentModel.count({
       where: {
         commentId: {
           [Op.eq]: commentId
         }
       }
     });
-    return count > 0;
+    return total > 0;
   }
 }

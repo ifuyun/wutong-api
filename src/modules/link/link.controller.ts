@@ -71,7 +71,7 @@ export class LinkController {
     @Search() search: string
   ) {
     const linkList = await this.linkService.getLinksByPage(page);
-    const { links, count } = linkList;
+    const { links, total } = linkList;
     const options = await this.optionsService.getOptions();
     const titles = ['链接列表', '管理后台', options.site_name];
     page = linkList.page;
@@ -84,7 +84,7 @@ export class LinkController {
         author: options.site_author
       },
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/admin/link/page-',
         linkParam: search
       },

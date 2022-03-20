@@ -54,17 +54,21 @@ export class PostController {
   async getPosts(
     @Req() req: Request,
     @Query('page', new ParseIntPipe(1)) page: number,
+    @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('category', new TrimPipe()) category: string,
     @Query('tag', new TrimPipe()) tag: string,
     @Query('year', new TrimPipe()) year: string,
     @Query('month', new ParseIntPipe()) month: number,
+    @Query('from', new TrimPipe()) from: string,
     @IsAdmin() isAdmin: boolean
   ) {
     const param: PostQueryParam = {
       page,
+      pageSize,
       postType: PostType.POST,
-      isAdmin
+      isAdmin,
+      from
     };
     if (keyword) {
       param.keyword = keyword;
@@ -293,7 +297,7 @@ export class PostController {
       keyword: query.keyword?.trim()
     });
     page = postList.page;
-    const { posts, count, postIds } = postList;
+    const { posts, total, postIds } = postList;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
     const siteDesc = this.utilService.getSiteDescription(options);
@@ -311,7 +315,7 @@ export class PostController {
       posts,
       comments,
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/post/page-',
         linkParam: query.keyword ? '?keyword=' + query.keyword : ''
       }
@@ -495,7 +499,7 @@ export class PostController {
       isAdmin,
       subTaxonomyIds
     });
-    const { posts, count, postIds } = postList;
+    const { posts, total, postIds } = postList;
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
@@ -516,7 +520,7 @@ export class PostController {
       posts,
       comments,
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/category/' + category + '/page-',
         linkParam: ''
       }
@@ -548,7 +552,7 @@ export class PostController {
       isAdmin,
       tag
     });
-    const { posts, count, postIds } = postList;
+    const { posts, total, postIds } = postList;
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
@@ -579,7 +583,7 @@ export class PostController {
       posts,
       comments,
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/tag/' + tag + '/page-',
         linkParam: ''
       }
@@ -621,7 +625,7 @@ export class PostController {
       year,
       month
     });
-    const { posts, count, postIds } = postList;
+    const { posts, total, postIds } = postList;
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const { options } = commonData;
@@ -661,7 +665,7 @@ export class PostController {
       posts,
       comments,
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: `/archive/${year}${month ? '/' + month : ''}/page-`,
         linkParam: ''
       }

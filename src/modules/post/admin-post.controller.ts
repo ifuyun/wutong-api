@@ -111,7 +111,7 @@ export class AdminPostController {
     }
 
     const postList = await this.postsService.getPosts(queryParam);
-    const { posts, count, postIds } = postList;
+    const { posts, total, postIds } = postList;
     page = postList.page;
     const comments = await this.commentsService.getCommentCountByPosts(postIds);
     const titles = [postType === PostType.PAGE ? '页面列表' : '文章列表', '管理后台', options.site_name];
@@ -130,7 +130,7 @@ export class AdminPostController {
         author: options.site_author
       },
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/admin/post/page-',
         linkParam: search
       },

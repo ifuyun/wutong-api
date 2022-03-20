@@ -67,9 +67,9 @@ export class LinksService {
   }
 
   async getLinksByPage(page: number = 1): Promise<LinkListVo> {
-    const count = await this.linkModel.count();
+    const total = await this.linkModel.count();
     const pageSize = this.paginatorService.getPageSize();
-    page = Math.max(Math.min(page, Math.ceil(count / pageSize)), 1);
+    page = Math.max(Math.min(page, Math.ceil(total / pageSize)), 1);
     /* findAndCountAll无法判断page大于最大页数的情况 */
     const links = await this.linkModel.findAll({
       order: [['linkOrder', 'desc']],
@@ -81,7 +81,7 @@ export class LinksService {
       link.linkVisible = LinkVisibleDesc[getEnumKeyByValue(LinkVisible, link.linkVisible)];
       link.linkTarget = LinkTargetDesc[getEnumKeyByValue(LinkTarget, link.linkTarget)];
     });
-    return { links, page, count };
+    return { links, page, total };
   }
 
   async getLinkById(linkId: string): Promise<LinkModel> {

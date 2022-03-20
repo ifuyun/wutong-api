@@ -86,7 +86,7 @@
                                 <td class="column-count"><?= comments[post.postId] ?></td>
                                 <td><?- postItem.meta.postAuthor ?></td>
                                 <td><a rel="author" href="/admin/post?author=<?= post.postAuthor ?>"><?- post.author.userNiceName ?></a></td>
-                                <td><a href="/admin/post?status=<?= post.postStatusDesc ?>"><?= post.postStatusDesc ?></a></td>
+                                <td><a href="/admin/post?status=<?= post.postStatus ?>"><?= post.postStatusDesc ?></a></td>
                                 <td class="m-col-operate">
                                     <a href="/admin/post/detail?action=edit&type=<?= postType ?>&postId=<?= post.postId ?>">编辑</a><a class="btn-delete" href="javascript:">删除</a>
                                 </td>

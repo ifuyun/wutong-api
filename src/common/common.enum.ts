@@ -65,7 +65,8 @@ export enum PostStatus {
 
 export enum PostStatusDesc {
   PUBLISH = '公开',
-  PRIVATE = '私密',
+  PASSWORD = '加密',
+  PRIVATE = '隐藏',
   // PENDING = '待定',
   DRAFT = '草稿',
   AUTO_DRAFT = '自动保存草稿',

@@ -63,7 +63,7 @@ export class TaxonomyController {
     }
     const options = await this.optionsService.getOptions();
     const taxonomyList = await this.taxonomiesService.getTaxonomies({ page, type, status, keyword });
-    const { taxonomies, count } = taxonomyList;
+    const { taxonomies, total } = taxonomyList;
     page = taxonomyList.page;
 
     const searchParams: string[] = [];
@@ -83,7 +83,7 @@ export class TaxonomyController {
         author: options.site_author
       },
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/admin/taxonomy/page-',
         linkParam: search
       },

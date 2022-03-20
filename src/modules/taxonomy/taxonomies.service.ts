@@ -264,8 +264,8 @@ export class TaxonomiesService {
       }];
     }
     const pageSize = this.paginatorService.getPageSize();
-    const count = await this.taxonomyModel.count({ where });
-    const page = Math.max(Math.min(param.page, Math.ceil(count / pageSize)), 1);
+    const total = await this.taxonomyModel.count({ where });
+    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
 
     const taxonomies = await this.taxonomyModel.findAll({
       where,
@@ -279,7 +279,7 @@ export class TaxonomiesService {
     });
 
     return {
-      taxonomies, page, count
+      taxonomies, page, total
     };
   }
 
@@ -311,14 +311,14 @@ export class TaxonomiesService {
   }
 
   async checkTaxonomyExist(taxonomyId: string): Promise<boolean> {
-    const count = await this.taxonomyModel.count({
+    const total = await this.taxonomyModel.count({
       where: {
         taxonomyId: {
           [Op.eq]: taxonomyId
         }
       }
     });
-    return count > 0;
+    return total > 0;
   }
 
   async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<boolean> {

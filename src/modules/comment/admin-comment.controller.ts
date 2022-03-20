@@ -41,7 +41,7 @@ export class AdminCommentController {
   ) {
     const options = await this.optionsService.getOptions();
     const commentList = await this.commentsService.getComments({ page, status, keyword });
-    const { comments, count } = commentList;
+    const { comments, total } = commentList;
     page = commentList.page;
 
     const searchParams: string[] = [];
@@ -59,7 +59,7 @@ export class AdminCommentController {
         author: options.site_author
       },
       pageBar: {
-        paginator: this.paginatorService.getPaginator(page, count),
+        paginator: this.paginatorService.getPaginator(page, total),
         linkUrl: '/admin/comment/page-',
         linkParam: search
       },

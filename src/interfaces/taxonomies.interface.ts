@@ -26,7 +26,7 @@ export interface TaxonomyMap {
 export interface TaxonomyListVo {
   taxonomies: TaxonomyModel[];
   page: number;
-  count: number;
+  total: number;
 }
 
 export interface TaxonomyStatusMap {

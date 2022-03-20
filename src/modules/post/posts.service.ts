@@ -242,6 +242,7 @@ export class PostsService {
   async getPosts(param: {
     page: number,
     isAdmin: boolean,
+    pageSize?: number,
     postType?: PostType,
     from?: string,
     keyword?: string,
@@ -253,11 +254,11 @@ export class PostsService {
     author?: string;
   }): Promise<PostListVo> {
     const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, author } = param;
-    const pageSize = this.paginatorService.getPageSize();
+    const pageSize = param.pageSize || 10;
     const postType = param.postType || PostType.POST;
     const where = {
       postStatus: {
-        [Op.in]: ['publish']
+        [Op.in]: [PostStatus.PUBLISH]
       },
       postType: {
         [Op.eq]: postType
@@ -265,9 +266,9 @@ export class PostsService {
     };
     if (isAdmin && from === 'admin') {
       if (status) {
-        where.postStatus[Op.eq] = status === 'draft' ? [PostStatus.DRAFT, PostStatus.AUTO_DRAFT] : status;
+        where.postStatus[Op.in] = status === 'draft' ? [PostStatus.DRAFT, PostStatus.AUTO_DRAFT] : [status];
       } else {
-        where.postStatus[Op.eq] = [PostStatus.PUBLISH, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
+        where.postStatus[Op.in] = [PostStatus.PUBLISH, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
       }
     }
     if (keyword) {
@@ -364,8 +365,8 @@ export class PostsService {
       queryOpt.group = ['postId'];
       countOpt.include = includeOpt;
     }
-    const count = await this.postModel.count(countOpt);
-    const page = Math.max(Math.min(param.page, Math.ceil(count / pageSize)), 1);
+    const total = await this.postModel.count(countOpt);
+    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
     queryOpt.offset = pageSize * (page - 1);
 
     const posts = await this.postModel.findAll(queryOpt);
@@ -385,7 +386,7 @@ export class PostsService {
       posts: this.assemblePostData({ posts, postMeta, taxonomies }),
       postIds,
       page,
-      count
+      total
     };
   }
 
@@ -530,22 +531,22 @@ export class PostsService {
         [Op.ne]: postId
       };
     }
-    const count = await this.postModel.count({
+    const total = await this.postModel.count({
       where
     });
 
-    return count > 0;
+    return total > 0;
   }
 
   async checkPostExist(postId: string): Promise<boolean> {
-    const count = await this.postModel.count({
+    const total = await this.postModel.count({
       where: {
         postId: {
           [Op.eq]: postId
         }
       }
     });
-    return count > 0;
+    return total > 0;
   }
 
   async saveFile(postDto: PostFileDto): Promise<PostModel> {

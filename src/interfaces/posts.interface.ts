@@ -12,7 +12,7 @@ export interface PostVo {
 export interface PostListVo {
   posts: PostVo[];
   page: number;
-  count: number;
+  total: number;
   postIds?: string[];
 }
 
@@ -22,12 +22,13 @@ export interface PostStatusMap {
 }
 
 export interface PostQueryParam {
-  page: number,
-  isAdmin: boolean,
-  postType?: PostType,
-  from?: string,
-  keyword?: string,
-  subTaxonomyIds?: string[],
+  page: number;
+  pageSize?: number;
+  isAdmin: boolean;
+  postType?: PostType;
+  from?: string;
+  keyword?: string;
+  subTaxonomyIds?: string[];
   tag?: string;
   year?: string;
   month?: string;
