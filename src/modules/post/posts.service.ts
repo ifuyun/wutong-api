@@ -14,7 +14,7 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { cutStr, filterHtmlTag, getEnumKeyByValue, getEnumValues, getUuid } from '../../helpers/helper';
-import { PostListVo, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
+import { PostListVo, PostQueryParam, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
 import { PostMetaVo } from '../../interfaces/post-meta.interface';
 import { PostModel } from '../../models/post.model';
 import { PostMetaModel } from '../../models/post-meta.model';
@@ -239,21 +239,8 @@ export class PostsService {
     });
   }
 
-  async getPosts(param: {
-    page: number,
-    isAdmin: boolean,
-    pageSize?: number,
-    postType?: PostType,
-    from?: string,
-    keyword?: string,
-    subTaxonomyIds?: string[],
-    tag?: string;
-    year?: string;
-    month?: string;
-    status?: PostStatus;
-    author?: string;
-  }): Promise<PostListVo> {
-    const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, author } = param;
+  async getPosts(param: PostQueryParam): Promise<PostListVo> {
+    const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, author, orders } = param;
     const pageSize = param.pageSize || 10;
     const postType = param.postType || PostType.POST;
     const where = {
@@ -351,7 +338,7 @@ export class PostsService {
         model: PostMetaModel,
         attributes: ['postId', 'metaKey', 'metaValue']
       }],
-      order: [['postCreated', 'desc'], ['postDate', 'desc']],
+      order: orders || [['postCreated', 'desc'], ['postDate', 'desc']],
       limit: pageSize,
       subQuery: false
     };

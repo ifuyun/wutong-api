@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { PostController } from './post.controller';
-import { DashboardController } from '../dashboard/dashboard.controller';
 import { PostsService } from './posts.service';
 import { PostMetaService } from './post-meta.service';
 import { AdminFileController } from './admin-file.controller';
@@ -34,7 +33,6 @@ import { AuthModule } from '../auth/auth.module';
   ],
   controllers: [
     PostController,
-    DashboardController,
     AdminPostController,
     AdminFileController
   ],

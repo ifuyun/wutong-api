@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { LinkController } from './link.controller';
 import { LinksService } from './links.service';
 import { UtilModule } from '../util/util.module';
@@ -15,7 +16,8 @@ import { TaxonomyModule } from '../taxonomy/taxonomy.module';
     UtilModule,
     PaginatorModule,
     TaxonomyModule,
-    OptionModule
+    OptionModule,
+    AuthModule
   ],
   controllers: [LinkController],
   providers: [LinksService],

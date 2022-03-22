@@ -1,3 +1,5 @@
+import { Order } from 'sequelize';
+import { TaxonomyStatus } from '../common/common.enum';
 import { TaxonomyModel } from '../models/taxonomy.model';
 
 export interface TaxonomyEntity {
@@ -7,6 +9,7 @@ export interface TaxonomyEntity {
   taxonomyId: string;
   parentId?: string;
   status?: number;
+  termOrder?: number;
   count?: number;
   hasChildren?: boolean;
 }
@@ -23,7 +26,7 @@ export interface TaxonomyMap {
   taxonomyList: TaxonomyNode[];
 }
 
-export interface TaxonomyListVo {
+export interface TaxonomyList {
   taxonomies: TaxonomyModel[];
   page: number;
   total: number;
@@ -32,4 +35,13 @@ export interface TaxonomyListVo {
 export interface TaxonomyStatusMap {
   name: string;
   desc: string;
+}
+
+export interface TaxonomyQueryParam {
+  type: string;
+  page: number;
+  pageSize?: number;
+  status?: TaxonomyStatus;
+  keyword?: string;
+  orders?: Order;
 }

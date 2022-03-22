@@ -1,22 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
-import { Op } from 'sequelize';
+import { FindOptions, Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentStatus, CommentStatusDesc } from '../../common/common.enum';
 import { CommentDto } from '../../dtos/comment.dto';
-import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
-import { CommentListVo, CommentStatusMap } from '../../interfaces/comments.interface';
+import { getUuid } from '../../helpers/helper';
+import { CommentListVo, CommentQueryParam, CommentStatusMap } from '../../interfaces/comments.interface';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
-import { PaginatorService } from '../paginator/paginator.service';
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectModel(CommentModel)
-    private readonly commentModel: typeof CommentModel,
-    private readonly paginatorService: PaginatorService
+    private readonly commentModel: typeof CommentModel
   ) {
   }
 
@@ -44,7 +42,7 @@ export class CommentsService {
     }).then((comments) => {
       let result: Record<string, number> = {};
       comments.forEach((comment) => {
-        result[comment.postId] = <number> comment.get('total');
+        result[comment.postId] = <number>comment.get('total');
       });
       return Promise.resolve(result);
     });
@@ -96,38 +94,50 @@ export class CommentsService {
     });
   }
 
-  async getComments(param: { page: number, status?: string, keyword?: string }): Promise<CommentListVo> {
-    const { keyword, status } = param;
-    const pageSize = this.paginatorService.getPageSize();
-    const where = {};
-    if (status) {
-      where['commentStatus'] = {
-        [Op.eq]: status
-      };
+  async getComments(param: CommentQueryParam): Promise<CommentListVo> {
+    const { isAdmin, from, postId, keyword, status, orders } = param;
+    const pageSize = param.pageSize || 10;
+    const where = {
+      commentStatus: {
+        [Op.in]: [CommentStatus.NORMAL]
+      }
+    };
+    if (postId) {
+      where['postId'] = postId;
     }
-    if (keyword) {
-      where['commentContent'] = {
-        [Op.like]: `%${keyword}%`
-      };
+    const limitOpt: FindOptions = {};
+    if (isAdmin && from === 'admin') {
+      if (status) {
+        where['commentStatus'] = {
+          [Op.in]: [status]
+        };
+      } else {
+        where['commentStatus'] = {
+          [Op.in]: [CommentStatus.PENDING, CommentStatus.NORMAL]
+        };
+      }
+      if (keyword) {
+        where['commentContent'] = {
+          [Op.like]: `%${keyword}%`
+        };
+      }
     }
     const total = await this.commentModel.count({ where });
     const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
 
+    if (isAdmin && from === 'admin') {
+      limitOpt['limit'] = pageSize;
+      limitOpt['offset'] = pageSize * (page - 1);
+    }
     const comments = await this.commentModel.findAll({
       where,
       include: [{
         model: PostModel,
         attributes: ['postId', 'postGuid', 'postTitle']
       }],
-      order: [['created', 'desc']],
-      limit: pageSize,
-      offset: pageSize * (page - 1),
-      subQuery: false
-    });
-    comments.forEach((comment) => {
-      // todo: time format changes to config
-      comment.createdText = moment(comment.created).format('YYYY-MM-DD HH:mm');
-      comment.commentStatusDesc = CommentStatusDesc[getEnumKeyByValue(CommentStatus, comment.commentStatus)];
+      order: orders || [['created', 'desc']],
+      subQuery: false,
+      ...limitOpt
     });
 
     return {

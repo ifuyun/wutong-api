@@ -1,24 +1,26 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Query, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Req, Session, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { CommentFlag, CommentStatus } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { IdParams } from '../../decorators/id-params.decorator';
 import { Ip } from '../../decorators/ip.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
-import { User } from '../../decorators/user.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
+import { User } from '../../decorators/user.decorator';
 import { CommentDto } from '../../dtos/comment.dto';
-import { CustomException } from '../../exceptions/custom.exception';
-import { UserVo } from '../../interfaces/users.interface';
-import { TrimPipe } from '../../pipes/trim.pipe';
-import { CommentsService } from './comments.service';
-import { PostsService } from '../post/posts.service';
-import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { IdParams } from '../../decorators/id-params.decorator';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { getSuccessResponse } from '../../transformers/response.transformers';
+import { CustomException } from '../../exceptions/custom.exception';
+import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
+import { CommentQueryParam } from '../../interfaces/comments.interface';
 import { HttpResponseEntity } from '../../interfaces/http-response';
+import { ParseIntPipe } from '../../pipes/parse-int.pipe';
+import { TrimPipe } from '../../pipes/trim.pipe';
+import { getQueryOrders } from '../../transformers/query-orders.transformers';
+import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CaptchaService } from '../captcha/captcha.service';
+import { PostsService } from '../post/posts.service';
+import { CommentsService } from './comments.service';
 
 @Controller()
 export class CommentController {
@@ -33,11 +35,35 @@ export class CommentController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['postId'] })
   @Header('Content-Type', 'application/json')
-  async getCommentsByPostId(@Query('postId', new TrimPipe()) postId: string): Promise<HttpResponseEntity> {
-    if (!postId) {
+  async getComments(
+    @Query('page', new ParseIntPipe(1)) page: number,
+    @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
+    @Query('postId', new TrimPipe()) postId: string,
+    @Query('status', new TrimPipe()) status: CommentStatus,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('orders', new TrimPipe()) orders: string[],
+    @Query('from', new TrimPipe()) from: string,
+    @IsAdmin() isAdmin: boolean
+  ): Promise<HttpResponseEntity> {
+    const param: CommentQueryParam = {
+      page,
+      pageSize,
+      postId,
+      status,
+      keyword,
+      isAdmin,
+      from
+    };
+    if (from !== 'admin' && !postId) {
       throw new BadRequestException();
     }
-    const comments = await this.commentsService.getCommentsByPostId(postId);
+    if (isAdmin && from === 'admin' && orders.length > 0) {
+      param.orders = getQueryOrders({
+        commentVote: 1,
+        created: 2
+      }, orders);
+    }
+    const comments = await this.commentsService.getComments(param);
     return getSuccessResponse(comments);
   }
 

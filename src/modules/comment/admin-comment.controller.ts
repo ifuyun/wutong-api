@@ -2,6 +2,8 @@ import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, 
 import { Request } from 'express';
 import { CommentStatus, CommentStatusDesc, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
+import { CommentQueryParam } from '../../interfaces/comments.interface';
 import { UtilService } from '../util/util.service';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
@@ -35,12 +37,14 @@ export class AdminCommentController {
   async showComments(
     @Req() req: Request,
     @Param('page', new ParseIntPipe(1)) page: number,
-    @Query('status', new TrimPipe()) status: string,
+    @Query('status', new TrimPipe()) status: CommentStatus,
     @Query('keyword', new TrimPipe()) keyword: string,
-    @Search() search: Record<string, any>
+    @Search() search: Record<string, any>,
+    @IsAdmin() isAdmin: boolean
   ) {
     const options = await this.optionsService.getOptions();
-    const commentList = await this.commentsService.getComments({ page, status, keyword });
+    const param: CommentQueryParam = { page, status, keyword, isAdmin };
+    const commentList = await this.commentsService.getComments(param);
     const { comments, total } = commentList;
     page = commentList.page;
 

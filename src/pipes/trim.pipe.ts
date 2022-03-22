@@ -3,12 +3,15 @@ import { trim } from 'lodash';
 
 @Injectable()
 export class TrimPipe implements PipeTransform {
-  transform(data: string | Record<string, any>, metadata: ArgumentMetadata): string | Record<string, any> {
+  transform(data: string | Record<string, any> | string[], metadata: ArgumentMetadata): string | Record<string, any> {
     if (!data) {
       return '';
     }
     if (typeof data === 'string') {
       return trim(data);
+    }
+    if (Array.isArray(data)) {
+      return data.map((item) => trim(item));
     }
     const iterator = (obj: Record<string, any>) => {
       Object.keys(obj).forEach((k) => {

@@ -10,7 +10,6 @@ import { InitInterceptor } from './interceptors/init.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { CaptchaModule } from './modules/captcha/captcha.module';
 import { CommentModule } from './modules/comment/comment.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { LinkModule } from './modules/link/link.module';
 import { LoggerService } from './modules/logger/logger.service';
 import { OptionModule } from './modules/option/option.module';
@@ -35,7 +34,6 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
     UserModule,
     CommentModule,
     VoteModule,
-    DashboardModule,
     TaxonomyModule,
     LinkModule,
     OptionModule,

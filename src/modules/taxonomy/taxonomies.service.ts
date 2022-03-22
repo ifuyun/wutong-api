@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../../common/common.enum';
+import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common/constants';
+import { TaxonomyDto } from '../../dtos/taxonomy.dto';
+import { getUuid } from '../../helpers/helper';
+import { CrumbEntity } from '../../interfaces/crumb.interface';
+import { TaxonomyEntity, TaxonomyList, TaxonomyMap, TaxonomyNode, TaxonomyQueryParam, TaxonomyStatusMap } from '../../interfaces/taxonomies.interface';
+import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
+import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
-import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common/constants';
-import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../../common/common.enum';
-import { TaxonomyDto } from '../../dtos/taxonomy.dto';
-import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
-import { CrumbEntity } from '../../interfaces/crumb.interface';
-import { TaxonomyListVo, TaxonomyNode, TaxonomyStatusMap, TaxonomyMap, TaxonomyEntity } from '../../interfaces/taxonomies.interface';
-import { TaxonomyModel } from '../../models/taxonomy.model';
-import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 
 @Injectable()
 export class TaxonomiesService {
@@ -237,15 +237,15 @@ export class TaxonomiesService {
     });
   }
 
-  async getTaxonomies(param: { page: number, type: string, status?: number, keyword?: string }): Promise<TaxonomyListVo> {
-    const { type, status, keyword } = param;
+  async getTaxonomies(param: TaxonomyQueryParam): Promise<TaxonomyList> {
+    const { type, status, keyword, orders } = param;
+    const pageSize = param.pageSize || 10;
     let where = {
       type: {
         [Op.eq]: type
       }
     };
-    // todo: move to validation
-    if (typeof status === 'number' && /^\d+$/i.test(status.toString())) {
+    if (status !== undefined && status !== null && !isNaN(status)) {
       where['status'] = status;
     }
     if (keyword) {
@@ -263,19 +263,15 @@ export class TaxonomiesService {
         }
       }];
     }
-    const pageSize = this.paginatorService.getPageSize();
     const total = await this.taxonomyModel.count({ where });
     const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
 
     const taxonomies = await this.taxonomyModel.findAll({
       where,
-      order: [['termOrder', 'asc'], ['created', 'desc']],
+      order: orders || [['termOrder', 'asc'], ['created', 'desc']],
       limit: pageSize,
       offset: pageSize * (page - 1),
       subQuery: false
-    });
-    taxonomies.forEach((taxonomy) => {
-      taxonomy.statusDesc = TaxonomyStatusDesc[getEnumKeyByValue(TaxonomyStatus, taxonomy.status)];
     });
 
     return {

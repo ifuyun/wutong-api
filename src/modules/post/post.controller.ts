@@ -1,38 +1,39 @@
 import { Controller, Get, Header, HttpStatus, Param, Query, Render, Req, Session, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import { uniq as unique } from 'lodash';
+import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
+import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
+import { IdParams } from '../../decorators/id-params.decorator';
+import { IpAndAgent } from '../../decorators/ip-and-agent.decorator';
+import { Ip } from '../../decorators/ip.decorator';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
+import { Referer } from '../../decorators/referer.decorator';
+import { UserAgent } from '../../decorators/user-agent.decorator';
+import { User } from '../../decorators/user.decorator';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
+import { CustomException } from '../../exceptions/custom.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
-import { PostsService } from './posts.service';
-import { PostCommonService } from './post-common.service';
+import { appendUrlRef, cutStr, filterHtmlTag } from '../../helpers/helper';
+import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
+import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { CrumbEntity } from '../../interfaces/crumb.interface';
+import { PostQueryParam } from '../../interfaces/posts.interface';
+import { TaxonomyModel } from '../../models/taxonomy.model';
+import { ParseIntPipe } from '../../pipes/parse-int.pipe';
+import { TrimPipe } from '../../pipes/trim.pipe';
+import { getQueryOrders } from '../../transformers/query-orders.transformers';
+import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CommentsService } from '../comment/comments.service';
-import { UtilService } from '../util/util.service';
 import { CrumbService } from '../crumb/crumb.service';
 import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
-import { ResponseCode } from '../../common/response-code.enum';
-import { Message } from '../../common/message.enum';
-import { POST_DESCRIPTION_LENGTH } from '../../common/constants';
-import { IdParams } from '../../decorators/id-params.decorator';
-import { Ip } from '../../decorators/ip.decorator';
-import { IpAndAgent } from '../../decorators/ip-and-agent.decorator';
-import { IsAdmin } from '../../decorators/is-admin.decorator';
-import { Referer } from '../../decorators/referer.decorator';
-import { User } from '../../decorators/user.decorator';
-import { UserAgent } from '../../decorators/user-agent.decorator';
-import { CustomException } from '../../exceptions/custom.exception';
-import { appendUrlRef, cutStr, filterHtmlTag } from '../../helpers/helper';
-import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { CrumbEntity } from '../../interfaces/crumb.interface';
-import { ParseIntPipe } from '../../pipes/parse-int.pipe';
-import { getSuccessResponse } from '../../transformers/response.transformers';
-import { AuthUser } from '../../decorators/auth-user.decorator';
-import { AuthUserEntity } from '../../interfaces/auth.interface';
-import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
-import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { TrimPipe } from '../../pipes/trim.pipe';
-import { PostQueryParam } from '../../interfaces/posts.interface';
-import { TaxonomyModel } from '../../models/taxonomy.model';
+import { UtilService } from '../util/util.service';
+import { PostCommonService } from './post-common.service';
+import { PostsService } from './posts.service';
 
 @Controller()
 export class PostController {
@@ -55,11 +56,13 @@ export class PostController {
     @Req() req: Request,
     @Query('page', new ParseIntPipe(1)) page: number,
     @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
-    @Query('keyword', new TrimPipe()) keyword: string,
     @Query('category', new TrimPipe()) category: string,
     @Query('tag', new TrimPipe()) tag: string,
     @Query('year', new TrimPipe()) year: string,
     @Query('month', new ParseIntPipe()) month: number,
+    @Query('status', new TrimPipe()) status: PostStatus,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('orders', new TrimPipe()) orders: string[],
     @Query('from', new TrimPipe()) from: string,
     @IsAdmin() isAdmin: boolean
   ) {
@@ -67,12 +70,14 @@ export class PostController {
       page,
       pageSize,
       postType: PostType.POST,
+      tag,
+      year,
+      month: month ? month < 10 ? '0' + month : month.toString() : '',
+      status,
+      keyword,
       isAdmin,
       from
     };
-    if (keyword) {
-      param.keyword = keyword;
-    }
     let crumbs: CrumbEntity[] = [];
     if (category) {
       const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
@@ -88,13 +93,18 @@ export class PostController {
       param.subTaxonomyIds = result.subTaxonomyIds;
       crumbs = result.crumbs;
     }
-    if (tag) {
-      param.tag = tag;
+
+    if (isAdmin && from === 'admin' && orders.length > 0) {
+      /* 管理员，且，从后台访问，且，传递了排序参数 */
+      param.orders = getQueryOrders({
+        postViewCount: 1,
+        commentCount: 2,
+        postDate: 3,
+        postCreated: 4,
+        postModified: 5
+      }, orders);
     }
-    if (year) {
-      param.year = year;
-      param.month = month ? month < 10 ? '0' + month : month.toString() : '';
-    }
+
     const postList = await this.postsService.getPosts(param);
     const commentCount = await this.commentsService.getCommentCountByPosts(postList.postIds);
     postList.posts.map((post) => {

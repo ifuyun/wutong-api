@@ -1,3 +1,4 @@
+import { Order } from 'sequelize';
 import { PostModel } from '../models/post.model';
 import { TaxonomyModel } from '../models/taxonomy.model';
 import { PostStatus, PostType } from '../common/common.enum';
@@ -25,8 +26,8 @@ export interface PostQueryParam {
   page: number;
   pageSize?: number;
   isAdmin: boolean;
-  postType?: PostType;
   from?: string;
+  postType?: PostType;
   keyword?: string;
   subTaxonomyIds?: string[];
   tag?: string;
@@ -34,4 +35,5 @@ export interface PostQueryParam {
   month?: string;
   status?: PostStatus;
   author?: string;
+  orders?: Order;
 }

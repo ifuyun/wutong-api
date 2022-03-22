@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Role } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { UserLoginDto } from '../../dtos/user-login.dto';
@@ -38,19 +39,23 @@ export class AuthService {
   }
 
   parse(token: string): AuthUserEntity {
+    let user: AuthUserEntity = {
+      isAdmin: false
+    };
     if (token) {
       token = token.split(' ')[1];
       try {
-        const authData = this.jwtService.verify(token, {
+        user = this.jwtService.verify(token, {
           secret: this.configService.get('auth.secret')
-        });
-        return authData || {};
+        }) || {};
+        user.isAdmin = !!(user && user.meta && user.meta.roles === Role.ADMIN);
+        return user;
       }
       catch (e) {
         // eg: e.message: jwt expired
-        return {};
+        return user;
       }
     }
-    return {};
+    return user;
   }
 }

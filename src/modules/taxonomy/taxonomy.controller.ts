@@ -1,12 +1,9 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { TaxonomiesService } from './taxonomies.service';
-import { UtilService } from '../util/util.service';
-import { OptionsService } from '../option/options.service';
-import { PaginatorService } from '../paginator/paginator.service';
 import { Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
@@ -16,13 +13,17 @@ import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { getEnumKeyByValue } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { TaxonomyNode } from '../../interfaces/taxonomies.interface';
+import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { TaxonomyNode, TaxonomyQueryParam } from '../../interfaces/taxonomies.interface';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
+import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
-import { AuthUser } from '../../decorators/auth-user.decorator';
-import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { OptionsService } from '../option/options.service';
+import { PaginatorService } from '../paginator/paginator.service';
+import { UtilService } from '../util/util.service';
+import { TaxonomiesService } from './taxonomies.service';
 
 @Controller('')
 export class TaxonomyController {
@@ -34,13 +35,47 @@ export class TaxonomyController {
   ) {
   }
 
-  @Get('api/taxonomies')
+  @Get('api/taxonomies/taxonomy-tree')
   @Header('Content-Type', 'application/json')
   async getTaxonomyTree(@AuthUser() user: AuthUserEntity) {
     const taxonomies = await this.taxonomiesService.getAllTaxonomies(user.isAdmin ? [0, 1] : 1);
     const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
 
     return getSuccessResponse(taxonomyTree);
+  }
+
+  @Get('api/taxonomies')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async getTaxonomies(
+    @Query('page', new ParseIntPipe(1)) page: number,
+    @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
+    @Query('status', new ParseIntPipe()) status: TaxonomyStatus,
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('orders', new TrimPipe()) orders: string[],
+  ) {
+    if (!type || !Object.keys(TaxonomyType).map((key) => TaxonomyType[key]).includes(type)) {
+      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_TYPE_INVALID);
+    }
+    if (status && !this.taxonomiesService.getAllTaxonomyStatusValues().includes(status)) {
+      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_STATUS_INVALID);
+    }
+    const param: TaxonomyQueryParam = {
+      page,
+      pageSize,
+      type,
+      status,
+      keyword
+    };
+    if (orders.length > 0) {
+      param.orders = getQueryOrders({
+        termOrder: 1
+      }, orders);
+    }
+    const taxonomies = await this.taxonomiesService.getTaxonomies(param);
+    return getSuccessResponse(taxonomies);
   }
 
   @Get(['admin/taxonomy', 'admin/taxonomy/page-:page'])

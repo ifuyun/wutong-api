@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { AdminOptionController } from './admin-option.controller';
 import { OptionsService } from './options.service';
 import { UtilModule } from '../util/util.module';
@@ -10,7 +11,8 @@ import { OptionController } from './option.controller';
   imports: [
     DatabaseModule,
     LoggerModule,
-    UtilModule
+    UtilModule,
+    forwardRef(() => AuthModule)
   ],
   controllers: [AdminOptionController, OptionController],
   providers: [OptionsService],
