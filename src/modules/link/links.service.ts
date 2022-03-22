@@ -5,10 +5,10 @@ import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
-import { LinkTarget, LinkTargetDesc, LinkVisible, LinkVisibleDesc, TaxonomyType } from '../../common/common.enum';
+import { CommentStatus, LinkTarget, LinkTargetDesc, LinkVisible, LinkVisibleDesc, TaxonomyType } from '../../common/common.enum';
 import { LinkDto } from '../../dtos/link.dto';
 import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
-import { LinkListVo } from '../../interfaces/links.interface';
+import { LinkListVo, LinkQueryParam } from '../../interfaces/links.interface';
 import { LinkModel } from '../../models/link.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -27,7 +27,7 @@ export class LinksService {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  async getLinks(param: { slug: string, visible: LinkVisible | LinkVisible[] }): Promise<LinkModel[]> {
+  async getLinksByType(param: { slug: string, visible: LinkVisible | LinkVisible[] }): Promise<LinkModel[]> {
     return this.linkModel.findAll({
       attributes: ['linkName', 'linkUrl', 'linkDescription', 'linkTarget'],
       include: [{
@@ -53,33 +53,47 @@ export class LinksService {
   }
 
   async getFriendLinks(visible: LinkVisible | LinkVisible[]): Promise<LinkModel[]> {
-    return this.getLinks({
+    return this.getLinksByType({
       slug: 'friendlink',
       visible: visible
     });
   }
 
   async getQuickLinks(): Promise<LinkModel[]> {
-    return this.getLinks({
+    return this.getLinksByType({
       slug: 'quicklink',
       visible: [LinkVisible.HOMEPAGE, LinkVisible.SITE]
     });
   }
 
-  async getLinksByPage(page: number = 1): Promise<LinkListVo> {
-    const total = await this.linkModel.count();
-    const pageSize = this.paginatorService.getPageSize();
-    page = Math.max(Math.min(page, Math.ceil(total / pageSize)), 1);
+  async getLinks(param: LinkQueryParam): Promise<LinkListVo> {
+    const { visible, keyword, orders } = param;
+    const pageSize = param.pageSize || 10;
+    const where = {
+    };
+    if (Array.isArray(visible) && visible.length > 0 || visible) {
+      where['linkVisible'] = visible;
+    }
+    if (keyword) {
+      where[Op.or] = [{
+        linkName: {
+          [Op.like]: `%${keyword}%`
+        }
+      }, {
+        linkDescription: {
+          [Op.like]: `%${keyword}%`
+        }
+      }];
+    }
+
+    const total = await this.linkModel.count({ where });
+    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
     /* findAndCountAll无法判断page大于最大页数的情况 */
     const links = await this.linkModel.findAll({
-      order: [['linkOrder', 'desc']],
+      where,
+      order: orders || [['linkOrder', 'desc']],
       limit: pageSize,
       offset: pageSize * (page - 1)
-    });
-    links.map((link) => {
-      link.createdText = moment(link.created).format('YYYY-MM-DD');
-      link.linkVisible = LinkVisibleDesc[getEnumKeyByValue(LinkVisible, link.linkVisible)];
-      link.linkTarget = LinkTargetDesc[getEnumKeyByValue(LinkTarget, link.linkTarget)];
     });
     return { links, page, total };
   }

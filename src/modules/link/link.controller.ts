@@ -1,12 +1,14 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
+import { LinkQueryParam } from '../../interfaces/links.interface';
+import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { LinksService } from './links.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../util/util.service';
-import { LinkVisible, Role, TaxonomyType } from '../../common/common.enum';
+import { CommentStatus, LinkVisible, PostType, Role, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
@@ -61,6 +63,42 @@ export class LinkController {
     return getSuccessResponse(links);
   }
 
+  @Get('api/links')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async getLinks(
+    @Param('page', new ParseIntPipe(1)) page: number,
+    @Param('pageSize', new ParseIntPipe(10)) pageSize: number,
+    @Query('visible', new TrimPipe()) visible: LinkVisible | LinkVisible[],
+    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('orders', new TrimPipe()) orders: string[],
+  ) {
+    if (visible) {
+      visible = Array.isArray(visible) ? visible : <LinkVisible[]>visible.split(',') || [];
+      const allowed = Object.keys(LinkVisible).map((key) => LinkVisible[key]);
+      (visible as LinkVisible[]).forEach((v: LinkVisible) => {
+        if (!allowed.includes(v)) {
+          throw new BadRequestException(Message.ILLEGAL_PARAM);
+        }
+      });
+    }
+    const param: LinkQueryParam = {
+      page,
+      pageSize,
+      visible,
+      keyword
+    };
+    if (orders.length > 0) {
+      param.orders = getQueryOrders({
+        linkOrder: 1,
+        created: 2
+      }, orders);
+    }
+    const links = await this.linkService.getLinks(param);
+    return getSuccessResponse(links);
+  }
+
   @Get(['admin/link', 'admin/link/page-:page'])
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
@@ -70,7 +108,7 @@ export class LinkController {
     @Param('page', new ParseIntPipe(1)) page: number,
     @Search() search: string
   ) {
-    const linkList = await this.linkService.getLinksByPage(page);
+    const linkList = await this.linkService.getLinks({ page });
     const { links, total } = linkList;
     const options = await this.optionsService.getOptions();
     const titles = ['链接列表', '管理后台', options.site_name];

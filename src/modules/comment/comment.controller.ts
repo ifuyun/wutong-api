@@ -45,6 +45,7 @@ export class CommentController {
     @Query('from', new TrimPipe()) from: string,
     @IsAdmin() isAdmin: boolean
   ): Promise<HttpResponseEntity> {
+    // todo: status is an array
     const param: CommentQueryParam = {
       page,
       pageSize,
