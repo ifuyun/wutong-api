@@ -1,18 +1,23 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Req, Session, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { CommentFlag, CommentStatus } from '../../common/common.enum';
+import { CommentFlag, CommentStatus, Role } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Ip } from '../../decorators/ip.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
+import { Roles } from '../../decorators/roles.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
 import { User } from '../../decorators/user.decorator';
 import { CommentDto } from '../../dtos/comment.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
+import { ForbiddenException } from '../../exceptions/forbidden.exception';
+import { UnknownException } from '../../exceptions/unknown.exception';
+import { RolesGuard } from '../../guards/roles.guard';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { CommentQueryParam } from '../../interfaces/comments.interface';
+import { CommentAuditParam, CommentQueryParam } from '../../interfaces/comments.interface';
 import { HttpResponseEntity } from '../../interfaces/http-response';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -39,22 +44,30 @@ export class CommentController {
     @Query('page', new ParseIntPipe(1)) page: number,
     @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
     @Query('postId', new TrimPipe()) postId: string,
-    @Query('status', new TrimPipe()) status: CommentStatus,
+    @Query('status', new TrimPipe()) status: CommentStatus | CommentStatus[],
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('orders', new TrimPipe()) orders: string[],
     @Query('from', new TrimPipe()) from: string,
     @IsAdmin() isAdmin: boolean
   ): Promise<HttpResponseEntity> {
-    // todo: status is an array
     const param: CommentQueryParam = {
       page,
       pageSize,
       postId,
-      status,
       keyword,
       isAdmin,
       from
     };
+    if (status) {
+      status = typeof status === 'string' ? [status] : status;
+      const allowed = Object.keys(CommentStatus).map((key) => CommentStatus[key]);
+      status.forEach((v: CommentStatus) => {
+        if (!allowed.includes(v)) {
+          throw new BadRequestException(Message.ILLEGAL_PARAM);
+        }
+      });
+      param.status = status;
+    }
     if (from !== 'admin' && !postId) {
       throw new BadRequestException();
     }
@@ -66,6 +79,25 @@ export class CommentController {
     }
     const comments = await this.commentsService.getComments(param);
     return getSuccessResponse(comments);
+  }
+
+  @Post('api/comments/audit')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams({ idInBody: ['commentId'] })
+  @Header('Content-Type', 'application/json')
+  async auditComment(
+    @Body(new TrimPipe()) data: CommentAuditParam,
+  ) {
+    if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
+      throw new ForbiddenException();
+    }
+    const result = await this.commentsService.auditComment(data.commentIds, data.action);
+    if (result[0] < 1) {
+      throw new UnknownException(Message.DB_QUERY_FAIL);
+    }
+    return getSuccessResponse();
   }
 
   @Post(['comment/save', 'admin/comment/save', 'api/comments'])

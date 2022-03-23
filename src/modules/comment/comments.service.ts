@@ -107,14 +107,12 @@ export class CommentsService {
     }
     const limitOpt: FindOptions = {};
     if (isAdmin && from === 'admin') {
-      if (status) {
+      if (status && status.length > 0) {
         where['commentStatus'] = {
-          [Op.in]: [status]
+          [Op.in]: status
         };
       } else {
-        where['commentStatus'] = {
-          [Op.in]: [CommentStatus.PENDING, CommentStatus.NORMAL]
-        };
+        delete where['commentStatus'];
       }
       if (keyword) {
         where['commentContent'] = {
@@ -145,13 +143,13 @@ export class CommentsService {
     };
   }
 
-  async auditComment(commentId: string, status: string): Promise<[number]> {
+  async auditComment(commentIds: string[], status: string): Promise<[number]> {
     return this.commentModel.update({
       commentStatus: status
     }, {
       where: {
         commentId: {
-          [Op.eq]: commentId
+          [Op.in]: commentIds
         }
       }
     });

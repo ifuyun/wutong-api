@@ -41,7 +41,7 @@ export class VoteController {
     };
     const result = await this.votesService.saveVote(voteDto);
     if (!result) {
-      throw new CustomException(Message.DB_QUERY_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.VOTE_FAILURE);
+      throw new CustomException(Message.DB_QUERY_FAIL, HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.VOTE_FAILURE);
     }
     const comment = await this.commentsService.getCommentById(voteDto.objectId);
 

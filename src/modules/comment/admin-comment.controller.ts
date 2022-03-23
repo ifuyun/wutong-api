@@ -1,11 +1,9 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import { CommentStatus, CommentStatusDesc, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
-import { IsAdmin } from '../../decorators/is-admin.decorator';
-import { CommentQueryParam } from '../../interfaces/comments.interface';
-import { UtilService } from '../util/util.service';
 import { IdParams } from '../../decorators/id-params.decorator';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { Search } from '../../decorators/search.decorator';
@@ -14,11 +12,13 @@ import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { getEnumKeyByValue } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
+import { CommentQueryParam } from '../../interfaces/comments.interface';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
-import { CommentsService } from './comments.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
+import { UtilService } from '../util/util.service';
+import { CommentsService } from './comments.service';
 
 @Controller('admin/comment')
 @UseGuards(RolesGuard)
@@ -43,7 +43,7 @@ export class AdminCommentController {
     @IsAdmin() isAdmin: boolean
   ) {
     const options = await this.optionsService.getOptions();
-    const param: CommentQueryParam = { page, status, keyword, isAdmin };
+    const param: CommentQueryParam = { page, status: [status], keyword, isAdmin };
     const commentList = await this.commentsService.getComments(param);
     const { comments, total } = commentList;
     page = commentList.page;
@@ -112,30 +112,6 @@ export class AdminCommentController {
       user,
       title,
       action
-    };
-  }
-
-  @Post('audit')
-  @Header('Content-Type', 'application/json')
-  @UseInterceptors(CheckIdInterceptor)
-  @IdParams({ idInBody: ['commentId'] })
-  async auditComment(
-    @Body(new TrimPipe()) data,
-    @Referer() referer: string
-  ) {
-    if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
-      throw new CustomException('操作不允许。', HttpStatus.FORBIDDEN, ResponseCode.FORBIDDEN);
-    }
-    const result = await this.commentsService.auditComment(data.commentId, data.action);
-    if (result[0] < 1) {
-      throw new CustomException('操作失败。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.INTERNAL_SERVER_ERROR);
-    }
-    return {
-      status: HttpStatus.OK,
-      code: ResponseCode.SUCCESS,
-      data: {
-        url: referer || '/admin/comment'
-      }
     };
   }
 }

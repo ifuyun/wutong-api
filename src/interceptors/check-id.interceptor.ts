@@ -1,8 +1,11 @@
 import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
+import { Message } from '../common/message.enum';
 import { ResponseCode } from '../common/response-code.enum';
+import { BadRequestException } from '../exceptions/bad-request.exception';
 import { CustomException } from '../exceptions/custom.exception';
+import { format } from '../helpers/helper';
 
 @Injectable()
 export class CheckIdInterceptor implements NestInterceptor {
@@ -38,19 +41,29 @@ export class CheckIdInterceptor implements NestInterceptor {
     });
     idParams.idInBody && idParams.idInBody.forEach((key) => {
       // 表单参数允许为空，非空校验在action层面判断
-      if (key && req.body[key]) {
-        ids.push(req.body[key]);
+      let bodyIds = req.body[key] || '';
+      if (typeof bodyIds === 'string') {
+        bodyIds = bodyIds.trim();
+        if (bodyIds) {
+          ids.push(bodyIds);
+        }
+      } else if (Array.isArray(bodyIds)) {
+        bodyIds.forEach((id) => {
+          if (typeof id !== 'string') {
+            throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, id), HttpStatus.BAD_REQUEST, ResponseCode.ILLEGAL_PARAMS);
+          }
+          id = id.trim();
+          if (id) {
+            ids.push(id);
+          }
+        });
+      } else {
+        throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, bodyIds), HttpStatus.BAD_REQUEST, ResponseCode.ILLEGAL_PARAMS);
       }
     });
     ids.forEach((id) => {
       if (!id || !/^[0-9a-fA-F]{16}$/i.test(id)) {
-        throw new CustomException({
-          status: HttpStatus.BAD_REQUEST,
-          data: {
-            code: ResponseCode.REQUEST_PARAM_ILLEGAL,
-            message: `Request param: ${id} is invalid.`
-          }
-        });
+        throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, id), HttpStatus.BAD_REQUEST, ResponseCode.ILLEGAL_PARAMS);
       }
     });
     return next.handle();

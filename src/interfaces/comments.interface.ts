@@ -20,6 +20,11 @@ export interface CommentQueryParam {
   from?: string;
   postId?: string;
   keyword?: string;
-  status?: CommentStatus;
+  status?: CommentStatus[];
   orders?: Order;
+}
+
+export interface CommentAuditParam {
+  commentIds: string[];
+  action: CommentStatus;
 }
