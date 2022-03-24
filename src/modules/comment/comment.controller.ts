@@ -100,7 +100,7 @@ export class CommentController {
     return getSuccessResponse();
   }
 
-  @Post(['comment/save', 'admin/comment/save', 'api/comments'])
+  @Post(['api/comments'])
   @Header('Content-Type', 'application/json')
   async saveComment(
     @Req() req: Request,
@@ -124,11 +124,15 @@ export class CommentController {
         ...commentData,
         commentAuthor: xss.sanitize(commentDto.commentAuthor || '') || user.userNiceName || '',
         commentAuthorEmail: xss.sanitize(commentDto.commentAuthorEmail || '') || user.userEmail || '',
-        commentStatus: CommentStatus.PENDING,
+        commentStatus: isAdmin ? CommentStatus.NORMAL : CommentStatus.PENDING,
         commentIp: ip,
         commentAgent: agent,
         userId: user.userId || ''
       };
+    } else {
+      if (isAdmin && commentDto.commentStatus) {
+        commentData.commentStatus = commentDto.commentStatus;
+      }
     }
     // 不是管理员，或，不是在后台修改、回复评论时
     const shouldCheckCaptcha = !isAdmin || !commentData.commentId && !commentData.parentId;
@@ -142,24 +146,18 @@ export class CommentController {
     if (post.commentFlag === CommentFlag.CLOSE && !isAdmin) {
       throw new CustomException('该文章禁止评论', HttpStatus.FORBIDDEN, ResponseCode.POST_COMMENT_CLOSED);
     }
-    commentData.commentStatus = post.commentFlag === CommentFlag.OPEN || isAdmin ? CommentStatus.NORMAL : CommentStatus.PENDING;
+    if (post.commentFlag === CommentFlag.OPEN) {
+      commentData.commentStatus = CommentStatus.NORMAL;
+    }
 
     const result = await this.commentsService.saveComment(commentData);
     if (result < 1) {
-      throw new CustomException('评论保存失败。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.COMMENT_SAVE_ERROR);
+      throw new UnknownException(Message.COMMENT_SAVE_ERROR);
     }
     this.captchaService.removeCaptcha(req.session);
 
-    const referer = session.commentReferer;
-    delete session.commentReferer;
-    const postUrl = post.postGuid || ('/post/' + post.postId);
-
-    return {
-      code: ResponseCode.SUCCESS,
-      data: {
-        commentFlag: post.commentFlag,
-        url: isAdmin ? referer || postUrl : postUrl
-      }
-    };
+    return getSuccessResponse({
+      commentFlag: post.commentFlag
+    });
   }
 }

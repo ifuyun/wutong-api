@@ -17,6 +17,8 @@ export const POST_TAG_LIMIT = 15;
 export const POST_SOURCE_LENGTH = 100;
 export const POST_AUTHOR_LENGTH = 50;
 
+export const COMMENT_LENGTH = 800;
+
 export const LINK_NAME_LENGTH = 20;
 export const LINK_URL_LENGTH = 50;
 export const LINK_DESCRIPTION_LENGTH = 40;

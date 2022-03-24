@@ -1,8 +1,12 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, MaxLength } from 'class-validator';
+import { CommentStatus } from '../common/common.enum';
+import { COMMENT_LENGTH } from '../common/constants';
+import { getEnumValues } from '../helpers/helper';
 import { IsCommentExist } from '../validators/async/is-comment-exist.validator';
 import { IsPostExist } from '../validators/async/is-post-exist.validator';
 import { IsId } from '../validators/is-id.validator';
+import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsRequired } from '../validators/is-required.validator';
 
 export class BasicCommentDto {
@@ -27,8 +31,15 @@ export class BasicCommentDto {
   @IsNotEmpty({ message: 'Email不能为空' })
   commentAuthorEmail?: string;
 
+  @MaxLength(COMMENT_LENGTH, { message: '评论内容长度应不大于$constraint1字符' })
   @IsRequired({ message: '评论内容不能为空' })
   commentContent: string;
+
+  @IsIncludedIn(
+    { ranges: getEnumValues(CommentStatus), allowNull: true },
+    { message: '评论状态无效' }
+  )
+  commentStatus?: CommentStatus;
 }
 
 export class AdditionalCommentDto {
