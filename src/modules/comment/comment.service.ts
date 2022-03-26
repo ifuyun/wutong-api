@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import * as moment from 'moment';
 import { FindOptions, Op } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import { CommentStatus, CommentStatusDesc } from '../../common/common.enum';
 import { CommentDto } from '../../dtos/comment.dto';
 import { getUuid } from '../../helpers/helper';
@@ -11,7 +9,7 @@ import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
 
 @Injectable()
-export class CommentsService {
+export class CommentService {
   constructor(
     @InjectModel(CommentModel)
     private readonly commentModel: typeof CommentModel
@@ -27,48 +25,6 @@ export class CommentsService {
       });
     });
     return status;
-  }
-
-  async getCommentCountByPosts(postIds: string[]): Promise<Record<string, number>> {
-    return this.commentModel.findAll({
-      attributes: ['postId', [Sequelize.fn('count', 1), 'total']],
-      where: {
-        postId: postIds,
-        commentStatus: {
-          [Op.eq]: 'normal'
-        }
-      },
-      group: ['postId']
-    }).then((comments) => {
-      let result: Record<string, number> = {};
-      comments.forEach((comment) => {
-        result[comment.postId] = <number>comment.get('total');
-      });
-      return Promise.resolve(result);
-    });
-  }
-
-  async getCommentsByPostId(postId: string): Promise<CommentModel[]> {
-    return this.commentModel.findAll({
-      attributes: ['commentId', 'commentContent', 'commentAuthor', 'commentVote', 'created'],
-      where: {
-        postId: {
-          [Op.eq]: postId
-        },
-        commentStatus: {
-          [Op.eq]: 'normal'
-        }
-      },
-      order: [
-        ['created', 'desc']
-      ]
-    }).then((comments) => {
-      // todo: to be removed
-      comments.map((comment) => {
-        comment.createdText = moment(comment.created).format('YYYY-MM-DD HH:mm');
-      });
-      return Promise.resolve(comments);
-    });
   }
 
   async saveComment(commentDto: CommentDto): Promise<number> {
@@ -95,7 +51,7 @@ export class CommentsService {
   }
 
   async getComments(param: CommentQueryParam): Promise<CommentListVo> {
-    const { isAdmin, from, postId, keyword, status, orders } = param;
+    const { isAdmin, fromAdmin, postId, keyword, status, orders } = param;
     const pageSize = param.pageSize || 10;
     const where = {
       commentStatus: {
@@ -106,7 +62,7 @@ export class CommentsService {
       where['postId'] = postId;
     }
     const limitOpt: FindOptions = {};
-    if (isAdmin && from === 'admin') {
+    if (fromAdmin) {
       if (status && status.length > 0) {
         where['commentStatus'] = {
           [Op.in]: status
@@ -123,7 +79,7 @@ export class CommentsService {
     const total = await this.commentModel.count({ where });
     const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
 
-    if (isAdmin && from === 'admin') {
+    if (fromAdmin) {
       limitOpt['limit'] = pageSize;
       limitOpt['offset'] = pageSize * (page - 1);
     }

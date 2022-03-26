@@ -45,13 +45,6 @@ export enum PostType {
   ATTACHMENT = 'attachment'
 }
 
-export enum PostTypeDesc {
-  POST = '文章',
-  PAGE = '独立页面',
-  REVISION = '修订稿',
-  ATTACHMENT = '素材'
-}
-
 export enum PostStatus {
   PUBLISH = 'publish',
   PASSWORD = 'password',
@@ -83,12 +76,6 @@ export enum CommentFlag {
   OPEN = 'open',
   VERIFY = 'verify',
   CLOSE = 'close'
-}
-
-export enum CommentFlagDesc {
-  OPEN = '允许',
-  VERIFY = '审核',
-  CLOSE = '禁止'
 }
 
 export enum CommentStatus {
@@ -159,10 +146,4 @@ export enum CopyrightType {
   FORBIDDEN = 0,
   AUTHORIZED = 1,
   CC = 2
-}
-
-export enum CopyrightTypeDesc {
-  FORBIDDEN = '禁止转载',
-  AUTHORIZED = '转载需授权',
-  CC = 'CC-BY-NC-ND'
 }

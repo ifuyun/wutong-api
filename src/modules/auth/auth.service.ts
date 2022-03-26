@@ -26,6 +26,7 @@ export class AuthService {
       if (password === user.userPass) {
         return {
           accessToken: this.jwtService.sign({
+            userId: user.userId,
             userName: user.userNiceName,
             userEmail: user.userEmail,
             meta: user.meta

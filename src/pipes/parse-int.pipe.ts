@@ -8,11 +8,11 @@ export class ParseIntPipe implements PipeTransform<string, number> {
     this.defaultValue = defaultValue;
   }
 
-  transform(value: string, metadata: ArgumentMetadata): number {
-    if (typeof this.defaultValue === 'number') {
-      const intValue = parseInt(value, 10);
+  transform(value: string | number, metadata: ArgumentMetadata): number {
+    const intValue = typeof value === 'number' ? value : parseInt(value, 10);
+    if (typeof this.defaultValue === 'number' && !isNaN(this.defaultValue)) {
       return isNaN(intValue) ? this.defaultValue : intValue;
     }
-    return parseInt(value, 10);
+    return intValue;
   }
 }

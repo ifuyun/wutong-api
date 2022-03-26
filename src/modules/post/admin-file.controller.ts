@@ -6,20 +6,20 @@ import * as mkdirp from 'mkdirp';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as xss from 'sanitizer';
-import { OptionsService } from '../option/options.service';
-import { PostsService } from './posts.service';
-import { PostCommonService } from './post-common.service';
-import { UtilService } from '../util/util.service';
-import { WatermarkService } from '../util/watermark.service';
 import { PostStatus, PostType, Role } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { User } from '../../decorators/user.decorator';
 import { PostFileDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { getFileExt, getUuid } from '../../helpers/helper';
+import { OptionsService } from '../option/options.service';
+import { UtilService } from '../util/util.service';
+import { WatermarkService } from '../util/watermark.service';
+import { PostCommonService } from './post-common.service';
+import { PostsService } from './posts.service';
 
 @Controller('admin/file')
 @UseGuards(RolesGuard)
@@ -60,7 +60,7 @@ export class AdminFileController {
   @Header('Content-Type', 'application/json')
   async uploadFile(
     @Req() req: Request,
-    @User() user,
+    @AuthUser() user,
     @Session() session: any
   ) {
     const now = moment();

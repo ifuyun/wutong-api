@@ -4,12 +4,12 @@ import * as xss from 'sanitizer';
 import { CommentFlag, CommentStatus, Role } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Ip } from '../../decorators/ip.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
-import { User } from '../../decorators/user.decorator';
 import { CommentDto } from '../../dtos/comment.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
@@ -25,12 +25,12 @@ import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CaptchaService } from '../captcha/captcha.service';
 import { PostsService } from '../post/posts.service';
-import { CommentsService } from './comments.service';
+import { CommentService } from './comment.service';
 
 @Controller()
 export class CommentController {
   constructor(
-    private readonly commentsService: CommentsService,
+    private readonly commentService: CommentService,
     private readonly postsService: PostsService,
     private readonly captchaService: CaptchaService
   ) {
@@ -47,16 +47,17 @@ export class CommentController {
     @Query('status', new TrimPipe()) status: CommentStatus | CommentStatus[],
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('orders', new TrimPipe()) orders: string[],
-    @Query('from', new TrimPipe()) from: string,
+    @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
   ): Promise<HttpResponseEntity> {
+    const fromAdmin = isAdmin && fa === '1';
     const param: CommentQueryParam = {
       page,
       pageSize,
       postId,
       keyword,
       isAdmin,
-      from
+      fromAdmin
     };
     if (status) {
       status = typeof status === 'string' ? [status] : status;
@@ -68,16 +69,16 @@ export class CommentController {
       });
       param.status = status;
     }
-    if (from !== 'admin' && !postId) {
+    if (!fromAdmin && !postId) {
       throw new BadRequestException();
     }
-    if (isAdmin && from === 'admin' && orders.length > 0) {
+    if (fromAdmin && orders.length > 0) {
       param.orders = getQueryOrders({
         commentVote: 1,
         created: 2
       }, orders);
     }
-    const comments = await this.commentsService.getComments(param);
+    const comments = await this.commentService.getComments(param);
     return getSuccessResponse(comments);
   }
 
@@ -93,7 +94,7 @@ export class CommentController {
     if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
       throw new ForbiddenException();
     }
-    const result = await this.commentsService.auditComment(data.commentIds, data.action);
+    const result = await this.commentService.auditComment(data.commentIds, data.action);
     if (result[0] < 1) {
       throw new UnknownException(Message.DB_QUERY_FAIL);
     }
@@ -105,7 +106,7 @@ export class CommentController {
   async saveComment(
     @Req() req: Request,
     @Body(new TrimPipe()) commentDto: CommentDto,
-    @User() user,
+    @AuthUser() user,
     @IsAdmin() isAdmin: boolean,
     @Ip() ip: string,
     @UserAgent() agent: string,
@@ -150,7 +151,7 @@ export class CommentController {
       commentData.commentStatus = CommentStatus.NORMAL;
     }
 
-    const result = await this.commentsService.saveComment(commentData);
+    const result = await this.commentService.saveComment(commentData);
     if (result < 1) {
       throw new UnknownException(Message.COMMENT_SAVE_ERROR);
     }

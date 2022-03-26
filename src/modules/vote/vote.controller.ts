@@ -3,31 +3,30 @@ import { Request } from 'express';
 import { VoteType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 import { Ip } from '../../decorators/ip.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
-import { User } from '../../decorators/user.decorator';
 import { VoteDto } from '../../dtos/vote.dto';
 import { CustomException } from '../../exceptions/custom.exception';
-import { UserVo } from '../../interfaces/users.interface';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getSuccessResponse } from '../../transformers/response.transformers';
-import { CommentsService } from '../comment/comments.service';
-import { VotesService } from './votes.service';
+import { CommentService } from '../comment/comment.service';
+import { VoteService } from './vote.service';
 
-@Controller()
+@Controller('api/votes')
 export class VoteController {
   constructor(
-    private readonly votesService: VotesService,
-    private readonly commentsService: CommentsService
+    private readonly voteService: VoteService,
+    private readonly commentService: CommentService
   ) {
   }
 
-  @Post(['vote/save', 'api/votes'])
+  @Post()
   @Header('Content-Type', 'application/json')
   async saveVote(
     @Req() req: Request,
     @Body(new TrimPipe()) voteDto: VoteDto,
-    @User() user,
+    @AuthUser() user,
     @Ip() ip: string,
     @UserAgent() agent: string
   ) {
@@ -39,11 +38,11 @@ export class VoteController {
       userIp: ip,
       userAgent: agent
     };
-    const result = await this.votesService.saveVote(voteDto);
+    const result = await this.voteService.saveVote(voteDto);
     if (!result) {
       throw new CustomException(Message.DB_QUERY_FAIL, HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.VOTE_FAILURE);
     }
-    const comment = await this.commentsService.getCommentById(voteDto.objectId);
+    const comment = await this.commentService.getCommentById(voteDto.objectId);
 
     return getSuccessResponse({
       vote: comment.commentVote

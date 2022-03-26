@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { WatermarkService } from './watermark.service';
 import { UtilService } from './util.service';
+import { WatermarkService } from './watermark.service';
 
 @Module({
   imports: [],

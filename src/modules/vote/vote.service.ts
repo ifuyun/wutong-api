@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { LoggerService } from '../logger/logger.service';
 import { VoteDto } from '../../dtos/vote.dto';
 import { getUuid } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { VoteModel } from '../../models/vote.model';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
-export class VotesService {
+export class VoteService {
   constructor(
     @InjectModel(VoteModel)
     private readonly voteModel: typeof VoteModel,

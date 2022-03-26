@@ -4,11 +4,11 @@ import { uniq as unique } from 'lodash';
 import * as xss from 'sanitizer';
 import { CommentFlag, PostOriginal, PostStatus, PostType, Role, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { User } from '../../decorators/user.decorator';
 import { PostDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
@@ -17,7 +17,7 @@ import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { PostModel } from '../../models/post.model';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
-import { CommentsService } from '../comment/comments.service';
+import { CommentService } from '../comment/comment.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
@@ -32,7 +32,7 @@ export class AdminPostController {
     private readonly postsService: PostsService,
     private readonly optionsService: OptionsService,
     private readonly taxonomiesService: TaxonomiesService,
-    private readonly commentsService: CommentsService,
+    private readonly commentService: CommentService,
     private readonly paginatorService: PaginatorService,
     private readonly utilService: UtilService
   ) {
@@ -131,7 +131,7 @@ export class AdminPostController {
   async savePost(
     @Req() req: Request,
     @Body(new TrimPipe()) postDto: PostDto,
-    @User() user,
+    @AuthUser() user,
     @Session() session: any
   ) {
     const newPostId = postDto.postId || getUuid();
