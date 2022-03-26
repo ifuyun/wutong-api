@@ -1,6 +1,4 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { IsAdminPipe } from '../../pipes/is-admin.pipe';
-import { ParseTokenPipe } from '../../pipes/parse-token.pipe';
 import { AuthModule } from '../auth/auth.module';
 import { CaptchaModule } from '../captcha/captcha.module';
 import { DatabaseModule } from '../database/database.module';
@@ -8,9 +6,8 @@ import { OptionModule } from '../option/option.module';
 import { PaginatorModule } from '../paginator/paginator.module';
 import { PostModule } from '../post/post.module';
 import { UtilModule } from '../util/util.module';
-import { AdminCommentController } from './admin-comment.controller';
 import { CommentController } from './comment.controller';
-import { CommentsService } from './comments.service';
+import { CommentService } from './comment.service';
 
 @Module({
   imports: [
@@ -23,13 +20,12 @@ import { CommentsService } from './comments.service';
     AuthModule
   ],
   controllers: [
-    CommentController,
-    AdminCommentController
+    CommentController
   ],
   providers: [
-    CommentsService
+    CommentService
   ],
-  exports: [CommentsService]
+  exports: [CommentService]
 })
 export class CommentModule {
 }

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { CommentsService } from '../../modules/comment/comments.service';
+import { CommentService } from '../../modules/comment/comment.service';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
 export class IsCommentExistConstraint implements ValidatorConstraintInterface {
-  constructor(private readonly commentsService: CommentsService) {
+  constructor(private readonly commentService: CommentService) {
   }
 
   async validate(value: string, args?: ValidationArguments): Promise<boolean> {
@@ -13,7 +13,7 @@ export class IsCommentExistConstraint implements ValidatorConstraintInterface {
       // 允许为空
       return true;
     }
-    return await this.commentsService.checkCommentExist(value);
+    return await this.commentService.checkCommentExist(value);
   }
 
   defaultMessage(args?: ValidationArguments): string {

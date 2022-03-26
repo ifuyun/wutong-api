@@ -17,7 +17,7 @@ export interface CommentQueryParam {
   page: number;
   pageSize?: number;
   isAdmin: boolean;
-  from?: string;
+  fromAdmin?: boolean;
   postId?: string;
   keyword?: string;
   status?: CommentStatus[];

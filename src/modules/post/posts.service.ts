@@ -1,15 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { uniq } from 'lodash';
-import * as moment from 'moment';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
-import { POST_EXCERPT_LENGTH } from '../../common/constants';
-import { ResponseCode } from '../../common/response-code.enum';
+import { PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
-import { CustomException } from '../../exceptions/custom.exception';
-import { cutStr, filterHtmlTag, getEnumKeyByValue, getEnumValues, getUuid } from '../../helpers/helper';
+import { getUuid } from '../../helpers/helper';
 import { PostMetaVo } from '../../interfaces/post-meta.interface';
 import { PostArchiveDatesQueryParam, PostListVo, PostQueryParam, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
 import { PostMetaModel } from '../../models/post-meta.model';
@@ -178,7 +174,7 @@ export class PostsService {
   }
 
   async getArchiveDates(param: PostArchiveDatesQueryParam): Promise<VPostDateArchiveModel[]> {
-    const { postType, status, limit, showCount, isAdmin, from } = param;
+    const { postType, status, limit, showCount, isAdmin, fromAdmin } = param;
     const queryOpt: any = {
       attributes: ['dateText', 'dateTitle'],
       where: {
@@ -192,7 +188,7 @@ export class PostsService {
       group: ['dateText'],
       order: [['dateText', 'desc']]
     };
-    if (isAdmin && from === 'admin') {
+    if (fromAdmin) {
       if (status && status.length > 0) {
         queryOpt.where.postStatus[Op.in] = status.includes(PostStatus.DRAFT)
           ? uniq(status.concat([PostStatus.DRAFT, PostStatus.AUTO_DRAFT])) : status;
@@ -235,7 +231,7 @@ export class PostsService {
   }
 
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
-    const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, commentFlag, author, orders } = param;
+    const { isAdmin, keyword, fromAdmin, subTaxonomyIds, tag, year, month, status, commentFlag, author, orders } = param;
     const pageSize = param.pageSize || 10;
     const postType = param.postType || PostType.POST;
     const where = {
@@ -246,7 +242,7 @@ export class PostsService {
         [Op.eq]: postType
       }
     };
-    if (isAdmin && from === 'admin') {
+    if (fromAdmin) {
       if (status && status.length > 0) {
         where.postStatus[Op.in] = status.includes(PostStatus.DRAFT)
           ? uniq(status.concat([PostStatus.DRAFT, PostStatus.AUTO_DRAFT])) : status;

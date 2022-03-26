@@ -1,19 +1,21 @@
 import { Module } from '@nestjs/common';
-import { VoteController } from './vote.controller';
-import { VotesService } from './votes.service';
+import { AuthModule } from '../auth/auth.module';
 import { CommentModule } from '../comment/comment.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
+import { VoteController } from './vote.controller';
+import { VoteService } from './vote.service';
 
 @Module({
   imports: [
     DatabaseModule,
     LoggerModule,
-    CommentModule
+    CommentModule,
+    AuthModule
   ],
   controllers: [VoteController],
-  providers: [VotesService],
-  exports: [VotesService]
+  providers: [VoteService],
+  exports: [VoteService]
 })
 export class VoteModule {
 }

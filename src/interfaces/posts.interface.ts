@@ -25,7 +25,7 @@ export interface PostQueryParam {
   page: number;
   pageSize?: number;
   isAdmin: boolean;
-  from?: string;
+  fromAdmin?: boolean;
   postType?: PostType;
   keyword?: string;
   subTaxonomyIds?: string[];
@@ -44,5 +44,5 @@ export interface PostArchiveDatesQueryParam {
   showCount: boolean;
   limit: number;
   isAdmin: boolean;
-  from?: string;
+  fromAdmin?: boolean;
 }

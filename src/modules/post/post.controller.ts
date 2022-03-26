@@ -17,7 +17,7 @@ import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
-import { CommentsService } from '../comment/comments.service';
+import { CommentService } from '../comment/comment.service';
 import { LoggerService } from '../logger/logger.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../util/util.service';
@@ -30,7 +30,7 @@ export class PostController {
     private readonly postsService: PostsService,
     private readonly commonService: PostCommonService,
     private readonly taxonomiesService: TaxonomiesService,
-    private readonly commentsService: CommentsService,
+    private readonly commentService: CommentService,
     private readonly logger: LoggerService,
     private readonly utilService: UtilService
   ) {
@@ -52,7 +52,7 @@ export class PostController {
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('orders', new TrimPipe()) orders: string[],
     @Query('type', new TrimPipe()) postType: PostType,
-    @Query('from', new TrimPipe()) from: string,
+    @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
   ) {
     postType = postType || PostType.POST;
@@ -62,6 +62,7 @@ export class PostController {
     if (!isAdmin && postType !== PostType.POST) {
       throw new UnauthorizedException();
     }
+    const fromAdmin = isAdmin && fa === '1';
     const param: PostQueryParam = {
       page,
       pageSize,
@@ -71,9 +72,9 @@ export class PostController {
       month: month ? month < 10 ? '0' + month : month.toString() : '',
       keyword,
       isAdmin,
-      from
+      fromAdmin
     };
-    if (isAdmin && from === 'admin') {
+    if (fromAdmin) {
       if (status) {
         status = typeof status === 'string' ? [status] : status;
         const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
@@ -110,7 +111,7 @@ export class PostController {
       param.subTaxonomyIds = result.subTaxonomyIds;
       crumbs = result.crumbs;
     }
-    if (isAdmin && from === 'admin' && orders.length > 0) {
+    if (fromAdmin && orders.length > 0) {
       /* 管理员，且，从后台访问，且，传递了排序参数 */
       param.orders = getQueryOrders({
         postViewCount: 1,
@@ -132,19 +133,20 @@ export class PostController {
     @Query('showCount', new ParseIntPipe(1)) showCount: number,
     @Query('limit', new ParseIntPipe(10)) limit: number,
     @Query('status', new TrimPipe()) status: PostStatus | PostStatus[],
-    @Query('from', new TrimPipe()) from: string,
+    @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
   ) {
     if (postType && ![PostType.POST, PostType.PAGE, PostType.ATTACHMENT].includes(postType)) {
       throw new BadRequestException(Message.ILLEGAL_PARAM);
     }
     postType = postType || PostType.POST;
+    const fromAdmin = isAdmin && fa === '1';
     const params: PostArchiveDatesQueryParam = {
       postType,
       showCount: !!showCount,
       limit,
       isAdmin,
-      from
+      fromAdmin
     };
     if (status) {
       status = typeof status === 'string' ? [status] : status;
@@ -220,9 +222,11 @@ export class PostController {
   @IdParams({ idInParams: ['postId'] })
   async getPost(
     @Param('postId') postId: string,
-    @Query('from', new TrimPipe()) from: string,
+    @Query('ref', new TrimPipe()) referer: string,
+    @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
   ) {
+    const fromAdmin = isAdmin && fa === '1';
     const post = await this.postsService.getPostById(postId, isAdmin);
     if (!post || !post.postId) {
       throw new CustomException({
@@ -247,12 +251,8 @@ export class PostController {
       });
     }
 
-    let taxonomies: TaxonomyModel[] = [];
-    post.taxonomies.forEach((v) => {
-      if (v.type === TaxonomyType.POST) {
-        taxonomies.push(v);
-      }
-    });
+    // post categories
+    let taxonomies: TaxonomyModel[] = post.taxonomies.filter((item) => item.type === TaxonomyType.POST);
     if (taxonomies.length < 1) {
       throw new NotFoundException({
         data: {
@@ -270,20 +270,23 @@ export class PostController {
     }
     await this.postsService.incrementPostView(postId);
 
-    let crumbTaxonomyId;
-    // todo: parent category
-    const crumbTaxonomies = taxonomies.filter((item) => from.split('?')[0].endsWith(`/${item.slug}`));
-    if (crumbTaxonomies.length > 0) {
-      crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
-    } else {
-      crumbTaxonomyId = taxonomies[0].taxonomyId;
+    let crumbs: CrumbEntity[] = [];
+    if (!fromAdmin) {
+      let crumbTaxonomyId;
+      // todo: parent category
+      const crumbTaxonomies = taxonomies.filter((item) => referer.split('?')[0].endsWith(`/${item.slug}`));
+      if (crumbTaxonomies.length > 0) {
+        crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
+      } else {
+        crumbTaxonomyId = taxonomies[0].taxonomyId;
+      }
+      const allTaxonomies = await this.taxonomiesService.getAllTaxonomies(
+        isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
+      crumbs = this.taxonomiesService.getTaxonomyPath({
+        taxonomyData: allTaxonomies,
+        taxonomyId: crumbTaxonomyId
+      });
     }
-    const allTaxonomies = await this.taxonomiesService.getAllTaxonomies(
-      isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
-    const crumbs = this.taxonomiesService.getTaxonomyPath({
-      taxonomyData: allTaxonomies,
-      taxonomyId: crumbTaxonomyId
-    });
 
     const postMeta: Record<string, string> = {};
     post.postMeta.forEach((meta) => {
