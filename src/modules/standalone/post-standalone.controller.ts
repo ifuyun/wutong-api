@@ -61,7 +61,6 @@ export class PostStandaloneController {
         postMeta[meta.metaKey] = meta.metaValue;
       });
     }
-    postMeta.copyright_type_text = this.postsService.transformCopyright(postMeta.copyright_type);
     postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
 
     const { options } = commonData;

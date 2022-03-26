@@ -24,8 +24,6 @@ export class PostModel extends Model {
   @HasMany(() => PostMetaModel)
   postMeta: PostMetaModel[];
 
-  postMetaMap: Record<string, string | number>;
-
   @HasMany(() => CommentModel)
   comments: CommentModel[];
 
@@ -96,8 +94,6 @@ export class PostModel extends Model {
   })
   postStatus: string;
 
-  postStatusDesc: string;
-
   @Column({
     field: 'comment_flag',
     type: DataType.ENUM('open', 'verify', 'close'),
@@ -141,8 +137,6 @@ export class PostModel extends Model {
   })
   postModified: Date;
 
-  postModifiedText: string;
-
   @Column({
     field: 'post_modified_gmt',
     type: DataType.DATE,
@@ -158,8 +152,6 @@ export class PostModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
   postCreated: Date;
-
-  postCreatedText: string;
 
   @Column({
     field: 'post_parent',
