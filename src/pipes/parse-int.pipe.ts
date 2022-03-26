@@ -10,7 +10,8 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 
   transform(value: string, metadata: ArgumentMetadata): number {
     if (typeof this.defaultValue === 'number') {
-      return parseInt(value, 10) || this.defaultValue;
+      const intValue = parseInt(value, 10);
+      return isNaN(intValue) ? this.defaultValue : intValue;
     }
     return parseInt(value, 10);
   }

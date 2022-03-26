@@ -1,28 +1,29 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { uniq } from 'lodash';
 import * as moment from 'moment';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { PostMetaService } from './post-meta.service';
-import { LoggerService } from '../logger/logger.service';
-import { OptionsService } from '../option/options.service';
-import { PaginatorService } from '../paginator/paginator.service';
-import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { CopyrightType, CopyrightTypeDesc, PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { POST_EXCERPT_LENGTH } from '../../common/constants';
 import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { cutStr, filterHtmlTag, getEnumKeyByValue, getEnumValues, getUuid } from '../../helpers/helper';
-import { PostListVo, PostQueryParam, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
 import { PostMetaVo } from '../../interfaces/post-meta.interface';
-import { PostModel } from '../../models/post.model';
+import { PostArchiveDatesQueryParam, PostListVo, PostQueryParam, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
 import { PostMetaModel } from '../../models/post-meta.model';
-import { TaxonomyModel } from '../../models/taxonomy.model';
+import { PostModel } from '../../models/post.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
+import { TaxonomyModel } from '../../models/taxonomy.model';
 import { UserModel } from '../../models/user.model';
-import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
 import { VPostDateArchiveModel } from '../../models/v-post-date-archive.model';
+import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
+import { LoggerService } from '../logger/logger.service';
+import { OptionsService } from '../option/options.service';
+import { PaginatorService } from '../paginator/paginator.service';
+import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { PostMetaService } from './post-meta.service';
 
 @Injectable()
 export class PostsService {
@@ -118,15 +119,6 @@ export class PostsService {
     return postList;
   }
 
-  transformCopyright(type: number | string): string {
-    type = typeof type === 'string' ? parseInt(type) : type;
-    type = isNaN(type) ? CopyrightType.AUTHORIZED : type;
-    if (!getEnumValues(CopyrightType).includes(type)) {
-      throw new CustomException('数据错误。', HttpStatus.INTERNAL_SERVER_ERROR, ResponseCode.COPYRIGHT_ILLEGAL);
-    }
-    return CopyrightTypeDesc[getEnumKeyByValue(CopyrightType, type)];
-  }
-
   async getRecentPosts(): Promise<PostModel[]> {
     return this.postModel.findAll({
       attributes: ['postId', 'postTitle', 'postGuid'],
@@ -185,19 +177,13 @@ export class PostsService {
     });
   }
 
-  async getArchiveDates(
-    {
-      postType = PostType.POST,
-      showCount = false,
-      isAdmin = false,
-      limit = 10
-    }
-  ): Promise<VPostDateArchiveModel[]> {
+  async getArchiveDates(param: PostArchiveDatesQueryParam): Promise<VPostDateArchiveModel[]> {
+    const { postType, status, limit, showCount, isAdmin, from } = param;
     const queryOpt: any = {
       attributes: ['dateText', 'dateTitle'],
       where: {
         postStatus: {
-          [Op.eq]: 'publish'
+          [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
         },
         postType: {
           [Op.eq]: postType
@@ -206,6 +192,15 @@ export class PostsService {
       group: ['dateText'],
       order: [['dateText', 'desc']]
     };
+    if (isAdmin && from === 'admin') {
+      if (status && status.length > 0) {
+        queryOpt.where.postStatus[Op.in] = status.includes(PostStatus.DRAFT)
+          ? uniq(status.concat([PostStatus.DRAFT, PostStatus.AUTO_DRAFT])) : status;
+      } else {
+        queryOpt.where.postStatus[Op.in] = [
+          PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
+      }
+    }
     // 0 is no limit, and default is 10
     if (limit !== 0) {
       queryOpt.limit = limit || 10;
@@ -240,22 +235,29 @@ export class PostsService {
   }
 
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
-    const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, author, orders } = param;
+    const { isAdmin, keyword, from, subTaxonomyIds, tag, year, month, status, commentFlag, author, orders } = param;
     const pageSize = param.pageSize || 10;
     const postType = param.postType || PostType.POST;
     const where = {
       postStatus: {
-        [Op.in]: [PostStatus.PUBLISH]
+        [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
       },
       postType: {
         [Op.eq]: postType
       }
     };
     if (isAdmin && from === 'admin') {
-      if (status) {
-        where.postStatus[Op.in] = status === 'draft' ? [PostStatus.DRAFT, PostStatus.AUTO_DRAFT] : [status];
+      if (status && status.length > 0) {
+        where.postStatus[Op.in] = status.includes(PostStatus.DRAFT)
+          ? uniq(status.concat([PostStatus.DRAFT, PostStatus.AUTO_DRAFT])) : status;
       } else {
-        where.postStatus[Op.in] = [PostStatus.PUBLISH, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
+        where.postStatus[Op.in] = [
+          PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
+      }
+      if (commentFlag && commentFlag.length > 0) {
+        where['commentFlag'] = {
+          [Op.in]: commentFlag
+        };
       }
     }
     if (keyword) {
@@ -289,7 +291,7 @@ export class PostsService {
     if (postType === PostType.POST) {
       includeOpt.push({
         model: TaxonomyModel,
-        through: { attributes: []},
+        through: { attributes: [] },
         attributes: ['taxonomyId', 'status'],
         where: {
           type: {
@@ -357,21 +359,11 @@ export class PostsService {
     queryOpt.offset = pageSize * (page - 1);
 
     const posts = await this.postModel.findAll(queryOpt);
-    const postIds: string[] = [];
-    posts.forEach((post) => {
-      postIds.push(post.postId);
-      // todo: time format changes to config
-      post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
-      post.postCreatedText = moment(post.postCreated).format('YYYY-MM-DD HH:mm');
-      post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
-      post.postExcerpt = post.postExcerpt || cutStr(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
-      post.postStatusDesc = PostStatusDesc[getEnumKeyByValue(PostStatus, post.postStatus)];
-    });
+    const postIds: string[] = posts.map((post) => post.postId);
     const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts(postIds, isAdmin);
 
     return {
       posts: this.assemblePostData({ posts, postMeta, taxonomies }),
-      postIds,
       page,
       total
     };
@@ -409,17 +401,6 @@ export class PostsService {
         // force to use left join
         required: false
       }]
-    }).then((post) => {
-      // todo: to be removed
-      if (post) {
-        post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
-        post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
-        post.postMetaMap = {};
-        post.postMeta.forEach((meta) => {
-          post.postMetaMap[meta.metaKey] = meta.metaValue;
-        });
-      }
-      return Promise.resolve(post);
     });
   }
 
@@ -447,12 +428,6 @@ export class PostsService {
           [Op.in]: ['post', 'page']
         }
       }
-    }).then((post) => {
-      if (post) {
-        post.postDateText = moment(post.postDate).format('YYYY-MM-DD');
-        post.postModifiedText = moment(post.postModified || post.postCreated).format('YYYY-MM-DD HH:mm');
-      }
-      return Promise.resolve(post);
     });
   }
 

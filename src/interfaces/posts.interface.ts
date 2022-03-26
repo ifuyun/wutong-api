@@ -1,7 +1,7 @@
 import { Order } from 'sequelize';
 import { PostModel } from '../models/post.model';
 import { TaxonomyModel } from '../models/taxonomy.model';
-import { PostStatus, PostType } from '../common/common.enum';
+import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
 
 export interface PostVo {
   post: PostModel;
@@ -14,7 +14,6 @@ export interface PostListVo {
   posts: PostVo[];
   page: number;
   total: number;
-  postIds?: string[];
 }
 
 export interface PostStatusMap {
@@ -33,7 +32,17 @@ export interface PostQueryParam {
   tag?: string;
   year?: string;
   month?: string;
-  status?: PostStatus;
+  status?: PostStatus[];
+  commentFlag?: CommentFlag[];
   author?: string;
   orders?: Order;
+}
+
+export interface PostArchiveDatesQueryParam {
+  postType: PostType;
+  status?: PostStatus[];
+  showCount: boolean;
+  limit: number;
+  isAdmin: boolean;
+  from?: string;
 }

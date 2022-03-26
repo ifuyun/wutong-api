@@ -1,9 +1,8 @@
 import { Controller, Get, Header, HttpStatus, Param, Query, Req, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
-import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { CommentFlag, PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
-import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
@@ -11,9 +10,8 @@ import { CustomException } from '../../exceptions/custom.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { AuthUserEntity } from '../../interfaces/auth.interface';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
-import { PostQueryParam } from '../../interfaces/posts.interface';
+import { PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -49,7 +47,8 @@ export class PostController {
     @Query('tag', new TrimPipe()) tag: string,
     @Query('year', new TrimPipe()) year: string,
     @Query('month', new ParseIntPipe()) month: number,
-    @Query('status', new TrimPipe()) status: PostStatus,
+    @Query('status', new TrimPipe()) status: PostStatus | PostStatus[],
+    @Query('commentFlag', new TrimPipe()) commentFlag: CommentFlag | CommentFlag[],
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('orders', new TrimPipe()) orders: string[],
     @Query('type', new TrimPipe()) postType: PostType,
@@ -70,11 +69,32 @@ export class PostController {
       tag,
       year,
       month: month ? month < 10 ? '0' + month : month.toString() : '',
-      status,
       keyword,
       isAdmin,
       from
     };
+    if (isAdmin && from === 'admin') {
+      if (status) {
+        status = typeof status === 'string' ? [status] : status;
+        const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
+        status.forEach((v: PostStatus) => {
+          if (!allowedStatuses.includes(v)) {
+            throw new BadRequestException(Message.ILLEGAL_PARAM);
+          }
+        });
+        param.status = status;
+      }
+      if (commentFlag) {
+        commentFlag = typeof commentFlag === 'string' ? [commentFlag] : commentFlag;
+        const allowedFlags = Object.keys(CommentFlag).map((key) => CommentFlag[key]);
+        commentFlag.forEach((v: CommentFlag) => {
+          if (!allowedFlags.includes(v)) {
+            throw new BadRequestException(Message.ILLEGAL_PARAM);
+          }
+        });
+        param.commentFlag = commentFlag;
+      }
+    }
     let crumbs: CrumbEntity[] = [];
     if (category) {
       const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
@@ -90,7 +110,6 @@ export class PostController {
       param.subTaxonomyIds = result.subTaxonomyIds;
       crumbs = result.crumbs;
     }
-
     if (isAdmin && from === 'admin' && orders.length > 0) {
       /* 管理员，且，从后台访问，且，传递了排序参数 */
       param.orders = getQueryOrders({
@@ -103,30 +122,40 @@ export class PostController {
     }
 
     const postList = await this.postsService.getPosts(param);
-    const commentCount = await this.commentsService.getCommentCountByPosts(postList.postIds);
-    postList.posts.map((post) => {
-      post.post.commentCount = commentCount[post.post.postId];
-      return post;
-    });
     return getSuccessResponse({ postList, crumbs });
   }
 
   @Get('archive-dates')
   @Header('Content-Type', 'application/json')
   async getArchiveDates(
-    @Query() query: Record<string, any>,
-    @AuthUser() user: AuthUserEntity
+    @Query('postType', new TrimPipe()) postType: PostType,
+    @Query('showCount', new ParseIntPipe(1)) showCount: number,
+    @Query('limit', new ParseIntPipe(10)) limit: number,
+    @Query('status', new TrimPipe()) status: PostStatus | PostStatus[],
+    @Query('from', new TrimPipe()) from: string,
+    @IsAdmin() isAdmin: boolean
   ) {
-    const { postType, showCount, limit } = query;
-    if (postType && ![PostType.POST, PostType.PAGE].includes(postType)) {
+    if (postType && ![PostType.POST, PostType.PAGE, PostType.ATTACHMENT].includes(postType)) {
       throw new BadRequestException(Message.ILLEGAL_PARAM);
     }
-    const params = {
+    postType = postType || PostType.POST;
+    const params: PostArchiveDatesQueryParam = {
       postType,
-      showCount: showCount === '1' || showCount === 'true',
-      isAdmin: user.isAdmin,
-      limit: parseInt(limit, 10)
+      showCount: !!showCount,
+      limit,
+      isAdmin,
+      from
     };
+    if (status) {
+      status = typeof status === 'string' ? [status] : status;
+      const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
+      status.forEach((v: PostStatus) => {
+        if (!allowedStatuses.includes(v)) {
+          throw new BadRequestException(Message.ILLEGAL_PARAM);
+        }
+      });
+      params.status = status;
+    }
     const dateList = await this.postsService.getArchiveDates(params);
     return getSuccessResponse(dateList);
   }
@@ -179,7 +208,6 @@ export class PostController {
     post.postMeta.forEach((meta) => {
       postMeta[meta.metaKey] = meta.metaValue;
     });
-    postMeta.copyrightType = this.postsService.transformCopyright(postMeta.copyright_type);
     postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
 
     return getSuccessResponse({
@@ -226,14 +254,13 @@ export class PostController {
       }
     });
     if (taxonomies.length < 1) {
-      throw new CustomException({
-        status: HttpStatus.NOT_FOUND,
+      throw new NotFoundException({
         data: {
           code: ResponseCode.TAXONOMY_NOT_FOUND,
           message: Message.NOT_FOUND
         },
         log: {
-          msg: 'Taxonomy not exist.',
+          msg: Message.TAXONOMY_NOT_FOUND,
           data: {
             postId: post.postId,
             postTitle: post.postTitle
@@ -262,7 +289,6 @@ export class PostController {
     post.postMeta.forEach((meta) => {
       postMeta[meta.metaKey] = meta.metaValue;
     });
-    postMeta.copyrightType = this.postsService.transformCopyright(postMeta.copyright_type);
     postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
 
     const tags: TaxonomyModel[] = [];

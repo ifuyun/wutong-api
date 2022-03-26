@@ -20,5 +20,6 @@ export enum Message {
   DB_QUERY_FAIL = '请求失败，请稍后重试',
   UNSUPPORTED_QUERY_ORDERS = '不支持的排序参数',
   INVALID_PARAMS = '参数: $0 无效',
-  COMMENT_SAVE_ERROR = '评论保存失败'
+  COMMENT_SAVE_ERROR = '评论保存失败',
+  TAXONOMY_NOT_FOUND = 'Taxonomy not exist'
 }
