@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { PostStatus, Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
@@ -9,9 +10,10 @@ import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { Search } from '../../decorators/search.decorator';
 import { RemoveTaxonomyDto, TaxonomyDto } from '../../dtos/taxonomy.dto';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { getEnumKeyByValue } from '../../helpers/helper';
+import { format, getEnumKeyByValue } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { AuthUserEntity } from '../../interfaces/auth.interface';
 import { TaxonomyNode, TaxonomyQueryParam } from '../../interfaces/taxonomies.interface';
@@ -38,7 +40,7 @@ export class TaxonomyController {
   @Get('api/taxonomies/taxonomy-tree')
   @Header('Content-Type', 'application/json')
   async getTaxonomyTree(@AuthUser() user: AuthUserEntity) {
-    const taxonomies = await this.taxonomiesService.getAllTaxonomies(user.isAdmin ? [0, 1] : 1);
+    const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(user.isAdmin ? [0, 1] : 1);
     const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
 
     return getSuccessResponse(taxonomyTree);
@@ -51,24 +53,33 @@ export class TaxonomyController {
   async getTaxonomies(
     @Query('page', new ParseIntPipe(1)) page: number,
     @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
-    @Query('status', new ParseIntPipe()) status: TaxonomyStatus,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) type: TaxonomyType,
+    @Query('status', new TrimPipe()) status: string | string[],
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('orders', new TrimPipe()) orders: string[],
   ) {
     if (!type || !Object.keys(TaxonomyType).map((key) => TaxonomyType[key]).includes(type)) {
-      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_TYPE_INVALID);
-    }
-    if (status && !this.taxonomiesService.getAllTaxonomyStatusValues().includes(status)) {
-      throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_STATUS_INVALID);
+      throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, type), ResponseCode.TAXONOMY_TYPE_INVALID);
     }
     const param: TaxonomyQueryParam = {
       page,
       pageSize,
       type,
-      status,
       keyword
     };
+    status = (Array.isArray(status) ? status : [status]).filter((item) => !!item);
+    if (status.length > 0) {
+      const allowedStatuses = this.taxonomiesService.getAllTaxonomyStatusValues();
+      status.forEach((v) => {
+        if (!allowedStatuses.includes(<TaxonomyStatus>parseInt(v))) {
+          throw new BadRequestException(
+            <Message>format(Message.INVALID_PARAMS, JSON.stringify(status)),
+            ResponseCode.TAXONOMY_STATUS_INVALID
+          );
+        }
+      });
+      param.status = status.map((v) => <TaxonomyStatus>parseInt(v));
+    }
     if (orders.length > 0) {
       param.orders = getQueryOrders({
         termOrder: 1
@@ -76,6 +87,22 @@ export class TaxonomyController {
     }
     const taxonomies = await this.taxonomiesService.getTaxonomies(param);
     return getSuccessResponse(taxonomies);
+  }
+
+  @Get('api/tags')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async getTags(
+    @Query('keyword', new TrimPipe()) keyword: string,
+  ) {
+    if (!keyword) {
+      throw new BadRequestException(Message.MISSED_PARAMS);
+    }
+    const tags = await this.taxonomiesService.searchTags(keyword);
+    const tagList: string[] = tags.map((item) => item.name);
+
+    return getSuccessResponse(tagList);
   }
 
   @Get(['admin/taxonomy', 'admin/taxonomy/page-:page'])
@@ -97,7 +124,7 @@ export class TaxonomyController {
       throw new CustomException('查询参数有误', HttpStatus.FORBIDDEN, ResponseCode.TAXONOMY_STATUS_INVALID);
     }
     const options = await this.optionsService.getOptions();
-    const taxonomyList = await this.taxonomiesService.getTaxonomies({ page, type, status, keyword });
+    const taxonomyList = await this.taxonomiesService.getTaxonomies({ page, type, status: [status], keyword });
     const { taxonomies, total } = taxonomyList;
     page = taxonomyList.page;
 
@@ -167,9 +194,9 @@ export class TaxonomyController {
     }
     let taxonomyList: TaxonomyNode[] = [];
     if (type !== TaxonomyType.TAG) {
-      const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0 ,1], type);
-      const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
-      taxonomyList = taxonomies.taxonomyList;
+      const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData([0 ,1], type);
+      const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomyData);
+      taxonomyList = this.taxonomiesService.flattenTaxonomyTree(taxonomyTree, []);
     }
     const options = await this.optionsService.getOptions();
     const titles = ['管理后台', options.site_name];

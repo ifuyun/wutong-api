@@ -1,18 +1,13 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
-import { uniq as unique } from 'lodash';
-import * as xss from 'sanitizer';
 import { CommentFlag, PostOriginal, PostStatus, PostType, Role, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
-import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { PostDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { PostModel } from '../../models/post.model';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
@@ -88,9 +83,10 @@ export class AdminPostController {
       }
     }
     const options = await this.optionsService.getOptions();
-    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0, 1], TaxonomyType.POST);
-    const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
-    taxonomies.taxonomyList.forEach((node) => {
+    const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData([0, 1], TaxonomyType.POST);
+    const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomyData);
+    const taxonomyList = this.taxonomiesService.flattenTaxonomyTree(taxonomyTree, []);
+    taxonomyList.forEach((node) => {
       if (postTaxonomies.includes(node.taxonomyId)) {
         node.isChecked = true;
       }
@@ -120,102 +116,9 @@ export class AdminPostController {
       options,
       post: post || emptyPost,
       postMeta: postMeta,
-      taxonomyList: taxonomies.taxonomyList,
+      taxonomyList: taxonomyList,
       postCategories: postTaxonomies,
       postTags: postTags.join(',')
-    };
-  }
-
-  @Post('save')
-  @Header('Content-Type', 'application/json')
-  async savePost(
-    @Req() req: Request,
-    @Body(new TrimPipe()) postDto: PostDto,
-    @AuthUser() user,
-    @Session() session: any
-  ) {
-    const newPostId = postDto.postId || getUuid();
-    const postData: PostDto = {
-      postId: postDto.postId,
-      postTitle: xss.sanitize(postDto.postTitle),
-      postContent: postDto.postContent,
-      postExcerpt: xss.sanitize(postDto.postExcerpt),
-      postGuid: postDto.postGuid || `/post/${newPostId}`,
-      postAuthor: user.userId,
-      postStatus: postDto.postStatus,
-      postPassword: postDto.postStatus === PostStatus.PASSWORD ? postDto.postPassword : '',
-      postOriginal: postDto.postOriginal,
-      commentFlag: postDto.commentFlag,
-      postDate: postDto.postDate
-    };
-    if (!postDto.postId) {// 编辑时不允许修改postType
-      postData.postType = postDto.postType;
-    }
-    const isPostGuidExist = await this.postsService.checkPostGuidExist(postData.postGuid, postData.postId);
-    if (isPostGuidExist) {
-      throw new CustomException('URL已存在，请重新输入。', HttpStatus.OK, ResponseCode.POST_GUID_CONFLICT);
-    }
-
-    const nowTime = new Date();
-    // todo: updateModified is string
-    if (postDto.postId && postDto.postContent !== postDto.postRawContent && postDto.updateModified.toString() === '1') {
-      postData.postModified = nowTime;
-    }
-    let postTags: string[];
-    if (typeof postDto.postTags === 'string') {
-      postTags = unique(postDto.postTags.split(/[,\s]/i).filter((v) => v.trim()));
-    } else {
-      postTags = postDto.postTags;
-    }
-    const postTaxonomies = postDto.postTaxonomies;
-
-    const metaData = [{
-      metaId: getUuid(),
-      postId: newPostId,
-      metaKey: 'show_wechat_card',
-      metaValue: postDto.showWechatCard || '0'
-    }, {
-      metaId: getUuid(),
-      postId: newPostId,
-      metaKey: 'copyright_type',
-      metaValue: postDto.copyrightType || '1'
-    }];
-    // todo: postOriginal is string
-    if (postDto.postOriginal.toString() !== '1') { // 非原创
-      metaData.push({
-        metaId: getUuid(),
-        postId: newPostId,
-        metaKey: 'post_source',
-        metaValue: postDto.postSource
-      });
-      metaData.push({
-        metaId: getUuid(),
-        postId: newPostId,
-        metaKey: 'post_author',
-        metaValue: postDto.postAuthor
-      });
-    }
-
-    const result = await this.postsService.savePost({
-      newPostId,
-      postData,
-      postMeta: metaData,
-      postTaxonomies,
-      postTags
-    });
-    if (!result) {
-      throw new CustomException('保存失败。', HttpStatus.OK, ResponseCode.POST_SAVE_ERROR);
-    }
-
-    const referer = session.postReferer;
-    delete session.postReferer;
-
-    return {
-      code: ResponseCode.SUCCESS,
-      status: HttpStatus.OK,
-      data: {
-        url: referer || '/admin/post?type=' + postDto.postType
-      }
     };
   }
 }

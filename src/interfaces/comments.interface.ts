@@ -16,7 +16,6 @@ export interface CommentListVo {
 export interface CommentQueryParam {
   page: number;
   pageSize?: number;
-  isAdmin: boolean;
   fromAdmin?: boolean;
   postId?: string;
   keyword?: string;

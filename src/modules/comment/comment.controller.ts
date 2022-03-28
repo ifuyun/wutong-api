@@ -56,7 +56,6 @@ export class CommentController {
       pageSize,
       postId,
       keyword,
-      isAdmin,
       fromAdmin
     };
     if (status) {

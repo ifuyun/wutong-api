@@ -34,9 +34,9 @@ export class AuthService {
           expiresAt: Date.now() + this.configService.get('auth.expiresIn') * 1000 // from 's' to 'ms'
         };
       }
-      throw new BadRequestException(Message.LOGIN_REJECT, HttpStatus.BAD_REQUEST, ResponseCode.LOGIN_REJECT);
+      throw new BadRequestException(Message.LOGIN_REJECT, ResponseCode.LOGIN_REJECT);
     }
-    throw new BadRequestException(Message.LOGIN_REJECT, HttpStatus.BAD_REQUEST, ResponseCode.LOGIN_REJECT);
+    throw new BadRequestException(Message.LOGIN_REJECT, ResponseCode.LOGIN_REJECT);
   }
 
   parse(token: string): AuthUserEntity {

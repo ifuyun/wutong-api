@@ -1,14 +1,22 @@
-import { Controller, Get, Header, HttpStatus, Param, Query, Req, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
-import { CommentFlag, PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { uniq } from 'lodash';
+import * as xss from 'sanitizer';
+import { CommentFlag, PostStatus, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
+import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
+import { Roles } from '../../decorators/roles.decorator';
+import { PostDto } from '../../dtos/post.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
+import { UnknownException } from '../../exceptions/unknown.exception';
+import { RolesGuard } from '../../guards/roles.guard';
+import { getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
 import { PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
@@ -21,14 +29,12 @@ import { CommentService } from '../comment/comment.service';
 import { LoggerService } from '../logger/logger.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../util/util.service';
-import { PostCommonService } from './post-common.service';
 import { PostsService } from './posts.service';
 
 @Controller('api/posts')
 export class PostController {
   constructor(
     private readonly postsService: PostsService,
-    private readonly commonService: PostCommonService,
     private readonly taxonomiesService: TaxonomiesService,
     private readonly commentService: CommentService,
     private readonly logger: LoggerService,
@@ -98,7 +104,7 @@ export class PostController {
     }
     let crumbs: CrumbEntity[] = [];
     if (category) {
-      const taxonomies = await this.taxonomiesService.getAllTaxonomies(isAdmin ? [0, 1] : 1);
+      const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(isAdmin ? [0, 1] : 1);
       const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
       const result = await this.taxonomiesService.getSubTaxonomies({
         taxonomyData: taxonomies,
@@ -280,7 +286,7 @@ export class PostController {
       } else {
         crumbTaxonomyId = taxonomies[0].taxonomyId;
       }
-      const allTaxonomies = await this.taxonomiesService.getAllTaxonomies(
+      const allTaxonomies = await this.taxonomiesService.getTaxonomyTreeData(
         isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
       crumbs = this.taxonomiesService.getTaxonomyPath({
         taxonomyData: allTaxonomies,
@@ -307,5 +313,76 @@ export class PostController {
     return getSuccessResponse({
       post, meta: postMeta, tags, categories, crumbs
     });
+  }
+
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async savePost(
+    @Req() req: Request,
+    @Body(new TrimPipe()) postDto: PostDto,
+    @AuthUser() user,
+    @Session() session: any
+  ) {
+    const newPostId = postDto.postId || getUuid();
+    const postData: PostDto = {
+      postId: postDto.postId,
+      postTitle: xss.sanitize(postDto.postTitle),
+      postContent: postDto.postContent,
+      postExcerpt: xss.sanitize(postDto.postExcerpt),
+      postGuid: postDto.postGuid || `/post/${newPostId}`,
+      postAuthor: user.userId,
+      postStatus: postDto.postStatus,
+      postPassword: postDto.postStatus === PostStatus.PASSWORD ? postDto.postPassword : '',
+      postOriginal: postDto.postOriginal,
+      commentFlag: postDto.commentFlag,
+      postDate: postDto.postDate
+    };
+    if (!postDto.postId) {// 编辑时不允许修改postType
+      postData.postType = postDto.postType;
+    }
+    const isPostGuidExist = await this.postsService.checkPostGuidExist(postData.postGuid, postData.postId);
+    if (isPostGuidExist) {
+      throw new BadRequestException(Message.POST_GUID_EXIST, ResponseCode.POST_GUID_CONFLICT);
+    }
+
+    if (postDto.postId && postDto.updateModified === 1) {
+      postData.postModified = new Date();
+    }
+    let postTags: string[];
+    if (typeof postDto.postTags === 'string') {
+      postTags = uniq(postDto.postTags.split(/[,\s]/i).filter((v) => v.trim()));
+    } else {
+      postTags = postDto.postTags;
+    }
+    const postTaxonomies = postDto.postTaxonomies;
+    const metaValue: [string, string][] = [
+      ['show_wechat_card', postDto.showWechatCard.toString()],
+      ['copyright_type', postDto.copyrightType.toString()]
+    ];
+    if (postDto.postOriginal !== 1) { // 非原创
+      metaValue.push(['post_source', postDto.postSource]);
+      metaValue.push(['post_author', postDto.postAuthor]);
+    }
+    const metaData = metaValue.map((item) => ({
+      metaId: getUuid(),
+      postId: newPostId,
+      metaKey: item[0],
+      metaValue: item[1]
+    }));
+
+    const result = await this.postsService.savePost({
+      newPostId,
+      postData,
+      postMeta: metaData,
+      postTaxonomies,
+      postTags
+    });
+    if (!result) {
+      throw new UnknownException(Message.POST_SAVE_ERROR, ResponseCode.POST_SAVE_ERROR);
+    }
+
+    return getSuccessResponse();
   }
 }

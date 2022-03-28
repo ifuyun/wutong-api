@@ -156,8 +156,9 @@ export class LinkController {
         throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
-    const taxonomyData = await this.taxonomiesService.getAllTaxonomies([0, 1], TaxonomyType.LINK);
-    const taxonomies = this.taxonomiesService.getTaxonomyTree(taxonomyData);
+    const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData([0, 1], TaxonomyType.LINK);
+    const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomyData);
+    const taxonomyList = this.taxonomiesService.flattenTaxonomyTree(taxonomyTree, []);
 
     const options = await this.optionsService.getOptions();
     const titles = ['管理后台', options.site_name];
@@ -182,7 +183,7 @@ export class LinkController {
       title,
       link,
       options,
-      taxonomyList: taxonomies.taxonomyList
+      taxonomyList: taxonomyList
     };
   }
 

@@ -10,8 +10,7 @@ export const KEY_WX_MP_JSAPI_TICKET_TIME = 'wx_mp_jsapi_ticket_time';
 export const WX_MP_ACCESS_TOKEN_EXPIRES = 7200;
 
 export const POST_TITLE_LENGTH = 100;
-export const POST_DESCRIPTION_LENGTH = 140;
-export const POST_EXCERPT_LENGTH = 120;
+export const POST_EXCERPT_LENGTH = 140;
 export const POST_TAXONOMY_LIMIT = 5;
 export const POST_TAG_LIMIT = 15;
 export const POST_SOURCE_LENGTH = 100;

@@ -28,6 +28,7 @@ export class CommentService {
   }
 
   async saveComment(commentDto: CommentDto): Promise<number> {
+    // todo: update comment count of post
     if (!commentDto.commentId) {
       commentDto.commentId = getUuid();
       return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve(1));
@@ -51,7 +52,7 @@ export class CommentService {
   }
 
   async getComments(param: CommentQueryParam): Promise<CommentListVo> {
-    const { isAdmin, fromAdmin, postId, keyword, status, orders } = param;
+    const { fromAdmin, postId, keyword, status, orders } = param;
     const pageSize = param.pageSize || 10;
     const where = {
       commentStatus: {
@@ -100,6 +101,7 @@ export class CommentService {
   }
 
   async auditComment(commentIds: string[], status: string): Promise<[number]> {
+    // todo: update comment count of post
     return this.commentModel.update({
       commentStatus: status
     }, {

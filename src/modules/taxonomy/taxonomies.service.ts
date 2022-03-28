@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, WhereOptions } from 'sequelize';
+import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../../common/common.enum';
 import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common/constants';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { getUuid } from '../../helpers/helper';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
-import { TaxonomyEntity, TaxonomyList, TaxonomyMap, TaxonomyNode, TaxonomyQueryParam, TaxonomyStatusMap } from '../../interfaces/taxonomies.interface';
+import { TaxonomyEntity, TaxonomyList, TaxonomyNode, TaxonomyQueryParam, TaxonomyStatusMap } from '../../interfaces/taxonomies.interface';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
@@ -28,9 +28,10 @@ export class TaxonomiesService {
   }
 
   generateTaxonomyTree(taxonomyData: TaxonomyEntity[]): TaxonomyNode[] {
+    // todo: improve
     const tree: TaxonomyNode[] = [];
     const iteratedIds: string[] = [];
-    const iterator = (treeData: TaxonomyNode[], parentId: string, parentNode: TaxonomyNode[], level: number) => {
+    const iterator = (treeData: TaxonomyEntity[], parentId: string, parentNode: TaxonomyNode[], level: number) => {
       treeData.map(item => {
         if (!iteratedIds.includes(item.taxonomyId)) {
           if (item.parentId === parentId) {
@@ -62,16 +63,6 @@ export class TaxonomiesService {
       }
     });
     return output;
-  }
-
-  // todo: redundant
-  getTaxonomyTree(data: TaxonomyEntity[]): TaxonomyMap {
-    const tree = this.generateTaxonomyTree(data);
-    return {
-      taxonomyData: data,
-      taxonomyTree: tree,
-      taxonomyList: this.flattenTaxonomyTree(tree, [])
-    };
   }
 
   getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): CrumbEntity[] {
@@ -149,14 +140,14 @@ export class TaxonomiesService {
     return status;
   }
 
-  getAllTaxonomyStatusValues(): number[] {
+  getAllTaxonomyStatusValues(): TaxonomyStatus[] {
     return Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).map((key) => TaxonomyStatus[key]);
   }
 
-  async getAllTaxonomies(
+  async getTaxonomyTreeData(
     status: TaxonomyStatus | TaxonomyStatus[] = TaxonomyStatus.OPEN,
     type: TaxonomyType = TaxonomyType.POST
-  ): Promise<TaxonomyNode[]> {
+  ): Promise<TaxonomyEntity[]> {
     let where: WhereOptions = {
       type: {
         [Op.eq]: type
@@ -239,13 +230,13 @@ export class TaxonomiesService {
 
   async getTaxonomies(param: TaxonomyQueryParam): Promise<TaxonomyList> {
     const { type, status, keyword, orders } = param;
-    const pageSize = param.pageSize || 10;
+    const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
     let where = {
       type: {
         [Op.eq]: type
       }
     };
-    if (status !== undefined && status !== null && !isNaN(status)) {
+    if (status && status.length > 0) {
       where['status'] = status;
     }
     if (keyword) {
@@ -265,14 +256,16 @@ export class TaxonomiesService {
     }
     const total = await this.taxonomyModel.count({ where });
     const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
-
-    const taxonomies = await this.taxonomyModel.findAll({
+    const queryOpt: FindOptions = {
       where,
       order: orders || [['termOrder', 'asc'], ['created', 'desc']],
-      limit: pageSize,
-      offset: pageSize * (page - 1),
       subQuery: false
-    });
+    };
+    if (pageSize !== 0) {
+      queryOpt.limit = pageSize;
+      queryOpt.offset = pageSize * (page - 1);
+    }
+    const taxonomies = await this.taxonomyModel.findAll(queryOpt);
 
     return {
       taxonomies, page, total
@@ -384,5 +377,23 @@ export class TaxonomiesService {
       });
       return Promise.resolve(false);
     });
+  }
+
+  async searchTags(keyword: string): Promise<TaxonomyModel[]> {
+    const rowsLimit = 10;
+    const queryOpt: FindOptions = {
+      where: {
+        type: {
+          [Op.eq]: TaxonomyType.TAG
+        },
+        name: {
+          [Op.like]: `%${keyword}%`
+        }
+      },
+      order: [['termOrder', 'asc'], ['created', 'desc']],
+      limit: rowsLimit,
+      offset: 0
+    };
+    return this.taxonomyModel.findAll(queryOpt);
   }
 }

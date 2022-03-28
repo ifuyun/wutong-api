@@ -45,17 +45,28 @@ export class BasicPostDto {
 
   @IsId({ message: '参数非法' })
   postParent?: string;
+
+  @ArrayMaxSizePlus(
+    { size: POST_TAG_LIMIT, separator: /[,\s]/i },
+    { message: '标签数应不大于$constraint1个，实际为$constraint2个' }
+  )
+  postTags?: string | string[];
 }
 
 export class AdditionalPostDto {
   postName?: string;
-  postRawContent?: string;
-  postModified?: Date;
   postCreated?: Date;
-  commentCount?: number;
+  postModified?: Date;
   postViewCount?: number;
-  showWechatCard?: string;
-  copyrightType?: string;
+  commentCount?: number;
+
+  @IsNumber({ message: '请选择是否插入名片' })
+  @IsNotEmpty({ message: '请选择是否插入名片' })
+  showWechatCard?: 0 | 1 | 2;
+
+  @IsNumber({ message: '请选择版权类型' })
+  @IsNotEmpty({ message: '请选择版权类型' })
+  copyrightType?: 0 | 1 | 2;
 }
 
 export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
@@ -64,22 +75,16 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   @ArrayNotEmpty({ message: '分类不能为空' })
   postTaxonomies?: string[];
 
-  @ArrayMaxSizePlus(
-    { size: POST_TAG_LIMIT, separator: /[,\s]/i },
-    { message: '标签数应不大于$constraint1个，实际为$constraint2个' }
-  )
-  postTags?: string | string[];
+  @IsNumber({ message: '请选择是否原创' })
+  @IsNotEmpty({ message: '请选择是否原创' })
+  postOriginal?: 0 | 1;
 
-  @IsNumber({ message: '文章来源必须为数字' })
-  @IsNotEmpty({ message: '请选择文章来源' })
-  postOriginal?: number;
-
-  @ValidateIf(o => o.postOriginal === '0')
+  @ValidateIf(o => o.postOriginal === 0)
   @MaxLength(POST_SOURCE_LENGTH, { message: '文章来源长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '转载文章请注明来源' })
   postSource?: string;
 
-  @ValidateIf(o => o.postOriginal === '0')
+  @ValidateIf(o => o.postOriginal === 0)
   @MaxLength(POST_AUTHOR_LENGTH, { message: '文章作者长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '转载文章请注明作者' })
   postAuthor: string;
@@ -102,11 +107,11 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
 
   @IsNumber({ message: '请选择是否更新文章修改时间' })
   @IsNotEmpty({ message: '请选择是否更新文章修改时间' })
-  updateModified?: number;
+  updateModified?: 0 | 1;
 }
 
 export class PostFileDto extends BasicPostDto {
   postAuthor: string;
-  postOriginal: number;
+  postOriginal: 0 | 1;
   postGuid?: string;
 }

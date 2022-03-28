@@ -1,21 +1,20 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { PostController } from './post.controller';
-import { PostsService } from './posts.service';
-import { PostMetaService } from './post-meta.service';
-import { AdminFileController } from './admin-file.controller';
-import { DatabaseModule } from '../database/database.module';
-import { LoggerModule } from '../logger/logger.module';
-import { OptionModule } from '../option/option.module';
-import { TaxonomyModule } from '../taxonomy/taxonomy.module';
-import { PaginatorModule } from '../paginator/paginator.module';
-import { UtilModule } from '../util/util.module';
-import { PostCommonService } from './post-common.service';
-import { LinkModule } from '../link/link.module';
+import { AuthModule } from '../auth/auth.module';
 import { CommentModule } from '../comment/comment.module';
 import { CrumbModule } from '../crumb/crumb.module';
-import { AdminPostController } from './admin-post.controller';
+import { DatabaseModule } from '../database/database.module';
+import { LinkModule } from '../link/link.module';
+import { LoggerModule } from '../logger/logger.module';
+import { OptionModule } from '../option/option.module';
+import { PaginatorModule } from '../paginator/paginator.module';
+import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { UserModule } from '../user/user.module';
-import { AuthModule } from '../auth/auth.module';
+import { UtilModule } from '../util/util.module';
+import { AdminFileController } from './admin-file.controller';
+import { AdminPostController } from './admin-post.controller';
+import { PostMetaService } from './post-meta.service';
+import { PostController } from './post.controller';
+import { PostsService } from './posts.service';
 
 @Module({
   imports: [
@@ -38,13 +37,12 @@ import { AuthModule } from '../auth/auth.module';
   ],
   providers: [
     PostsService,
-    PostMetaService,
-    PostCommonService
+    PostMetaService
   ],
   exports: [
     PostsService,
-    PostMetaService,
-    PostCommonService
+    PostMetaService
   ]
 })
-export class PostModule {}
+export class PostModule {
+}

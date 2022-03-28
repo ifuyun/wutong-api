@@ -21,5 +21,8 @@ export enum Message {
   UNSUPPORTED_QUERY_ORDERS = '不支持的排序参数',
   INVALID_PARAMS = '参数: $0 无效',
   COMMENT_SAVE_ERROR = '评论保存失败',
-  TAXONOMY_NOT_FOUND = 'Taxonomy not exist'
+  TAXONOMY_NOT_FOUND = 'Taxonomy not exist',
+  MISSED_PARAMS = '缺少参数',
+  POST_GUID_EXIST = 'URL已存在，请重新输入',
+  POST_SAVE_ERROR = '文章保存失败'
 }

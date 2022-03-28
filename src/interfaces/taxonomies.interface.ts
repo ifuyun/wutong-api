@@ -39,9 +39,9 @@ export interface TaxonomyStatusMap {
 
 export interface TaxonomyQueryParam {
   type: string;
+  status?: TaxonomyStatus[];
   page: number;
   pageSize?: number;
-  status?: TaxonomyStatus;
   keyword?: string;
   orders?: Order;
 }

@@ -79,14 +79,11 @@ export class PostsService {
     const postList = [];
     posts.forEach((post) => {
       const meta: Record<string, string> = {};
-      postMeta.forEach((u, i) => {
+      postMeta.forEach((u) => {
         if (u.postId === post.postId) {
           meta[u.metaKey] = u.metaValue;
-          // decrease iterate times
-          postMeta.splice(i, 1);
         }
       });
-      meta.postAuthor = meta['post_author'] || post.author.userNiceName;
 
       const tags = [];
       const categories = [];
@@ -216,7 +213,10 @@ export class PostsService {
     return this.postArchiveView.findAll(queryOpt);
   }
 
-  async getTaxonomiesAndPostMetaByPosts(postIds: string[], isAdmin?: boolean) {
+  async getTaxonomiesAndPostMetaByPosts(postIds: string[], isAdmin?: boolean): Promise<{
+    postMeta: PostMetaModel[],
+    taxonomies: TaxonomyModel[]
+  }> {
     return Promise.all([
       this.postMetaService.getPostMetaByPostIds(postIds),
       this.taxonomiesService.getTaxonomiesByPostIds({
@@ -326,8 +326,9 @@ export class PostsService {
     const queryOpt: FindOptions = {
       where,
       attributes: [
-        'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
-        'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified', 'postCreated', 'postGuid', 'commentCount', 'postViewCount'
+        'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt',
+        'postStatus', 'commentFlag', 'postOriginal', 'postType', 'postAuthor',
+        'postModified', 'postCreated', 'postGuid', 'commentCount', 'postViewCount'
       ],
       include: [{
         model: UserModel,
@@ -592,7 +593,7 @@ export class PostsService {
       return Promise.resolve(true);
     }).catch((err) => {
       this.logger.error({
-        message: '内容保存失败。',
+        message: '内容保存失败',
         data: data,
         stack: err.stack
       });

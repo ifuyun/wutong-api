@@ -18,7 +18,6 @@ import { getFileExt, getUuid } from '../../helpers/helper';
 import { OptionsService } from '../option/options.service';
 import { UtilService } from '../util/util.service';
 import { WatermarkService } from '../util/watermark.service';
-import { PostCommonService } from './post-common.service';
 import { PostsService } from './posts.service';
 
 @Controller('admin/file')
@@ -26,7 +25,6 @@ import { PostsService } from './posts.service';
 @Roles(Role.ADMIN)
 export class AdminFileController {
   constructor(
-    private readonly commonService: PostCommonService,
     private readonly optionsService: OptionsService,
     private readonly postsService: PostsService,
     private readonly utilService: UtilService,
@@ -88,7 +86,7 @@ export class AdminFileController {
         const filePath = path.join(uploadPath, fileName);
         fs.renameSync(files.mediafile['filepath'], filePath);
         resolve({
-          rawName: files.mediafile['originalFilename'],
+          fileRawName: files.mediafile['originalFilename'],
           fileName,
           filePath,
           fields
@@ -105,7 +103,7 @@ export class AdminFileController {
     if (isPostGuidExist) {
       throw new CustomException('文件上传错误，请重新上传。', HttpStatus.OK, ResponseCode.UPLOAD_PATH_CONFLICT);
     }
-    const fileDesc = xss.sanitize(result['rawName']);
+    const fileDesc = xss.sanitize(result['fileRawName']);
     const fileData: PostFileDto = {
       postContent: fileDesc,
       postExcerpt: fileDesc,
