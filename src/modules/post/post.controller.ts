@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Param, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import { uniq } from 'lodash';
 import * as xss from 'sanitizer';
@@ -369,6 +369,23 @@ export class PostController {
     if (!result) {
       throw new UnknownException(Message.POST_SAVE_ERROR, ResponseCode.POST_SAVE_ERROR);
     }
+
+    return getSuccessResponse();
+  }
+
+  @Delete()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(CheckIdInterceptor)
+  @IdParams({ idInBody: ['postIds'] })
+  @Header('Content-Type', 'application/json')
+  async deletePosts(
+    @Body(new TrimPipe()) { postIds }: Record<string, any>
+  ) {
+    if (!postIds || postIds.length < 1) {
+      throw new BadRequestException(Message.POST_DELETE_EMPTY);
+    }
+    await this.postsService.deletePosts(postIds);
 
     return getSuccessResponse();
   }

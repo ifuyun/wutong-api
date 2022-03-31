@@ -577,4 +577,17 @@ export class PostsService {
       return Promise.resolve(false);
     });
   }
+
+  async deletePosts(postIds: string[]): Promise<[affectedCount: number]> {
+    /* soft delete */
+    return this.postModel.update({
+      postStatus: PostStatus.TRASH
+    }, {
+      where: {
+        postId: {
+          [Op.in]: postIds
+        }
+      }
+    });
+  }
 }

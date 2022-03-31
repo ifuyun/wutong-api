@@ -100,7 +100,7 @@ export class CommentService {
     };
   }
 
-  async auditComment(commentIds: string[], status: string): Promise<[number]> {
+  async auditComment(commentIds: string[], status: string): Promise<[affectedCount: number]> {
     // todo: update comment count of post
     return this.commentModel.update({
       commentStatus: status

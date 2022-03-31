@@ -88,15 +88,13 @@ export class CommentController {
   @IdParams({ idInBody: ['commentId'] })
   @Header('Content-Type', 'application/json')
   async auditComment(
-    @Body(new TrimPipe()) data: CommentAuditParam,
+    @Body(new TrimPipe()) data: CommentAuditParam
   ) {
     if (!Object.keys(CommentStatus).map((k) => CommentStatus[k]).includes(data.action)) {
       throw new ForbiddenException();
     }
-    const result = await this.commentService.auditComment(data.commentIds, data.action);
-    if (result[0] < 1) {
-      throw new UnknownException(Message.DB_QUERY_FAIL);
-    }
+    await this.commentService.auditComment(data.commentIds, data.action);
+
     return getSuccessResponse();
   }
 
@@ -119,7 +117,7 @@ export class CommentController {
       commentContent: xss.sanitize(commentDto.commentContent),
       captchaCode: commentDto.captchaCode || ''
     };
-    if (!commentData.commentId) {
+    if (!commentDto.commentId) {
       commentData = {
         ...commentData,
         commentAuthor: xss.sanitize(commentDto.commentAuthor || '') || user.userNiceName || '',
@@ -146,14 +144,11 @@ export class CommentController {
     if (post.commentFlag === CommentFlag.CLOSE && !isAdmin) {
       throw new CustomException('该文章禁止评论', HttpStatus.FORBIDDEN, ResponseCode.POST_COMMENT_CLOSED);
     }
-    if (post.commentFlag === CommentFlag.OPEN) {
+    if (post.commentFlag === CommentFlag.OPEN && !commentDto.commentId) {
       commentData.commentStatus = CommentStatus.NORMAL;
     }
 
-    const result = await this.commentService.saveComment(commentData);
-    if (result < 1) {
-      throw new UnknownException(Message.COMMENT_SAVE_ERROR);
-    }
+    await this.commentService.saveComment(commentData);
     this.captchaService.removeCaptcha(req.session);
 
     return getSuccessResponse({
