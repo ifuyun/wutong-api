@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import { uniq } from 'lodash';
 import * as xss from 'sanitizer';
@@ -11,7 +11,7 @@ import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { PostDto } from '../../dtos/post.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { CustomException } from '../../exceptions/custom.exception';
+import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
@@ -200,17 +200,26 @@ export class PostController {
   }
 
   @Get('standalone')
-  async getPostBySlug(@Query('slug', new TrimPipe()) slug: string) {
+  async getPostBySlug(
+    @Query('slug', new TrimPipe()) slug: string,
+    @IsAdmin() isAdmin: boolean
+  ) {
     // todo: move to validation
     const isLikePost = this.utilService.isUrlPathLikePostSlug(slug);
     if (!isLikePost) {
       throw new NotFoundException();
     }
-    const post = await this.postsService.getPostBySlug(slug);
+    const post = await this.postsService.getPostBySlug(slug, isAdmin);
     if (!post) {
       throw new NotFoundException();
     }
-    await this.postsService.incrementPostView(post.postId);
+    // 无管理员权限不允许访问非公开文章(包括草稿)
+    // todo: encrypt post
+    if (!isAdmin && post.postStatus !== PostStatus.PUBLISH) {
+      // log: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
+      throw new ForbiddenException();
+    }
+    await this.postsService.increasePostView(post.postId);
 
     const postMeta: Record<string, string> = {};
     post.postMeta.forEach((meta) => {
@@ -235,63 +244,41 @@ export class PostController {
     const fromAdmin = isAdmin && fa === '1';
     const post = await this.postsService.getPostById(postId, isAdmin);
     if (!post || !post.postId) {
-      throw new CustomException({
-        status: HttpStatus.NOT_FOUND,
-        data: {
-          code: ResponseCode.POST_NOT_FOUND,
-          message: `Post: ${postId} is not exist.`
-        }
-      });
+      throw new NotFoundException();
     }
     // 无管理员权限不允许访问非公开文章(包括草稿)
+    // todo: encrypt post
     if (!isAdmin && post.postStatus !== PostStatus.PUBLISH) {
-      throw new CustomException({
-        status: HttpStatus.NOT_FOUND,
-        data: {
-          code: ResponseCode.UNAUTHORIZED,
-          message: Message.NOT_FOUND
-        },
-        log: {
-          msg: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
-        }
-      });
+      // log: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
+      throw new ForbiddenException();
     }
-
-    // post categories
-    let taxonomies: TaxonomyModel[] = post.taxonomies.filter((item) => item.type === TaxonomyType.POST);
-    if (taxonomies.length < 1) {
-      throw new NotFoundException({
-        data: {
-          code: ResponseCode.TAXONOMY_NOT_FOUND,
-          message: Message.NOT_FOUND
-        },
-        log: {
-          msg: Message.TAXONOMY_NOT_FOUND,
-          data: {
-            postId: post.postId,
-            postTitle: post.postTitle
-          }
-        }
-      });
-    }
-    await this.postsService.incrementPostView(postId);
 
     let crumbs: CrumbEntity[] = [];
-    if (!fromAdmin) {
-      let crumbTaxonomyId;
-      // todo: parent category
-      const crumbTaxonomies = taxonomies.filter((item) => referer.split('?')[0].endsWith(`/${item.slug}`));
-      if (crumbTaxonomies.length > 0) {
-        crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
-      } else {
-        crumbTaxonomyId = taxonomies[0].taxonomyId;
+    if (post.postType === PostType.POST) {
+      // post categories
+      let taxonomies: TaxonomyModel[] = post.taxonomies.filter((item) => item.type === TaxonomyType.POST);
+      if (taxonomies.length < 1) {
+        throw new NotFoundException(Message.NOT_FOUND, ResponseCode.TAXONOMY_NOT_FOUND);
       }
-      const allTaxonomies = await this.taxonomiesService.getTaxonomyTreeData(
-        isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
-      crumbs = this.taxonomiesService.getTaxonomyPath({
-        taxonomyData: allTaxonomies,
-        taxonomyId: crumbTaxonomyId
-      });
+      if (!fromAdmin) {
+        let crumbTaxonomyId;
+        // todo: parent category
+        const crumbTaxonomies = taxonomies.filter((item) => referer.split('?')[0].endsWith(`/${item.slug}`));
+        if (crumbTaxonomies.length > 0) {
+          crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
+        } else {
+          crumbTaxonomyId = taxonomies[0].taxonomyId;
+        }
+        const allTaxonomies = await this.taxonomiesService.getTaxonomyTreeData(
+          isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
+        crumbs = this.taxonomiesService.getTaxonomyPath({
+          taxonomyData: allTaxonomies,
+          taxonomyId: crumbTaxonomyId
+        });
+      }
+    }
+    if (!fromAdmin) {
+      await this.postsService.increasePostView(postId);
     }
 
     const postMeta: Record<string, string> = {};

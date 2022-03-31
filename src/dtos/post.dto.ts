@@ -37,7 +37,7 @@ export class BasicPostDto {
   postExcerpt?: string;
 
   @IsIncludedIn(
-    { ranges: [PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE] },
+    { ranges: [PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.TRASH] },
     { message: '公开度选择错误' }
   )
   @IsNotEmpty({ message: '公开度不能为空' })
@@ -70,6 +70,7 @@ export class AdditionalPostDto {
 }
 
 export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
+  @ValidateIf(o => o.postType === PostType.POST)
   @IsId({ message: '参数非法' })
   @ArrayMaxSize(POST_TAXONOMY_LIMIT, { message: '分类数应不大于$constraint1个' })
   @ArrayNotEmpty({ message: '分类不能为空' })
@@ -95,7 +96,7 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   postGuid?: string;
 
   @ValidateIf(o => o.postStatus === 'password')
-  @IsNotEmpty({ message: '密码不能为空' })
+  @IsNotEmpty({ message: '加密内容密码不能为空' })
   postPassword?: string;
 
   @IsIncludedIn(

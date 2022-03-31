@@ -46,14 +46,10 @@ export class PostsService {
   }
 
   getAllPostStatus(): PostStatusMap[] {
-    const status: PostStatusMap[] = [];
-    Object.keys(PostStatus).forEach((key) => {
-      status.push({
-        name: PostStatus[key],
-        desc: PostStatusDesc[key]
-      });
-    });
-    return status;
+    return Object.keys(PostStatus).map((key) => ({
+      name: PostStatus[key],
+      desc: PostStatusDesc[key]
+    }));
   }
 
   transformArchiveDates(archiveDates: VPostDateArchiveModel[]) {
@@ -74,34 +70,19 @@ export class PostsService {
     };
   }
 
-  assemblePostData(param: { posts: PostModel[], postMeta: PostMetaModel[], taxonomies: TaxonomyModel[] }): PostVo[] {
-    const { posts, postMeta, taxonomies } = param;
+  assemblePostData(posts: PostModel[], postMeta: PostMetaModel[], taxonomies: TaxonomyModel[]): PostVo[] {
     const postList = [];
     posts.forEach((post) => {
       const meta: Record<string, string> = {};
-      postMeta.forEach((u) => {
-        if (u.postId === post.postId) {
-          meta[u.metaKey] = u.metaValue;
-        }
-      });
+      postMeta.filter((item) => item.postId === post.postId)
+        .forEach((item) => meta[item.metaKey] = item.metaValue);
 
-      const tags = [];
-      const categories = [];
-      taxonomies.forEach((t) => {
-        if (t.type === 'tag') {
-          t.taxonomyRelationships.forEach((r) => {
-            if (r.objectId === post.postId) {
-              tags.push(t);
-            }
-          });
-        } else {
-          t.taxonomyRelationships.forEach((r) => {
-            if (r.objectId === post.postId) {
-              categories.push(t);
-            }
-          });
-        }
-      });
+      const matched = taxonomies.filter(
+        (item) => item.taxonomyRelationships.filter((r) => r.objectId === post.postId).length > 0
+      );
+      const tags = matched.filter((item) => item.type === TaxonomyType.TAG);
+      const categories = matched.filter((item) => item.type === TaxonomyType.POST);
+
       postList.push({
         post,
         meta,
@@ -213,23 +194,6 @@ export class PostsService {
     return this.postArchiveView.findAll(queryOpt);
   }
 
-  async getTaxonomiesAndPostMetaByPosts(postIds: string[], isAdmin?: boolean): Promise<{
-    postMeta: PostMetaModel[],
-    taxonomies: TaxonomyModel[]
-  }> {
-    return Promise.all([
-      this.postMetaService.getPostMetaByPostIds(postIds),
-      this.taxonomiesService.getTaxonomiesByPostIds({
-        postIds, isAdmin
-      })
-    ]).then((results) => {
-      return Promise.resolve({
-        postMeta: results[0],
-        taxonomies: results[1]
-      });
-    });
-  }
-
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
     const { isAdmin, keyword, fromAdmin, subTaxonomyIds, tag, year, month, status, commentFlag, author, orders } = param;
     const pageSize = param.pageSize || 10;
@@ -284,33 +248,32 @@ export class PostsService {
       };
     }
     const includeOpt: IncludeOptions[] = [];
-    if (postType === PostType.POST) {
-      includeOpt.push({
-        model: TaxonomyModel,
-        through: { attributes: [] },
-        attributes: ['taxonomyId', 'status'],
-        where: {
-          type: {
-            [Op.eq]: TaxonomyType.POST
-          },
-          status: {
-            [Op.in]: isAdmin ? [0, 1] : [1]
-          }
+    const includeTmp = {
+      model: TaxonomyModel,
+      through: { attributes: [] },
+      attributes: ['taxonomyId', 'status'],
+      where: {
+        type: {
+          [Op.in]: [TaxonomyType.POST]
+        },
+        status: {
+          [Op.in]: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : [TaxonomyStatus.OPEN]
         }
-      });
-      if (tag) {
-        includeOpt[0].where = {
-          type: {
-            [Op.eq]: TaxonomyType.TAG
-          },
-          status: {
-            [Op.eq]: TaxonomyStatus.OPEN
-          },
-          slug: {
-            [Op.eq]: tag
-          }
-        };
       }
+    };
+    if (postType === PostType.POST) {
+      includeOpt.push(includeTmp);
+    }
+    if (tag) {
+      if (includeOpt.length < 1) {
+        includeOpt.push(includeTmp);
+      }
+      includeOpt[0].where['type'] = {
+        [Op.in]: postType === PostType.POST ? [TaxonomyType.POST, TaxonomyType.TAG] : [TaxonomyType.TAG]
+      };
+      includeOpt[0].where['slug'] = {
+        [Op.eq]: tag
+      };
     }
     if (subTaxonomyIds && subTaxonomyIds.length > 0) {
       includeOpt.push({
@@ -333,9 +296,6 @@ export class PostsService {
       include: [{
         model: UserModel,
         attributes: ['userNiceName']
-      }, {
-        model: PostMetaModel,
-        attributes: ['postId', 'metaKey', 'metaValue']
       }],
       order: orders || [['postCreated', 'desc'], ['postDate', 'desc']],
       limit: pageSize,
@@ -346,7 +306,7 @@ export class PostsService {
       where,
       distinct: true
     };
-    if (postType === 'post') {
+    if (includeOpt.length > 0) {
       queryOpt.include = (queryOpt.include as IncludeOptions[]).concat(includeOpt);
       queryOpt.group = ['postId'];
       countOpt.include = includeOpt;
@@ -357,26 +317,28 @@ export class PostsService {
 
     const posts = await this.postModel.findAll(queryOpt);
     const postIds: string[] = posts.map((post) => post.postId);
-    const { postMeta, taxonomies } = await this.getTaxonomiesAndPostMetaByPosts(postIds, isAdmin);
+    const taxonomies = await this.taxonomiesService.getTaxonomiesByPostIds(postIds, isAdmin);
+    const postMeta = await this.postMetaService.getPostMetaByPostIds(postIds);
 
     return {
-      posts: this.assemblePostData({ posts, postMeta, taxonomies }),
+      posts: this.assemblePostData(posts, postMeta, taxonomies),
       page,
       total
     };
   }
 
   async getPostById(postId: string, isAdmin?: boolean): Promise<PostModel> {
-    let where = {
-      [Op.or]: [{
-        taxonomy: TaxonomyType.POST,
-        status: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN
-      }, {
-        taxonomy: TaxonomyType.TAG,
-        status: TaxonomyStatus.OPEN
-      }]
+    let where: WhereOptions = {
+      postId: {
+        [Op.eq]: postId
+      }
     };
-    return this.postModel.findByPk(postId, {
+    if (!isAdmin) {
+      where.postStatus = {
+        [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
+      };
+    }
+    return this.postModel.findOne({
       attributes: [
         'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
         'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified',
@@ -394,14 +356,36 @@ export class PostsService {
         model: TaxonomyModel,
         as: 'taxonomies',
         attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'status', 'count'],
-        where,
+        where: {
+          [Op.or]: [{
+            taxonomy: TaxonomyType.POST,
+            status: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN
+          }, {
+            taxonomy: TaxonomyType.TAG,
+            status: TaxonomyStatus.OPEN
+          }]
+        },
         // force to use left join
         required: false
-      }]
+      }],
+      where
     });
   }
 
-  async getPostBySlug(postSlug: string): Promise<PostModel> {
+  async getPostBySlug(postSlug: string, isAdmin: boolean): Promise<PostModel> {
+    let where: WhereOptions = {
+      postGuid: {
+        [Op.eq]: decodeURIComponent(postSlug)
+      },
+      postType: {
+        [Op.in]: [PostType.POST, PostType.PAGE]
+      }
+    };
+    if (!isAdmin) {
+      where.postStatus = {
+        [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
+      };
+    }
     return this.postModel.findOne({
       attributes: [
         'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
@@ -417,18 +401,11 @@ export class PostsService {
         as: 'postMeta',
         attributes: ['metaKey', 'metaValue']
       }],
-      where: {
-        postGuid: {
-          [Op.eq]: decodeURIComponent(postSlug)
-        },
-        postType: {
-          [Op.in]: ['post', 'page']
-        }
-      }
+      where
     });
   }
 
-  async incrementPostView(postId: string) {
+  async increasePostView(postId: string) {
     return this.postModel.increment({ postViewCount: 1 }, {
       where: {
         postId
@@ -552,12 +529,12 @@ export class PostsService {
         });
       }
       // bulkCreate会报类型错误
-      for (let postMeta of data.postMeta) {
+      for (const postMeta of data.postMeta) {
         await this.postMetaModel.create({ ...postMeta }, {
           transaction: t
         });
       }
-      for (let taxonomy of data.postTaxonomies) {
+      for (const taxonomy of data.postTaxonomies) {
         await this.taxonomyRelationshipModel.create({
           objectId: data.newPostId,
           termTaxonomyId: taxonomy

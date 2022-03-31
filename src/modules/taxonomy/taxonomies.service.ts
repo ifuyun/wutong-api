@@ -181,17 +181,16 @@ export class TaxonomiesService {
     });
   }
 
-  async getTaxonomiesByPostIds(param: { postIds: string[], isAdmin?: boolean }): Promise<TaxonomyModel[]> {
-    const { postIds, isAdmin } = param;
+  async getTaxonomiesByPostIds(postIds: string[], isAdmin?: boolean): Promise<TaxonomyModel[]> {
     const where = {
       [Op.or]: [{
         type: {
-          [Op.eq]: 'post'
+          [Op.eq]: TaxonomyType.POST
         },
-        status: isAdmin ? [0, 1] : [1]
+        status: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : [TaxonomyStatus.OPEN]
       }, {
         type: {
-          [Op.eq]: 'tag'
+          [Op.eq]: TaxonomyType.TAG
         },
         status: {
           [Op.eq]: 1
