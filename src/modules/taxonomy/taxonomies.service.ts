@@ -145,7 +145,7 @@ export class TaxonomiesService {
   }
 
   async getTaxonomyTreeData(
-    status: TaxonomyStatus | TaxonomyStatus[] = TaxonomyStatus.OPEN,
+    status: TaxonomyStatus | TaxonomyStatus[] = TaxonomyStatus.PUBLISH,
     type: TaxonomyType = TaxonomyType.POST
   ): Promise<TaxonomyEntity[]> {
     let where: WhereOptions = {
@@ -181,21 +181,16 @@ export class TaxonomiesService {
     });
   }
 
-  async getTaxonomiesByPostIds(postIds: string[], isAdmin?: boolean): Promise<TaxonomyModel[]> {
+  async getTaxonomiesByPostIds(
+    postIds: string | string[],
+    isAdmin?: boolean,
+    type: TaxonomyType | TaxonomyType[] = [TaxonomyType.POST, TaxonomyType.TAG]
+  ): Promise<TaxonomyModel[]> {
     const where = {
-      [Op.or]: [{
-        type: {
-          [Op.eq]: TaxonomyType.POST
-        },
-        status: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : [TaxonomyStatus.OPEN]
-      }, {
-        type: {
-          [Op.eq]: TaxonomyType.TAG
-        },
-        status: {
-          [Op.eq]: 1
-        }
-      }]
+      type: {
+        [Op.in]: !type || Array.isArray(type) && type.length < 1 ? [TaxonomyType.POST, TaxonomyType.TAG] : type
+      },
+      status: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : [TaxonomyStatus.PUBLISH]
     };
     return this.taxonomyModel.findAll({
       attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'status', 'count'],
@@ -203,9 +198,7 @@ export class TaxonomiesService {
         model: TaxonomyRelationshipModel,
         attributes: ['objectId', 'termTaxonomyId'],
         where: {
-          objectId: {
-            [Op.in]: postIds
-          }
+          objectId: postIds
         }
       }],
       where,
@@ -228,12 +221,11 @@ export class TaxonomiesService {
   }
 
   async getTaxonomies(param: TaxonomyQueryParam): Promise<TaxonomyList> {
+    param.page = param.page || 1;
     const { type, status, keyword, orders } = param;
     const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
     let where = {
-      type: {
-        [Op.eq]: type
-      }
+      type: type
     };
     if (status && status.length > 0) {
       where['status'] = status;
@@ -253,21 +245,25 @@ export class TaxonomiesService {
         }
       }];
     }
-    const total = await this.taxonomyModel.count({ where });
-    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
     const queryOpt: FindOptions = {
       where,
       order: orders || [['termOrder', 'asc'], ['created', 'desc']],
       subQuery: false
     };
+    let total: number;
+    let page: number;
     if (pageSize !== 0) {
+      total = await this.taxonomyModel.count({ where });
+      page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
       queryOpt.limit = pageSize;
       queryOpt.offset = pageSize * (page - 1);
     }
     const taxonomies = await this.taxonomyModel.findAll(queryOpt);
 
     return {
-      taxonomies, page, total
+      taxonomies,
+      page: page || 1,
+      total: total || taxonomies.length
     };
   }
 
@@ -277,7 +273,7 @@ export class TaxonomiesService {
         [Op.eq]: slug
       },
       status: {
-        [Op.eq]: TaxonomyStatus.OPEN
+        [Op.eq]: TaxonomyStatus.PUBLISH
       },
       type: {
         [Op.eq]: type
@@ -394,5 +390,26 @@ export class TaxonomiesService {
       offset: 0
     };
     return this.taxonomyModel.findAll(queryOpt);
+  }
+
+  async updateAllCount(type?: TaxonomyType): Promise<boolean> {
+    const where: WhereOptions = {
+      status: {
+        [Op.ne]: TaxonomyStatus.TRASH
+      }
+    };
+    if (type) {
+      where.type = {
+        [Op.eq]: type
+      };
+    }
+    return this.taxonomyModel.update({
+      count: Sequelize.literal(
+        '(select count(1) total from term_relationships where term_relationships.term_taxonomy_id = term_taxonomy.taxonomy_id)'
+      )
+    }, {
+      where,
+      silent: true
+    }).then((result) => Promise.resolve(true));
   }
 }

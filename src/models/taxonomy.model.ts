@@ -1,4 +1,5 @@
 import { BelongsToMany, Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table, Unique, UpdatedAt } from 'sequelize-typescript';
+import { TaxonomyStatus } from '../common/common.enum';
 import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
 import { PostModel } from './post.model';
 import { LinkModel } from './link.model';
@@ -79,16 +80,11 @@ export class TaxonomyModel extends Model {
 
   @Column({
     field: 'status',
-    type: DataType.INTEGER({
-      length: 1,
-      unsigned: true
-    }),
+    type: DataType.ENUM('publish', 'private', 'trash'),
     allowNull: false,
-    defaultValue: 1
+    defaultValue: 'publish'
   })
-  status: number;
-
-  statusDesc: string;
+  status: TaxonomyStatus;
 
   @Column({
     field: 'term_group',

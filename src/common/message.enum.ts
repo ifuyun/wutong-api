@@ -25,5 +25,6 @@ export enum Message {
   MISSED_PARAMS = '缺少参数',
   POST_GUID_EXIST = 'URL已存在，请重新输入',
   POST_SAVE_ERROR = '文章保存失败',
-  POST_DELETE_EMPTY = '请选择要删除的内容'
+  POST_DELETE_EMPTY = '请选择要删除的内容',
+  POST_DELETE_PARAM_INVALID = '参数错误，必须为ID字符串数组'
 }

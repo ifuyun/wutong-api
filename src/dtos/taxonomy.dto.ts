@@ -48,7 +48,7 @@ export class BasicTaxonomyDto {
     { message: '状态选择错误' }
   )
   @IsNotEmpty({ message: '状态不能为空' })
-  status: number;
+  status: string;
 }
 
 export class AdditionalTaxonomyDto {

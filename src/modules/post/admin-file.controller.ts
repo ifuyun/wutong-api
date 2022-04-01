@@ -18,7 +18,7 @@ import { getFileExt, getUuid } from '../../helpers/helper';
 import { OptionsService } from '../option/options.service';
 import { UtilService } from '../util/util.service';
 import { WatermarkService } from '../util/watermark.service';
-import { PostsService } from './posts.service';
+import { PostService } from './post.service';
 
 @Controller('admin/file')
 @UseGuards(RolesGuard)
@@ -26,7 +26,7 @@ import { PostsService } from './posts.service';
 export class AdminFileController {
   constructor(
     private readonly optionsService: OptionsService,
-    private readonly postsService: PostsService,
+    private readonly postService: PostService,
     private readonly utilService: UtilService,
     private readonly watermarkService: WatermarkService
   ) {
@@ -99,7 +99,7 @@ export class AdminFileController {
     }
     const options = await this.optionsService.getOptions(false);
     const postGuid = `${options.upload_url_prefix}/${curYear}/${curMonth}/${result['fileName']}`;
-    const isPostGuidExist = await this.postsService.checkPostGuidExist(postGuid);
+    const isPostGuidExist = await this.postService.checkPostGuidExist(postGuid);
     if (isPostGuidExist) {
       throw new CustomException('文件上传错误，请重新上传。', HttpStatus.OK, ResponseCode.UPLOAD_PATH_CONFLICT);
     }
@@ -116,7 +116,7 @@ export class AdminFileController {
       postGuid,
       postDate: new Date()
     };
-    const post = await this.postsService.saveFile(fileData);
+    const post = await this.postService.saveFile(fileData);
     if (!post) {
       throw new CustomException('文件上传错误，请重新上传。', HttpStatus.OK, ResponseCode.UPLOAD_ERROR);
     }

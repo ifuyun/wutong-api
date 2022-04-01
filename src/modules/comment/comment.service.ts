@@ -27,11 +27,11 @@ export class CommentService {
     return status;
   }
 
-  async saveComment(commentDto: CommentDto): Promise<number> {
+  async saveComment(commentDto: CommentDto): Promise<boolean> {
     // todo: update comment count of post
     if (!commentDto.commentId) {
       commentDto.commentId = getUuid();
-      return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve(1));
+      return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve(true));
     }
     return this.commentModel.update(commentDto, {
       where: {
@@ -39,7 +39,7 @@ export class CommentService {
           [Op.eq]: commentDto.commentId
         }
       }
-    }).then((result) => Promise.resolve(result[0]));
+    }).then((result) => Promise.resolve(true));
   }
 
   async getCommentById(commentId: string): Promise<CommentModel> {

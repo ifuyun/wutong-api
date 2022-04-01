@@ -107,14 +107,14 @@ export enum TaxonomyTypeDesc {
 }
 
 export enum TaxonomyStatus {
-  CLOSED = 0,
-  OPEN = 1,
-  TRASH = 2
+  PUBLISH = 'publish',
+  PRIVATE = 'private',
+  TRASH = 'trash'
 }
 
 export enum TaxonomyStatusDesc {
-  CLOSED = '不公开',
-  OPEN = '公开',
+  PUBLISH = '公开',
+  PRIVATE = '隐藏',
   TRASH = '已删除'
 }
 

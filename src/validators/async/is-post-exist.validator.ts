@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { PostsService } from '../../modules/post/posts.service';
+import { PostService } from '../../modules/post/post.service';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
 export class IsPostExistConstraint implements ValidatorConstraintInterface {
-  constructor(private readonly postsService: PostsService) {
+  constructor(private readonly postService: PostService) {
   }
 
   async validate(value: string, args?: ValidationArguments): Promise<boolean> {
@@ -13,7 +13,7 @@ export class IsPostExistConstraint implements ValidatorConstraintInterface {
       // 允许为空
       return true;
     }
-    return await this.postsService.checkPostExist(value);
+    return await this.postService.checkPostExist(value);
   }
 
   defaultMessage(args?: ValidationArguments): string {

@@ -24,19 +24,19 @@ import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CaptchaService } from '../captcha/captcha.service';
-import { PostsService } from '../post/posts.service';
+import { PostService } from '../post/post.service';
 import { CommentService } from './comment.service';
 
-@Controller()
+@Controller('api/comments')
 export class CommentController {
   constructor(
     private readonly commentService: CommentService,
-    private readonly postsService: PostsService,
+    private readonly postService: PostService,
     private readonly captchaService: CaptchaService
   ) {
   }
 
-  @Get('api/comments')
+  @Get()
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['postId'] })
   @Header('Content-Type', 'application/json')
@@ -81,7 +81,7 @@ export class CommentController {
     return getSuccessResponse(comments);
   }
 
-  @Post('api/comments/audit')
+  @Post('audit')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @UseInterceptors(CheckIdInterceptor)
@@ -98,7 +98,7 @@ export class CommentController {
     return getSuccessResponse();
   }
 
-  @Post(['api/comments'])
+  @Post()
   @Header('Content-Type', 'application/json')
   async saveComment(
     @Req() req: Request,
@@ -140,7 +140,7 @@ export class CommentController {
     if (shouldCheckCaptcha && (session.captcha?.toLowerCase() !== commentData.captchaCode?.toLowerCase())) {
       throw new CustomException('验证码输入有误，请重新输入', HttpStatus.BAD_REQUEST, ResponseCode.CAPTCHA_INPUT_ERROR);
     }
-    const post = await this.postsService.getPostById(commentData.postId);
+    const post = await this.postService.getPostById(commentData.postId);
     if (post.commentFlag === CommentFlag.CLOSE && !isAdmin) {
       throw new CustomException('该文章禁止评论', HttpStatus.FORBIDDEN, ResponseCode.POST_COMMENT_CLOSED);
     }

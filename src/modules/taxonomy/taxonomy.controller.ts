@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { PostStatus, Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
+import { Role, TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType, TaxonomyTypeDesc } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
@@ -40,7 +40,8 @@ export class TaxonomyController {
   @Get('api/taxonomies/taxonomy-tree')
   @Header('Content-Type', 'application/json')
   async getTaxonomyTree(@AuthUser() user: AuthUserEntity) {
-    const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(user.isAdmin ? [0, 1] : 1);
+    const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(
+      user.isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH);
     const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
 
     return getSuccessResponse(taxonomyTree);
@@ -54,9 +55,9 @@ export class TaxonomyController {
     @Query('page', new ParseIntPipe(1)) page: number,
     @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
     @Query('type', new TrimPipe(), new LowerCasePipe()) type: TaxonomyType,
-    @Query('status', new TrimPipe()) status: string | string[],
+    @Query('status', new TrimPipe()) status: TaxonomyStatus | TaxonomyStatus[],
     @Query('keyword', new TrimPipe()) keyword: string,
-    @Query('orders', new TrimPipe()) orders: string[],
+    @Query('orders', new TrimPipe()) orders: string[]
   ) {
     if (!type || !Object.keys(TaxonomyType).map((key) => TaxonomyType[key]).includes(type)) {
       throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, type), ResponseCode.TAXONOMY_TYPE_INVALID);
@@ -67,24 +68,25 @@ export class TaxonomyController {
       type,
       keyword
     };
-    status = (Array.isArray(status) ? status : [status]).filter((item) => !!item);
-    if (status.length > 0) {
+    if (status) {
+      status = typeof status === 'string' ? [status] : status;
       const allowedStatuses = this.taxonomiesService.getAllTaxonomyStatusValues();
       status.forEach((v) => {
-        if (!allowedStatuses.includes(<TaxonomyStatus>parseInt(v))) {
+        if (!allowedStatuses.includes(v)) {
           throw new BadRequestException(
             <Message>format(Message.INVALID_PARAMS, JSON.stringify(status)),
             ResponseCode.TAXONOMY_STATUS_INVALID
           );
         }
       });
-      param.status = status.map((v) => <TaxonomyStatus>parseInt(v));
+      param.status = status;
     }
     if (orders.length > 0) {
       param.orders = getQueryOrders({
         termOrder: 1
       }, orders);
     }
+
     const taxonomies = await this.taxonomiesService.getTaxonomies(param);
     return getSuccessResponse(taxonomies);
   }
@@ -94,7 +96,7 @@ export class TaxonomyController {
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async getTags(
-    @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('keyword', new TrimPipe()) keyword: string
   ) {
     if (!keyword) {
       throw new BadRequestException(Message.MISSED_PARAMS);
@@ -105,6 +107,19 @@ export class TaxonomyController {
     return getSuccessResponse(tagList);
   }
 
+  @Post('api/taxonomies/update-count')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async updateCount(@Body(new TrimPipe()) body: { type: TaxonomyType }) {
+    if (body.type && ![TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK].includes(body.type)) {
+      return new BadRequestException(Message.ILLEGAL_PARAM);
+    }
+    await this.taxonomiesService.updateAllCount(body.type);
+
+    return getSuccessResponse();
+  }
+
   @Get(['admin/taxonomy', 'admin/taxonomy/page-:page'])
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
@@ -112,8 +127,8 @@ export class TaxonomyController {
   async showTaxonomies(
     @Req() req: Request,
     @Param('page', new ParseIntPipe(1)) page: number,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
-    @Query('status', new ParseIntPipe()) status: number,
+    @Query('type', new TrimPipe(), new LowerCasePipe()) type: TaxonomyType,
+    @Query('status', new ParseIntPipe()) status: TaxonomyStatus,
     @Query('keyword', new TrimPipe()) keyword: string,
     @Search() search: Record<string, any>
   ) {
@@ -194,13 +209,13 @@ export class TaxonomyController {
     }
     let taxonomyList: TaxonomyNode[] = [];
     if (type !== TaxonomyType.TAG) {
-      const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData([0 ,1], type);
+      const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData([TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE], type);
       const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomyData);
       taxonomyList = this.taxonomiesService.flattenTaxonomyTree(taxonomyTree, []);
     }
     const options = await this.optionsService.getOptions();
     const titles = ['管理后台', options.site_name];
-    let title = '';
+    let title: string;
     if (action === 'create') {
       title = `新增${typeDesc}`;
       titles.unshift(title);
@@ -236,8 +251,6 @@ export class TaxonomyController {
     @Session() session: any
   ) {
     const type = taxonomyDto.type.toLowerCase();
-    // todo: Body参数无法完成自动类型转换，因此虽然DTO定义是number，但实际仍是string，导致无法直接调用parseInt
-    taxonomyDto.status = Number(taxonomyDto.status);
     taxonomyDto = {
       taxonomyId: taxonomyDto.taxonomyId,
       name: xss.sanitize(taxonomyDto.name),

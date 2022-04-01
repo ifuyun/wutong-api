@@ -8,7 +8,7 @@ import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../util/util.service';
-import { CommentStatus, LinkVisible, PostType, Role, TaxonomyType } from '../../common/common.enum';
+import { CommentStatus, LinkVisible, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
@@ -156,7 +156,8 @@ export class LinkController {
         throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
-    const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData([0, 1], TaxonomyType.LINK);
+    const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData(
+      [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE], TaxonomyType.LINK);
     const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomyData);
     const taxonomyList = this.taxonomiesService.flattenTaxonomyTree(taxonomyTree, []);
 

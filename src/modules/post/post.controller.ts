@@ -29,12 +29,12 @@ import { CommentService } from '../comment/comment.service';
 import { LoggerService } from '../logger/logger.service';
 import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { UtilService } from '../util/util.service';
-import { PostsService } from './posts.service';
+import { PostService } from './post.service';
 
 @Controller('api/posts')
 export class PostController {
   constructor(
-    private readonly postsService: PostsService,
+    private readonly postService: PostService,
     private readonly taxonomiesService: TaxonomiesService,
     private readonly commentService: CommentService,
     private readonly logger: LoggerService,
@@ -104,7 +104,8 @@ export class PostController {
     }
     let crumbs: CrumbEntity[] = [];
     if (category) {
-      const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(isAdmin ? [0, 1] : 1);
+      const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(
+        isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH);
       const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
       const result = await this.taxonomiesService.getSubTaxonomies({
         taxonomyData: taxonomies,
@@ -128,7 +129,7 @@ export class PostController {
       }, orders);
     }
 
-    const postList = await this.postsService.getPosts(param);
+    const postList = await this.postService.getPosts(param);
     return getSuccessResponse({ postList, crumbs });
   }
 
@@ -164,28 +165,28 @@ export class PostController {
       });
       params.status = status;
     }
-    const dateList = await this.postsService.getArchiveDates(params);
+    const dateList = await this.postService.getArchiveDates(params);
     return getSuccessResponse(dateList);
   }
 
   @Get('hot')
   @Header('Content-Type', 'application/json')
   async getHotPosts() {
-    const posts = await this.postsService.getHotPosts();
+    const posts = await this.postService.getHotPosts();
     return getSuccessResponse(posts);
   }
 
   @Get('random')
   @Header('Content-Type', 'application/json')
   async getRandomPosts() {
-    const posts = await this.postsService.getRandomPosts();
+    const posts = await this.postService.getRandomPosts();
     return getSuccessResponse(posts);
   }
 
   @Get('recent')
   @Header('Content-Type', 'application/json')
   async getRecentPosts() {
-    const posts = await this.postsService.getRecentPosts();
+    const posts = await this.postService.getRecentPosts();
     return getSuccessResponse(posts);
   }
 
@@ -193,8 +194,8 @@ export class PostController {
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInQuery: ['postId'] })
   async getPrevAndNext(@Query('postId', new TrimPipe()) postId: string) {
-    const prevPost = await this.postsService.getPrevPost(postId);
-    const nextPost = await this.postsService.getNextPost(postId);
+    const prevPost = await this.postService.getPrevPost(postId);
+    const nextPost = await this.postService.getNextPost(postId);
 
     return getSuccessResponse({ prevPost, nextPost });
   }
@@ -209,7 +210,7 @@ export class PostController {
     if (!isLikePost) {
       throw new NotFoundException();
     }
-    const post = await this.postsService.getPostBySlug(slug, isAdmin);
+    const post = await this.postService.getPostBySlug(slug, isAdmin);
     if (!post) {
       throw new NotFoundException();
     }
@@ -219,7 +220,7 @@ export class PostController {
       // log: `[Unauthorized]${post.postId}:${post.postTitle} is ${post.postStatus}`
       throw new ForbiddenException();
     }
-    await this.postsService.increasePostView(post.postId);
+    await this.postService.increasePostView(post.postId);
 
     const postMeta: Record<string, string> = {};
     post.postMeta.forEach((meta) => {
@@ -242,7 +243,7 @@ export class PostController {
     @IsAdmin() isAdmin: boolean
   ) {
     const fromAdmin = isAdmin && fa === '1';
-    const post = await this.postsService.getPostById(postId, isAdmin);
+    const post = await this.postService.getPostById(postId, isAdmin);
     if (!post || !post.postId) {
       throw new NotFoundException();
     }
@@ -270,7 +271,7 @@ export class PostController {
           crumbTaxonomyId = taxonomies[0].taxonomyId;
         }
         const allTaxonomies = await this.taxonomiesService.getTaxonomyTreeData(
-          isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN);
+          isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : TaxonomyStatus.PUBLISH);
         crumbs = this.taxonomiesService.getTaxonomyPath({
           taxonomyData: allTaxonomies,
           taxonomyId: crumbTaxonomyId
@@ -278,7 +279,7 @@ export class PostController {
       }
     }
     if (!fromAdmin) {
-      await this.postsService.increasePostView(postId);
+      await this.postService.increasePostView(postId);
     }
 
     const postMeta: Record<string, string> = {};
@@ -329,7 +330,7 @@ export class PostController {
     if (!postDto.postId) {// 编辑时不允许修改postType
       postData.postType = postDto.postType;
     }
-    const isPostGuidExist = await this.postsService.checkPostGuidExist(postData.postGuid, postData.postId);
+    const isPostGuidExist = await this.postService.checkPostGuidExist(postData.postGuid, postData.postId);
     if (isPostGuidExist) {
       throw new BadRequestException(Message.POST_GUID_EXIST, ResponseCode.POST_GUID_CONFLICT);
     }
@@ -359,7 +360,7 @@ export class PostController {
       metaValue: item[1]
     }));
 
-    const result = await this.postsService.savePost({
+    const result = await this.postService.savePost({
       newPostId,
       postData,
       postMeta: metaData,
@@ -380,12 +381,15 @@ export class PostController {
   @IdParams({ idInBody: ['postIds'] })
   @Header('Content-Type', 'application/json')
   async deletePosts(
-    @Body(new TrimPipe()) { postIds }: Record<string, any>
+    @Body(new TrimPipe()) { postIds }: { postIds: string[] }
   ) {
     if (!postIds || postIds.length < 1) {
       throw new BadRequestException(Message.POST_DELETE_EMPTY);
     }
-    await this.postsService.deletePosts(postIds);
+    if (!Array.isArray(postIds)) {
+      throw new BadRequestException(Message.POST_DELETE_PARAM_INVALID);
+    }
+    await this.postService.deletePosts(postIds);
 
     return getSuccessResponse();
   }

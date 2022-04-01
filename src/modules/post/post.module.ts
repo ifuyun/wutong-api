@@ -11,10 +11,9 @@ import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { UserModule } from '../user/user.module';
 import { UtilModule } from '../util/util.module';
 import { AdminFileController } from './admin-file.controller';
-import { AdminPostController } from './admin-post.controller';
 import { PostMetaService } from './post-meta.service';
 import { PostController } from './post.controller';
-import { PostsService } from './posts.service';
+import { PostService } from './post.service';
 
 @Module({
   imports: [
@@ -32,15 +31,14 @@ import { PostsService } from './posts.service';
   ],
   controllers: [
     PostController,
-    AdminPostController,
     AdminFileController
   ],
   providers: [
-    PostsService,
+    PostService,
     PostMetaService
   ],
   exports: [
-    PostsService,
+    PostService,
     PostMetaService
   ]
 })

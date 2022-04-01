@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { uniq } from 'lodash';
+import { difference, uniq } from 'lodash';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
@@ -22,7 +22,7 @@ import { TaxonomiesService } from '../taxonomy/taxonomies.service';
 import { PostMetaService } from './post-meta.service';
 
 @Injectable()
-export class PostsService {
+export class PostService {
   constructor(
     @InjectModel(PostModel)
     private readonly postModel: typeof PostModel,
@@ -257,7 +257,7 @@ export class PostsService {
           [Op.in]: [TaxonomyType.POST]
         },
         status: {
-          [Op.in]: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : [TaxonomyStatus.OPEN]
+          [Op.in]: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : [TaxonomyStatus.PUBLISH]
         }
       }
     };
@@ -359,10 +359,10 @@ export class PostsService {
         where: {
           [Op.or]: [{
             taxonomy: TaxonomyType.POST,
-            status: isAdmin ? [TaxonomyStatus.CLOSED, TaxonomyStatus.OPEN] : TaxonomyStatus.OPEN
+            status: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : TaxonomyStatus.PUBLISH
           }, {
             taxonomy: TaxonomyType.TAG,
-            status: TaxonomyStatus.OPEN
+            status: TaxonomyStatus.PUBLISH
           }]
         },
         // force to use left join
@@ -497,6 +497,12 @@ export class PostsService {
     postTaxonomies?: string[]
   }): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
+      const previousTaxonomies = (await this.taxonomiesService.getTaxonomiesByPostIds(
+        data.postData.postId, true
+      )).map((item) => item.taxonomyId);
+      let latestTaxonomies: string[] = data.postTaxonomies;
+      const latestTags: string[] = [];
+
       if (data.postData.postId) {
         await this.taxonomyRelationshipModel.destroy({
           where: {
@@ -542,11 +548,12 @@ export class PostsService {
           transaction: t
         });
       }
-      for (let tag of data.postTags) {
+      for (const tag of data.postTags) {
         const result = await this.taxonomiesService.checkTaxonomySlugExist(tag, TaxonomyType.TAG);
         let taxonomyId = getUuid();
         if (result.taxonomy) {
           taxonomyId = result.taxonomy.taxonomyId;
+          latestTags.push(taxonomyId);
         } else {
           await this.taxonomyModel.create({
             taxonomyId,
@@ -563,6 +570,27 @@ export class PostsService {
           objectId: data.newPostId,
           termTaxonomyId: taxonomyId
         }, {
+          transaction: t
+        });
+      }
+
+      /* update object count */
+      latestTaxonomies = latestTaxonomies.concat(latestTags);
+      const shouldIncrement = difference(latestTaxonomies, previousTaxonomies);
+      const shouldDecrement = difference(previousTaxonomies, latestTaxonomies);
+      if (shouldIncrement.length > 0) {
+        await this.taxonomyModel.increment({ count: 1 }, {
+          where: {
+            taxonomyId: shouldIncrement
+          },
+          transaction: t
+        });
+      }
+      if (shouldDecrement.length > 0) {
+        await this.taxonomyModel.decrement({ count: 1 }, {
+          where: {
+            taxonomyId: shouldDecrement
+          },
           transaction: t
         });
       }

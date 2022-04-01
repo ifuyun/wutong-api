@@ -1,5 +1,5 @@
 import { Order } from 'sequelize';
-import { TaxonomyStatus } from '../common/common.enum';
+import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { TaxonomyModel } from '../models/taxonomy.model';
 
 export interface TaxonomyEntity {
@@ -8,7 +8,7 @@ export interface TaxonomyEntity {
   slug: string;
   taxonomyId: string;
   parentId?: string;
-  status?: number;
+  status?: TaxonomyStatus;
   termOrder?: number;
   count?: number;
   hasChildren?: boolean;
@@ -17,13 +17,6 @@ export interface TaxonomyEntity {
 export interface TaxonomyNode extends TaxonomyEntity {
   level?: number
   children?: TaxonomyNode[];
-  isChecked?: boolean;
-}
-
-export interface TaxonomyMap {
-  taxonomyData: TaxonomyEntity[];
-  taxonomyTree: TaxonomyNode[];
-  taxonomyList: TaxonomyNode[];
 }
 
 export interface TaxonomyList {
@@ -38,9 +31,9 @@ export interface TaxonomyStatusMap {
 }
 
 export interface TaxonomyQueryParam {
-  type: string;
+  type: TaxonomyType | TaxonomyType[];
   status?: TaxonomyStatus[];
-  page: number;
+  page?: number;
   pageSize?: number;
   keyword?: string;
   orders?: Order;
