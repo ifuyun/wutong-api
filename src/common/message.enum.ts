@@ -17,14 +17,15 @@ export enum Message {
   LOGIN_REJECT = '用户名或密码错误，请重新输入',
   UNSUPPORTED_OPERATION = 'Unsupported operation',
   ILLEGAL_PARAM = 'Unsupported parameter(s)',
+  INVALID_PARAMS = '参数: $0 无效',
+  MISSED_PARAMS = '缺少参数',
   DB_QUERY_FAIL = '请求失败，请稍后重试',
   UNSUPPORTED_QUERY_ORDERS = '不支持的排序参数',
-  INVALID_PARAMS = '参数: $0 无效',
-  COMMENT_SAVE_ERROR = '评论保存失败',
-  TAXONOMY_NOT_FOUND = 'Taxonomy not exist',
-  MISSED_PARAMS = '缺少参数',
   POST_GUID_EXIST = 'URL已存在，请重新输入',
   POST_SAVE_ERROR = '文章保存失败',
   POST_DELETE_EMPTY = '请选择要删除的内容',
-  POST_DELETE_PARAM_INVALID = '参数错误，必须为ID字符串数组'
+  POST_DELETE_PARAM_INVALID = '参数错误，必须为ID字符串数组',
+  COMMENT_SAVE_ERROR = '评论保存失败',
+  TAXONOMY_NOT_FOUND = 'Taxonomy not exist',
+  TAXONOMY_SAVE_ERROR = '$0保存失败'
 }

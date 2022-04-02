@@ -100,22 +100,10 @@ export enum TaxonomyType {
   TAG = 'tag'
 }
 
-export enum TaxonomyTypeDesc {
-  POST = '文章分类',
-  LINK = '链接分类',
-  TAG = '标签'
-}
-
 export enum TaxonomyStatus {
   PUBLISH = 'publish',
   PRIVATE = 'private',
   TRASH = 'trash'
-}
-
-export enum TaxonomyStatusDesc {
-  PUBLISH = '公开',
-  PRIVATE = '隐藏',
-  TRASH = '已删除'
 }
 
 export enum LinkVisible {

@@ -14,7 +14,6 @@ import { CommentDto } from '../../dtos/comment.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
-import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { CommentAuditParam, CommentQueryParam } from '../../interfaces/comments.interface';
@@ -111,9 +110,9 @@ export class CommentController {
   ) {
     user = user || {};
     let commentData: CommentDto = {
+      postId: commentDto.postId,
       commentId: commentDto.commentId,
       parentId: commentDto.parentId,
-      postId: commentDto.postId,
       commentContent: xss.sanitize(commentDto.commentContent),
       captchaCode: commentDto.captchaCode || ''
     };

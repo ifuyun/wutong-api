@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { TaxonomyStatus, TaxonomyStatusDesc, TaxonomyType } from '../../common/common.enum';
+import { TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common/constants';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { getUuid } from '../../helpers/helper';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
-import { TaxonomyEntity, TaxonomyList, TaxonomyNode, TaxonomyQueryParam, TaxonomyStatusMap } from '../../interfaces/taxonomies.interface';
+import { TaxonomyList, TaxonomyNode, TaxonomyQueryParam } from '../../interfaces/taxonomies.interface';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
@@ -27,42 +28,13 @@ export class TaxonomiesService {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  generateTaxonomyTree(taxonomyData: TaxonomyEntity[]): TaxonomyNode[] {
-    // todo: improve
-    const tree: TaxonomyNode[] = [];
-    const iteratedIds: string[] = [];
-    const iterator = (treeData: TaxonomyEntity[], parentId: string, parentNode: TaxonomyNode[], level: number) => {
-      treeData.map(item => {
-        if (!iteratedIds.includes(item.taxonomyId)) {
-          if (item.parentId === parentId) {
-            parentNode.push({
-              ...item,
-              level,
-              children: []
-            });
-            iteratedIds.push(item.taxonomyId);
-            iterator(treeData, item.taxonomyId, parentNode[parentNode.length - 1].children, level + 1);
-          }
-        }
-      });
-    };
-    iterator(taxonomyData, '', tree, 1);
-    return tree;
-  }
-
-  flattenTaxonomyTree(tree: TaxonomyNode[], output: TaxonomyNode[]): TaxonomyNode[] {
-    tree.forEach((curNode) => {
-      output.push({
-        name: curNode.name,
-        slug: curNode.slug,
-        taxonomyId: curNode.taxonomyId,
-        level: curNode.level
-      });
-      if (curNode.hasChildren) {
-        this.flattenTaxonomyTree(curNode.children, output);
-      }
+  generateTaxonomyTree(taxonomyData: TaxonomyModel[]): TaxonomyNode[] {
+    const nodes: TaxonomyNode[] = taxonomyData.map((item) => <TaxonomyNode>item.get());
+    return nodes.filter((father) => {
+      father.children = nodes.filter((child) => father.taxonomyId === child.parentId);
+      father.isLeaf = father.children.length < 1;
+      return !father.parentId;
     });
-    return output;
   }
 
   getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): CrumbEntity[] {
@@ -102,83 +74,136 @@ export class TaxonomiesService {
     return crumbs;
   }
 
-  getSubTaxonomies(param: { taxonomyTree: TaxonomyNode[], taxonomyData: TaxonomyNode[], slug: string }) {
-    const subTaxonomyIds: string[] = [];
-    const iterator = (nodes: TaxonomyNode[], checked = false, slug?: string) => {
-      nodes.forEach((curNode) => {
-        if (checked || curNode.slug === slug) {
-          subTaxonomyIds.push(curNode.taxonomyId);
-          if (curNode.hasChildren) {
-            iterator(curNode.children, true);
-          }
-        } else {
-          if (curNode.hasChildren) {
-            iterator(curNode.children, false, slug);
-          }
-        }
-      });
+  async getTaxonomies(param: TaxonomyQueryParam): Promise<TaxonomyList> {
+    param.page = param.page || 1;
+    const { type, status, keyword, orders } = param;
+    const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
+    let where = {
+      type: type
     };
-    iterator(param.taxonomyTree, false, param.slug);
+    if (Array.isArray(status) && status.length > 0 || !Array.isArray(status) && status) {
+      where['status'] = status;
+    }
+    if (keyword) {
+      where[Op.or] = [{
+        name: {
+          [Op.like]: `%${keyword}%`
+        }
+      }, {
+        slug: {
+          [Op.like]: `%${keyword}%`
+        }
+      }, {
+        description: {
+          [Op.like]: `%${keyword}%`
+        }
+      }];
+    }
+    const queryOpt: FindOptions = {
+      where,
+      order: orders || [['termOrder', 'asc'], ['created', 'desc']],
+      subQuery: false
+    };
+    let total: number;
+    let page: number;
+    if (pageSize !== 0) {
+      total = await this.taxonomyModel.count({ where });
+      page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+      queryOpt.limit = pageSize;
+      queryOpt.offset = pageSize * (page - 1);
+    }
+    const taxonomies = await this.taxonomyModel.findAll(queryOpt);
 
     return {
-      subTaxonomyIds,
-      crumbs: this.getTaxonomyPath({
-        taxonomyData: param.taxonomyData,
-        slug: param.slug
-      })
+      taxonomies,
+      page: page || 1,
+      total: total || taxonomies.length
     };
   }
 
-  getAllTaxonomyStatus(): TaxonomyStatusMap[] {
-    const status: TaxonomyStatusMap[] = [];
-    Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).forEach((key) => {
-      status.push({
-        name: TaxonomyStatus[key],
-        desc: TaxonomyStatusDesc[key]
+  async getAllChildTaxonomies<T extends string[] | TaxonomyNode[]>(
+    param: {
+      status: TaxonomyStatus | TaxonomyStatus[],
+      type: TaxonomyType,
+      id?: string,
+      slug?: string,
+      returnId?: boolean,
+      taxonomyTree?: TaxonomyNode[]
+    }
+  ): Promise<T> {
+    const { type, status, id, slug } = param;
+    if (!id && !slug) {
+      throw new BadRequestException();
+    }
+    let taxonomyTree: TaxonomyNode[] = param.taxonomyTree;
+    if (!taxonomyTree) {
+      const { taxonomies } = await this.getTaxonomies({
+        status,
+        type,
+        pageSize: 0
       });
-    });
-    return status;
-  }
-
-  getAllTaxonomyStatusValues(): TaxonomyStatus[] {
-    return Object.keys(TaxonomyStatus).filter((key) => !/^\d+$/i.test(key)).map((key) => TaxonomyStatus[key]);
-  }
-
-  async getTaxonomyTreeData(
-    status: TaxonomyStatus | TaxonomyStatus[] = TaxonomyStatus.PUBLISH,
-    type: TaxonomyType = TaxonomyType.POST
-  ): Promise<TaxonomyEntity[]> {
-    let where: WhereOptions = {
-      type: {
-        [Op.eq]: type
-      },
-      status
-    };
-    return this.taxonomyModel.findAll({
-      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'status', 'count', 'termOrder'],
-      where,
-      order: [['termOrder', 'asc']]
-    }).then((taxonomies) => {
-      const treeData: TaxonomyNode[] = taxonomies.map((taxonomy) => {
-        const nodeData: TaxonomyNode = {
-          name: taxonomy.name,
-          description: taxonomy.description,
-          slug: taxonomy.slug,
-          count: taxonomy.count,
-          taxonomyId: taxonomy.taxonomyId,
-          parentId: taxonomy.parentId,
-          status: taxonomy.status
-        };
-        for (let i = 0; i < taxonomies.length; i += 1) {
-          if (taxonomy.taxonomyId === taxonomies[i].parentId) {
-            nodeData.hasChildren = true;
-            break;
+      taxonomyTree = this.generateTaxonomyTree(taxonomies);
+    }
+    const returnId = typeof param.returnId !== 'boolean' ? true : param.returnId;
+    const subTaxonomyIds: string[] = [];
+    const subTaxonomies: TaxonomyNode[] = [];
+    const iterator = (nodes: TaxonomyNode[], checked = false, id?: string, slug?: string) => {
+      nodes.forEach((curNode) => {
+        if (checked || (id && curNode.taxonomyId === id) || (slug && curNode.slug === slug)) {
+          if (returnId) {
+            subTaxonomyIds.push(curNode.taxonomyId);
+          } else {
+            subTaxonomies.push(curNode);
           }
+          !curNode.isLeaf && iterator(curNode.children, true);
+        } else {
+          !curNode.isLeaf && iterator(curNode.children, false, id, slug);
         }
-        return nodeData;
       });
-      return Promise.resolve(treeData);
-    });
+    };
+    iterator(taxonomyTree, false, id, slug);
+
+    return (returnId ? subTaxonomyIds : subTaxonomies) as T;
+  }
+
+  async getAllParentTaxonomies<T extends string[] | TaxonomyNode[]>(param: {
+    status: TaxonomyStatus | TaxonomyStatus[],
+    type: TaxonomyType,
+    id: string,
+    returnId?: boolean,
+    taxonomyData?: TaxonomyNode[]
+  }): Promise<T> {
+    let taxonomyData = param.taxonomyData;
+    const { type, status, id } = param;
+    if (!taxonomyData) {
+      const taxonomyList = await this.getTaxonomies({
+        status,
+        type,
+        pageSize: 0
+      });
+      taxonomyData = taxonomyList.taxonomies;
+    }
+    const returnId = typeof param.returnId !== 'boolean' ? true : param.returnId;
+    const parentTaxonomyIds: string[] = [];
+    const parentTaxonomies: TaxonomyNode[] = [];
+    const iterator = (nodes: TaxonomyNode[], parentId: string) => {
+      for (let item of taxonomyData) {
+        if (item.taxonomyId === parentId) {
+          if (returnId) {
+            parentTaxonomyIds.push(item.taxonomyId);
+          } else {
+            parentTaxonomies.push(item);
+          }
+          if (item.parentId) {
+            iterator(taxonomyData, item.parentId);
+          }
+          break;
+        }
+      }
+    };
+    iterator(taxonomyData, id);
+
+    return (returnId ? parentTaxonomyIds : parentTaxonomies) as T;
   }
 
   async getTaxonomiesByPostIds(
@@ -218,53 +243,6 @@ export class TaxonomiesService {
         }
       }
     });
-  }
-
-  async getTaxonomies(param: TaxonomyQueryParam): Promise<TaxonomyList> {
-    param.page = param.page || 1;
-    const { type, status, keyword, orders } = param;
-    const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
-    let where = {
-      type: type
-    };
-    if (status && status.length > 0) {
-      where['status'] = status;
-    }
-    if (keyword) {
-      where[Op.or] = [{
-        name: {
-          [Op.like]: `%${keyword}%`
-        }
-      }, {
-        slug: {
-          [Op.like]: `%${keyword}%`
-        }
-      }, {
-        description: {
-          [Op.like]: `%${keyword}%`
-        }
-      }];
-    }
-    const queryOpt: FindOptions = {
-      where,
-      order: orders || [['termOrder', 'asc'], ['created', 'desc']],
-      subQuery: false
-    };
-    let total: number;
-    let page: number;
-    if (pageSize !== 0) {
-      total = await this.taxonomyModel.count({ where });
-      page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
-      queryOpt.limit = pageSize;
-      queryOpt.offset = pageSize * (page - 1);
-    }
-    const taxonomies = await this.taxonomyModel.findAll(queryOpt);
-
-    return {
-      taxonomies,
-      page: page || 1,
-      total: total || taxonomies.length
-    };
   }
 
   async checkTaxonomySlugExist(slug: string, type: string, taxonomyId?: string): Promise<{ taxonomy: TaxonomyModel, isExist: boolean }> {
@@ -310,13 +288,58 @@ export class TaxonomiesService {
       taxonomyDto.taxonomyId = getUuid();
       return this.taxonomyModel.create({ ...taxonomyDto }).then((taxonomy) => Promise.resolve(true));
     }
-    return this.taxonomyModel.update(taxonomyDto, {
-      where: {
-        taxonomyId: {
-          [Op.eq]: taxonomyDto.taxonomyId
+    return this.sequelize.transaction(async (t) => {
+      await this.taxonomyModel.update(taxonomyDto, {
+        where: {
+          taxonomyId: {
+            [Op.eq]: taxonomyDto.taxonomyId
+          }
+        },
+        transaction: t
+      });
+      if (taxonomyDto.type !== TaxonomyType.TAG) {
+        if (taxonomyDto.status !== TaxonomyStatus.PUBLISH) {
+          /* if status is not PUBLISH, also set it's all children's statuses to the same */
+          const subTaxonomyIds = await this.getAllChildTaxonomies<string[]>({
+            status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE],
+            type: TaxonomyType.POST,
+            id: taxonomyDto.taxonomyId
+          });
+          await this.taxonomyModel.update({
+            status: taxonomyDto.status
+          }, {
+            where: {
+              taxonomyId: subTaxonomyIds
+            },
+            transaction: t
+          });
+        } else if (taxonomyDto.status === TaxonomyStatus.PUBLISH && taxonomyDto.parentId) {
+          /* if status is PUBLISH, also set it's all parents' statuses to the same */
+          const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({
+            status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH],
+            type: TaxonomyType.POST,
+            id: taxonomyDto.parentId
+          });
+          await this.taxonomyModel.update({
+            status: taxonomyDto.status
+          }, {
+            where: {
+              taxonomyId: parentTaxonomyIds
+            },
+            transaction: t
+          });
         }
       }
-    }).then((result) => Promise.resolve(true));
+    }).then(() => {
+      return Promise.resolve(true);
+    }).catch((err) => {
+      this.logger.error({
+        message: '保存失败',
+        data: taxonomyDto,
+        stack: err.stack
+      });
+      return Promise.resolve(false);
+    });
   }
 
   async removeTaxonomies(type: string, taxonomyIds: string[]): Promise<boolean> {

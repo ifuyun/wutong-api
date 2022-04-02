@@ -2,21 +2,9 @@ import { Order } from 'sequelize';
 import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { TaxonomyModel } from '../models/taxonomy.model';
 
-export interface TaxonomyEntity {
-  name: string;
-  description?: string;
-  slug: string;
-  taxonomyId: string;
-  parentId?: string;
-  status?: TaxonomyStatus;
-  termOrder?: number;
-  count?: number;
-  hasChildren?: boolean;
-}
-
-export interface TaxonomyNode extends TaxonomyEntity {
-  level?: number
+export interface TaxonomyNode extends TaxonomyModel {
   children?: TaxonomyNode[];
+  isLeaf?: boolean;
 }
 
 export interface TaxonomyList {
@@ -25,14 +13,9 @@ export interface TaxonomyList {
   total: number;
 }
 
-export interface TaxonomyStatusMap {
-  name: string;
-  desc: string;
-}
-
 export interface TaxonomyQueryParam {
   type: TaxonomyType | TaxonomyType[];
-  status?: TaxonomyStatus[];
+  status?: TaxonomyStatus | TaxonomyStatus[];
   page?: number;
   pageSize?: number;
   keyword?: string;

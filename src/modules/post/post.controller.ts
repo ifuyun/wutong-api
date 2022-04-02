@@ -82,7 +82,7 @@ export class PostController {
     };
     if (fromAdmin) {
       if (status) {
-        status = typeof status === 'string' ? [status] : status;
+        status = Array.isArray(status) ? status : [status];
         const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
         status.forEach((v: PostStatus) => {
           if (!allowedStatuses.includes(v)) {
@@ -104,19 +104,26 @@ export class PostController {
     }
     let crumbs: CrumbEntity[] = [];
     if (category) {
-      const taxonomies = await this.taxonomiesService.getTaxonomyTreeData(
-        isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH);
+      const { taxonomies } = await this.taxonomiesService.getTaxonomies({
+        status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH,
+        type: TaxonomyType.POST,
+        pageSize: 0
+      });
       const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
-      const result = await this.taxonomiesService.getSubTaxonomies({
-        taxonomyData: taxonomies,
+      const subTaxonomyIds = await this.taxonomiesService.getAllChildTaxonomies<string[]>({
         taxonomyTree,
+        status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : [TaxonomyStatus.PUBLISH],
+        type: TaxonomyType.POST,
         slug: category
       });
-      if (result.subTaxonomyIds.length < 1) {
+      if (subTaxonomyIds.length < 1) {
         throw new NotFoundException();
       }
-      param.subTaxonomyIds = result.subTaxonomyIds;
-      crumbs = result.crumbs;
+      param.subTaxonomyIds = subTaxonomyIds;
+      crumbs = await this.taxonomiesService.getTaxonomyPath({
+        taxonomyData: taxonomyTree,
+        slug: category
+      });
     }
     if (fromAdmin && orders.length > 0) {
       /* 管理员，且，从后台访问，且，传递了排序参数 */
@@ -270,8 +277,11 @@ export class PostController {
         } else {
           crumbTaxonomyId = taxonomies[0].taxonomyId;
         }
-        const allTaxonomies = await this.taxonomiesService.getTaxonomyTreeData(
-          isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : TaxonomyStatus.PUBLISH);
+        const { taxonomies: allTaxonomies } = await this.taxonomiesService.getTaxonomies({
+          status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH,
+          type: TaxonomyType.POST,
+          pageSize: 0
+        });
         crumbs = this.taxonomiesService.getTaxonomyPath({
           taxonomyData: allTaxonomies,
           taxonomyId: crumbTaxonomyId

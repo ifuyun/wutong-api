@@ -1,29 +1,29 @@
 import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { LinkQueryParam } from '../../interfaces/links.interface';
-import { getQueryOrders } from '../../transformers/query-orders.transformers';
-import { LinksService } from './links.service';
-import { OptionsService } from '../option/options.service';
-import { PaginatorService } from '../paginator/paginator.service';
-import { TaxonomiesService } from '../taxonomy/taxonomies.service';
-import { UtilService } from '../util/util.service';
-import { CommentStatus, LinkVisible, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { LinkVisible, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { Search } from '../../decorators/search.decorator';
 import { LinkDto, RemoveLinkDto } from '../../dtos/link.dto';
+import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
+import { LinkQueryParam } from '../../interfaces/links.interface';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
+import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
-import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { Message } from '../../common/message.enum';
+import { OptionsService } from '../option/options.service';
+import { PaginatorService } from '../paginator/paginator.service';
+import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { UtilService } from '../util/util.service';
+import { LinksService } from './links.service';
 
 @Controller('')
 export class LinkController {
@@ -156,10 +156,11 @@ export class LinkController {
         throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
-    const taxonomyData = await this.taxonomiesService.getTaxonomyTreeData(
-      [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE], TaxonomyType.LINK);
-    const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomyData);
-    const taxonomyList = this.taxonomiesService.flattenTaxonomyTree(taxonomyTree, []);
+    const { taxonomies } = await this.taxonomiesService.getTaxonomies({
+      status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE],
+      type: TaxonomyType.LINK,
+      pageSize: 0
+    });
 
     const options = await this.optionsService.getOptions();
     const titles = ['管理后台', options.site_name];
@@ -184,7 +185,7 @@ export class LinkController {
       title,
       link,
       options,
-      taxonomyList: taxonomyList
+      taxonomyList: taxonomies
     };
   }
 
