@@ -38,7 +38,7 @@ export class LinksService {
           slug: {
             [Op.eq]: param.slug
           },
-          taxonomy: {
+          type: {
             [Op.eq]: 'link'
           }
         }

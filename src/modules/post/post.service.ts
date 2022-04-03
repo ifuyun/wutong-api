@@ -212,7 +212,8 @@ export class PostService {
           ? uniq(status.concat([PostStatus.DRAFT, PostStatus.AUTO_DRAFT])) : status;
       } else {
         where.postStatus[Op.in] = [
-          PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
+          PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH
+        ];
       }
       if (commentFlag && commentFlag.length > 0) {
         where['commentFlag'] = {
@@ -259,7 +260,8 @@ export class PostService {
         status: {
           [Op.in]: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : [TaxonomyStatus.PUBLISH]
         }
-      }
+      },
+      required: !!tag
     };
     if (postType === PostType.POST) {
       includeOpt.push(includeTmp);
@@ -358,10 +360,10 @@ export class PostService {
         attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'status', 'count'],
         where: {
           [Op.or]: [{
-            taxonomy: TaxonomyType.POST,
+            type: TaxonomyType.POST,
             status: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : TaxonomyStatus.PUBLISH
           }, {
-            taxonomy: TaxonomyType.TAG,
+            type: TaxonomyType.TAG,
             status: TaxonomyStatus.PUBLISH
           }]
         },
@@ -606,16 +608,37 @@ export class PostService {
     });
   }
 
-  async deletePosts(postIds: string[]): Promise<[affectedCount: number]> {
+  async deletePosts(postIds: string[]): Promise<boolean> {
     /* soft delete */
-    return this.postModel.update({
-      postStatus: PostStatus.TRASH
-    }, {
-      where: {
-        postId: {
-          [Op.in]: postIds
-        }
-      }
+    return this.sequelize.transaction(async (t) => {
+      await this.postModel.update({
+        postStatus: PostStatus.TRASH
+      }, {
+        where: {
+          postId: {
+            [Op.in]: postIds
+          }
+        },
+        transaction: t
+      });
+      /* 同时删除内容所关联的分类和标签 */
+      await this.taxonomyRelationshipModel.destroy({
+        where: {
+          objectId: {
+            [Op.in]: postIds
+          }
+        },
+        transaction: t
+      });
+    }).then(() => {
+      return Promise.resolve(true);
+    }).catch((err) => {
+      this.logger.error({
+        message: '内容删除失败',
+        data: postIds,
+        stack: err.stack
+      });
+      return Promise.resolve(false);
     });
   }
 }

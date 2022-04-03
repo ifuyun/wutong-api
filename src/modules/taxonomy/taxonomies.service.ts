@@ -415,16 +415,14 @@ export class TaxonomiesService {
     return this.taxonomyModel.findAll(queryOpt);
   }
 
-  async updateAllCount(type?: TaxonomyType): Promise<boolean> {
+  async updateAllCount(type?: TaxonomyType | TaxonomyType[]): Promise<boolean> {
     const where: WhereOptions = {
       status: {
         [Op.ne]: TaxonomyStatus.TRASH
       }
     };
     if (type) {
-      where.type = {
-        [Op.eq]: type
-      };
+      where.type = type;
     }
     return this.taxonomyModel.update({
       count: Sequelize.literal(

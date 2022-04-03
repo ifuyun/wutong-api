@@ -37,11 +37,11 @@ export class BasicPostDto {
   postExcerpt?: string;
 
   @IsIncludedIn(
-    { ranges: [PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.TRASH] },
-    { message: '公开度选择错误' }
+    { ranges: [PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.TRASH] },
+    { message: '状态选择错误' }
   )
-  @IsNotEmpty({ message: '公开度不能为空' })
-  postStatus: string;
+  @IsNotEmpty({ message: '状态不能为空' })
+  postStatus: PostStatus;
 
   @IsId({ message: '参数非法' })
   postParent?: string;
@@ -73,7 +73,6 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   @ValidateIf(o => o.postType === PostType.POST)
   @IsId({ message: '参数非法' })
   @ArrayMaxSize(POST_TAXONOMY_LIMIT, { message: '分类数应不大于$constraint1个' })
-  @ArrayNotEmpty({ message: '分类不能为空' })
   postTaxonomies?: string[];
 
   @IsNumber({ message: '请选择是否原创' })

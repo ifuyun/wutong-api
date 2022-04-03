@@ -26,9 +26,8 @@ export class TaxonomyModel extends Model {
   @BelongsToMany(() => LinkModel, () => TaxonomyRelationshipModel)
   links: LinkModel[];
 
-  // todo: rename to 'type'
   @Column({
-    field: 'taxonomy',
+    field: 'type',
     type: DataType.ENUM('post', 'link', 'tag'),
     allowNull: false,
     defaultValue: 'post'
@@ -68,6 +67,14 @@ export class TaxonomyModel extends Model {
   parentId: string;
 
   @Column({
+    field: 'term_group',
+    type: DataType.BIGINT,
+    allowNull: false,
+    defaultValue: 0
+  })
+  termGroup: number;
+
+  @Column({
     field: 'term_order',
     type: DataType.INTEGER({
       length: 11,
@@ -87,12 +94,12 @@ export class TaxonomyModel extends Model {
   status: TaxonomyStatus;
 
   @Column({
-    field: 'term_group',
-    type: DataType.BIGINT,
+    field: 'is_required',
+    type: DataType.TINYINT,
     allowNull: false,
     defaultValue: 0
   })
-  termGroup: number;
+  isRequired: number;
 
   @Column({
     field: 'count',
@@ -119,6 +126,4 @@ export class TaxonomyModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
   modified: Date;
-
-  // todo: add column: is_required
 }

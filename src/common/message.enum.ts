@@ -21,11 +21,16 @@ export enum Message {
   MISSED_PARAMS = '缺少参数',
   DB_QUERY_FAIL = '请求失败，请稍后重试',
   UNSUPPORTED_QUERY_ORDERS = '不支持的排序参数',
-  POST_GUID_EXIST = 'URL已存在，请重新输入',
-  POST_SAVE_ERROR = '文章保存失败',
+  POST_GUID_IS_EXIST = 'URL已存在，请重新输入',
+  POST_SAVE_ERROR = '内容保存失败',
+  POST_DELETE_ERROR = '内容删除失败',
+  POST_SAVE_DISALLOW_DELETE = '内容保存时不允许状态设为“删除”',
+  POST_STATUS_MUST_NOT_TRASH = '要添加$0，请将状态设为非"删除"状态',
+  POST_CATEGORY_IS_NULL = '分类不能为空',
   POST_DELETE_EMPTY = '请选择要删除的内容',
   POST_DELETE_PARAM_INVALID = '参数错误，必须为ID字符串数组',
   COMMENT_SAVE_ERROR = '评论保存失败',
   TAXONOMY_NOT_FOUND = 'Taxonomy not exist',
-  TAXONOMY_SAVE_ERROR = '$0保存失败'
+  TAXONOMY_SAVE_ERROR = '$0保存失败',
+  TAXONOMY_SLUG_EXIST = '$0“$1”已存在'
 }

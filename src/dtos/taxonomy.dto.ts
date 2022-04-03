@@ -7,7 +7,7 @@ import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
 import { IsTaxonomyExist } from '../validators/async/is-taxonomy-exist.validator';
-import { IsSlugExist } from '../validators/async/is-slug-exist.validator';
+import { IsTaxonomySlugExist } from '../validators/async/is-taxonomy-slug-exist.validator';
 
 export class BasicTaxonomyDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -26,7 +26,7 @@ export class BasicTaxonomyDto {
   @IsNotEmpty({ message: '名称不能为空' })
   name: string;
 
-  @IsSlugExist({ typeField: 'type', idField: 'taxonomyId' }, { message: '别名$value已存在' })
+  @IsTaxonomySlugExist({ typeField: 'type', idField: 'taxonomyId' })
   @MaxLength(TAXONOMY_SLUG_LENGTH, { message: '别名长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '别名不能为空' })
   slug: string;

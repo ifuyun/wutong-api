@@ -1,5 +1,6 @@
 import { BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, HasMany, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
 import { DataType } from 'sequelize-typescript';
+import { PostStatus } from '../common/common.enum';
 import { UserModel } from './user.model';
 import { CommentModel } from './comment.model';
 import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
@@ -92,7 +93,7 @@ export class PostModel extends Model {
     allowNull: false,
     defaultValue: 'publish'
   })
-  postStatus: string;
+  postStatus: PostStatus;
 
   @Column({
     field: 'comment_flag',

@@ -16,7 +16,7 @@ import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { getUuid } from '../../helpers/helper';
+import { format, getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
 import { PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
@@ -43,7 +43,7 @@ export class PostController {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  @Get('')
+  @Get()
   @Header('Content-Type', 'application/json')
   async getPosts(
     @Req() req: Request,
@@ -339,10 +339,27 @@ export class PostController {
     };
     if (!postDto.postId) {// 编辑时不允许修改postType
       postData.postType = postDto.postType;
+    } else {
+      const post = await this.postService.getPostById(postDto.postId, true);
+      if (post.postStatus !== PostStatus.TRASH && postDto.postStatus === PostStatus.TRASH) {
+        throw new BadRequestException(Message.POST_SAVE_DISALLOW_DELETE);
+      }
+    }
+    if (postDto.postStatus === PostStatus.TRASH && (postDto.postTaxonomies.length > 0 || postDto.postTags.length > 0)) {
+      const errType: string[] = [];
+      postDto.postTaxonomies.length > 0 && errType.push('分类');
+      postDto.postTags.length > 0 && errType.push('标签');
+      throw new BadRequestException(<Message>format(Message.POST_STATUS_MUST_NOT_TRASH, errType.join('和')));
+    }
+    if (postDto.postTaxonomies.length < 1
+      && ![PostStatus.DRAFT, PostStatus.TRASH].includes(postDto.postStatus)
+      && postDto.postType === PostType.POST
+    ) {
+      throw new BadRequestException(Message.POST_CATEGORY_IS_NULL);
     }
     const isPostGuidExist = await this.postService.checkPostGuidExist(postData.postGuid, postData.postId);
     if (isPostGuidExist) {
-      throw new BadRequestException(Message.POST_GUID_EXIST, ResponseCode.POST_GUID_CONFLICT);
+      throw new BadRequestException(Message.POST_GUID_IS_EXIST, ResponseCode.POST_GUID_CONFLICT);
     }
 
     if (postDto.postId && postDto.updateModified === 1) {
@@ -399,7 +416,11 @@ export class PostController {
     if (!Array.isArray(postIds)) {
       throw new BadRequestException(Message.POST_DELETE_PARAM_INVALID);
     }
-    await this.postService.deletePosts(postIds);
+    const result = await this.postService.deletePosts(postIds);
+    if (!result) {
+      throw new UnknownException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
+    }
+    await this.taxonomiesService.updateAllCount([TaxonomyType.POST, TaxonomyType.TAG]);
 
     return getSuccessResponse();
   }

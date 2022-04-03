@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { TaxonomyType } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
+import { format } from '../../helpers/helper';
 import { TaxonomiesService } from '../../modules/taxonomy/taxonomies.service';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
-export class IsSlugExistConstraint implements ValidatorConstraintInterface {
+export class IsTaxonomySlugExistConstraint implements ValidatorConstraintInterface {
+  private taxonomyType: string;
+
   constructor(private readonly taxonomiesService: TaxonomiesService) {
   }
 
@@ -14,23 +19,25 @@ export class IsSlugExistConstraint implements ValidatorConstraintInterface {
       // 允许为空
       return true;
     }
+    this.taxonomyType = args.object[type];
+
     return !(await this.taxonomiesService.checkTaxonomySlugExist(value, args.object[type], args.object[id])).isExist;
   }
 
   defaultMessage(args?: ValidationArguments): string {
-    return '别名已存在';
+    return format(Message.TAXONOMY_SLUG_EXIST, this.taxonomyType === TaxonomyType.TAG ? '标签' : '别名', '$value');
   }
 }
 
-export function IsSlugExist(param: {typeField: string, idField?: string}, validationOptions?: ValidationOptions) {
-  return function(object: Object, propertyName: string) {
+export function IsTaxonomySlugExist(param: { typeField: string, idField?: string }, validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
     registerDecorator({
-      name: 'IsSlugExist',
+      name: 'IsTaxonomySlugExist',
       target: object.constructor,
       propertyName: propertyName,
       constraints: [param.typeField, param.idField],
       options: validationOptions,
-      validator: IsSlugExistConstraint
+      validator: IsTaxonomySlugExistConstraint
     });
   };
 }

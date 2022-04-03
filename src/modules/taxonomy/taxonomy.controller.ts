@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Query, Req, Session, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, HttpStatus, Post, Query, Req, Session, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { PostStatus, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
@@ -22,14 +22,14 @@ import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { TaxonomiesService } from './taxonomies.service';
 
-@Controller('')
+@Controller('api/taxonomies')
 export class TaxonomyController {
   constructor(
     private readonly taxonomiesService: TaxonomiesService
   ) {
   }
 
-  @Get('api/taxonomies/taxonomy-tree')
+  @Get('taxonomy-tree')
   @Header('Content-Type', 'application/json')
   async getTaxonomyTree(@AuthUser() user: AuthUserEntity) {
     const { taxonomies } = await this.taxonomiesService.getTaxonomies({
@@ -42,7 +42,7 @@ export class TaxonomyController {
     return getSuccessResponse(taxonomyTree);
   }
 
-  @Get('api/taxonomies')
+  @Get()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
@@ -87,11 +87,11 @@ export class TaxonomyController {
     return getSuccessResponse(taxonomies);
   }
 
-  @Get('api/tags')
+  @Get('tags')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
-  async getTags(
+  async searchTags(
     @Query('keyword', new TrimPipe()) keyword: string
   ) {
     if (!keyword) {
@@ -103,7 +103,7 @@ export class TaxonomyController {
     return getSuccessResponse(tagList);
   }
 
-  @Post('api/taxonomies/update-count')
+  @Post('update-count')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
@@ -116,7 +116,7 @@ export class TaxonomyController {
     return getSuccessResponse();
   }
 
-  @Post('api/taxonomies')
+  @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
@@ -151,9 +151,10 @@ export class TaxonomyController {
     return getSuccessResponse();
   }
 
-  @Post('admin/taxonomy/remove')
+  @Delete()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
   async removeTaxonomies(
     @Req() req: Request,
     @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
