@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { uniq, uniqBy } from 'lodash';
 import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
-import { DEFAULT_LINK_TAXONOMY_ID, DEFAULT_POST_TAXONOMY_ID } from '../../common/constants';
+import { Message } from '../../common/message.enum';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { getUuid } from '../../helpers/helper';
+import { CustomException } from '../../exceptions/custom.exception';
+import { format, getUuid } from '../../helpers/helper';
 import { CrumbEntity } from '../../interfaces/crumb.interface';
 import { TaxonomyList, TaxonomyNode, TaxonomyQueryParam } from '../../interfaces/taxonomies.interface';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -125,14 +127,14 @@ export class TaxonomiesService {
     param: {
       status: TaxonomyStatus | TaxonomyStatus[],
       type: TaxonomyType,
-      id?: string,
+      id?: string | string[],
       slug?: string,
       returnId?: boolean,
       taxonomyTree?: TaxonomyNode[]
     }
   ): Promise<T> {
     const { type, status, id, slug } = param;
-    if (!id && !slug) {
+    if ((!id || Array.isArray(id) && id.length < 1) && !slug) {
       throw new BadRequestException();
     }
     let taxonomyTree: TaxonomyNode[] = param.taxonomyTree;
@@ -161,18 +163,21 @@ export class TaxonomiesService {
         }
       });
     };
-    iterator(taxonomyTree, false, id, slug);
+    const idList = Array.isArray(id) ? id : [id];
+    idList.forEach((id) => iterator(taxonomyTree, false, id, slug));
 
-    return (returnId ? subTaxonomyIds : subTaxonomies) as T;
+    return (returnId ? uniq(subTaxonomyIds) : uniqBy(subTaxonomies, 'taxonomyId')) as T;
   }
 
-  async getAllParentTaxonomies<T extends string[] | TaxonomyNode[]>(param: {
-    status: TaxonomyStatus | TaxonomyStatus[],
-    type: TaxonomyType,
-    id: string,
-    returnId?: boolean,
-    taxonomyData?: TaxonomyNode[]
-  }): Promise<T> {
+  async getAllParentTaxonomies<T extends string[] | TaxonomyNode[]>(
+    param: {
+      status: TaxonomyStatus | TaxonomyStatus[],
+      type: TaxonomyType,
+      id: string,
+      returnId?: boolean,
+      taxonomyData?: TaxonomyNode[]
+    }
+  ): Promise<T> {
     let taxonomyData = param.taxonomyData;
     const { type, status, id } = param;
     if (!taxonomyData) {
@@ -342,7 +347,7 @@ export class TaxonomiesService {
     });
   }
 
-  async removeTaxonomies(type: string, taxonomyIds: string[]): Promise<boolean> {
+  async removeTaxonomies(type: TaxonomyType, taxonomyIds: string[]): Promise<{ success: boolean, message?: Message }> {
     return this.sequelize.transaction(async (t) => {
       await this.taxonomyModel.update({
         status: TaxonomyStatus.TRASH
@@ -364,36 +369,45 @@ export class TaxonomiesService {
           transaction: t
         });
       } else {
-        await this.taxonomyRelationshipModel.update({
-          termTaxonomyId: type === TaxonomyType.POST ? DEFAULT_POST_TAXONOMY_ID : DEFAULT_LINK_TAXONOMY_ID
-        }, {
+        const subTaxonomyIds = await this.getAllChildTaxonomies<string[]>({
+          status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE],
+          type,
+          id: taxonomyIds
+        });
+        const objectCount = await this.taxonomyRelationshipModel.count({
           where: {
             termTaxonomyId: {
-              [Op.in]: taxonomyIds
+              [Op.in]: subTaxonomyIds
             }
-          },
-          transaction: t
+          }
         });
+        if (objectCount > 0) {
+          throw new BadRequestException(
+            <Message>format(Message.TAXONOMY_EXISTS_RELATED_CONTENT, type === TaxonomyType.LINK ? '链接' : '内容')
+          );
+        }
         await this.taxonomyModel.update({
-          parentId: type === TaxonomyType.POST ? DEFAULT_POST_TAXONOMY_ID : DEFAULT_LINK_TAXONOMY_ID
+          status: TaxonomyStatus.TRASH
         }, {
           where: {
-            parentId: {
-              [Op.in]: taxonomyIds
+            taxonomyId: {
+              [Op.in]: subTaxonomyIds
             }
           },
           transaction: t
         });
       }
     }).then(() => {
-      return Promise.resolve(true);
+      return Promise.resolve({ success: true });
     }).catch((err) => {
       this.logger.error({
         message: '分类删除失败。',
         data: { type, taxonomyIds },
-        stack: err.stack
+        stack: err.stack || ''
       });
-      return Promise.resolve(false);
+      const message = err instanceof CustomException ? err.getResponse() : err.message;
+
+      return Promise.resolve({ success: false, message });
     });
   }
 

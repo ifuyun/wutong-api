@@ -157,10 +157,6 @@ export function getEnumValues(enumData: Record<string, string | number>): (strin
   return Object.keys(enumData).filter((key) => !/^\d+$/i.test(key)).map((key) => enumData[key]);
 }
 
-export function getEnumStringValues(enumData: Record<string, string | number>): string[] {
-  return Object.keys(enumData).filter((key) => !/^\d+$/i.test(key)).map((key) => enumData[key].toString());
-}
-
 /**
  * 格式化字符串
  * e.g. input: format('Hello $0, $1.', 'World', 'Fuyun')

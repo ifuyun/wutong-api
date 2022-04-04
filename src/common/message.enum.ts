@@ -32,5 +32,7 @@ export enum Message {
   COMMENT_SAVE_ERROR = '评论保存失败',
   TAXONOMY_NOT_FOUND = 'Taxonomy not exist',
   TAXONOMY_SAVE_ERROR = '$0保存失败',
-  TAXONOMY_SLUG_EXIST = '$0“$1”已存在'
+  TAXONOMY_SLUG_EXIST = '$0“$1”已存在',
+  TAXONOMY_EXISTS_RELATED_CONTENT = '分类下仍有$0',
+  TAXONOMY_DELETE_ERROR = '$0删除失败'
 }

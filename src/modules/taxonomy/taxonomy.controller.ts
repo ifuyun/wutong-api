@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, HttpStatus, Post, Query, Req, Session, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Post, Query, Req, Session, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
@@ -9,7 +9,6 @@ import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { RemoveTaxonomyDto, TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { CustomException } from '../../exceptions/custom.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { format } from '../../helpers/helper';
@@ -140,6 +139,7 @@ export class TaxonomyController {
       taxonomyDto.slug = taxonomyDto.description = taxonomyDto.name;
       taxonomyDto.parentId = '';
     }
+    // todo: check parent's status, disallow except PUBLISH when is create
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);
     if (!result) {
       throw new UnknownException(
@@ -157,23 +157,18 @@ export class TaxonomyController {
   @Header('Content-Type', 'application/json')
   async removeTaxonomies(
     @Req() req: Request,
-    @Query('type', new TrimPipe(), new LowerCasePipe()) type: string,
     @Body(new TrimPipe()) removeTaxonomyDto: RemoveTaxonomyDto,
     @Referer() referer: string
   ) {
-    if (!Object.keys(TaxonomyType).map((k) => TaxonomyType[k]).includes(type)) {
-      throw new CustomException('操作不允许。', HttpStatus.OK, ResponseCode.FORBIDDEN);
-    }
-    const result = await this.taxonomiesService.removeTaxonomies(type, removeTaxonomyDto.taxonomyIds);
-    if (!result) {
-      throw new CustomException('删除失败。', HttpStatus.OK, ResponseCode.TAXONOMY_DELETE_ERROR);
+    const { type, taxonomyIds } = removeTaxonomyDto;
+    const { success, message } = await this.taxonomiesService.removeTaxonomies(type, taxonomyIds);
+    if (!success) {
+      if (message) {
+        throw new BadRequestException(message);
+      }
+      throw new UnknownException(<Message>format(Message.TAXONOMY_DELETE_ERROR, type === TaxonomyType.TAG ? '标签' : '分类'));
     }
 
-    return {
-      code: 0,
-      data: {
-        url: referer || '/admin/taxonomy?type=' + type
-      }
-    };
+    return getSuccessResponse();
   }
 }

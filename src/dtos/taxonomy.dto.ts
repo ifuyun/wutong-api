@@ -2,20 +2,19 @@ import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { TAXONOMY_DESCRIPTION_LENGTH, TAXONOMY_NAME_LENGTH, TAXONOMY_SLUG_LENGTH } from '../common/constants';
-import { getEnumStringValues } from '../helpers/helper';
+import { IsTaxonomyExist } from '../validators/async/is-taxonomy-exist.validator';
+import { IsTaxonomySlugExist } from '../validators/async/is-taxonomy-slug-exist.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
-import { IsTaxonomyExist } from '../validators/async/is-taxonomy-exist.validator';
-import { IsTaxonomySlugExist } from '../validators/async/is-taxonomy-slug-exist.validator';
 
 export class BasicTaxonomyDto {
   // 验证顺序根据注解声明顺序从下往上
   @IsIncludedIn(
-    { ranges: getEnumStringValues(TaxonomyType) },
-    { message: '不支持的操作' }
+    { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
+    { message: '不支持的参数' }
   )
-  @IsNotEmpty({ message: '参数非法' })
+  @IsNotEmpty({ message: '缺少参数' })
   type?: string;
 
   @IsTaxonomyExist({ message: '修改的分类不存在' })
@@ -44,7 +43,7 @@ export class BasicTaxonomyDto {
   termOrder?: number;
 
   @IsIncludedIn(
-    { ranges: getEnumStringValues(TaxonomyStatus) },
+    { ranges: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH] },
     { message: '状态选择错误' }
   )
   @IsNotEmpty({ message: '状态不能为空' })
@@ -62,6 +61,13 @@ export class TaxonomyDto extends IntersectionType(BasicTaxonomyDto, AdditionalTa
 }
 
 export class RemoveTaxonomyDto {
+  @IsIncludedIn(
+    { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
+    { message: '不支持的参数' }
+  )
+  @IsNotEmpty({ message: '缺少参数' })
+  type: TaxonomyType;
+
   @IsId({ message: '参数非法' })
   @ArrayNotEmpty({ message: '请选择要删除的分类' })
   taxonomyIds: string[];
