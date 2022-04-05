@@ -340,7 +340,7 @@ export class TaxonomiesService {
           if (taxonomyDto.status === TaxonomyStatus.PRIVATE) {
             const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({
               status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH],
-              type: TaxonomyType.POST,
+              type: taxonomyDto.type,
               id: taxonomyDto.parentId
             });
             await this.taxonomyModel.update({
@@ -359,7 +359,7 @@ export class TaxonomiesService {
           /* if status is PUBLISH, also set it's all parents' statuses to the same */
           const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({
             status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH],
-            type: TaxonomyType.POST,
+            type: taxonomyDto.type,
             id: taxonomyDto.parentId
           });
           await this.taxonomyModel.update({
@@ -386,9 +386,13 @@ export class TaxonomiesService {
 
   async removeTaxonomies(type: TaxonomyType, taxonomyIds: string[]): Promise<{ success: boolean, message?: Message }> {
     return this.sequelize.transaction(async (t) => {
-      await this.taxonomyModel.update({
+      const updateValue: Record<string, any> = {
         status: TaxonomyStatus.TRASH
-      }, {
+      };
+      if (type === TaxonomyType.TAG) {
+        updateValue.count = 0;
+      }
+      await this.taxonomyModel.update(updateValue, {
         where: {
           taxonomyId: {
             [Op.in]: taxonomyIds

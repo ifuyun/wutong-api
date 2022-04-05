@@ -124,7 +124,6 @@ export class TaxonomyController {
     @Body(new TrimPipe()) taxonomyDto: TaxonomyDto,
     @Session() session: any
   ) {
-    const type = taxonomyDto.type.toLowerCase();
     taxonomyDto = {
       taxonomyId: taxonomyDto.taxonomyId,
       name: xss.sanitize(taxonomyDto.name),
@@ -133,25 +132,35 @@ export class TaxonomyController {
       parentId: taxonomyDto.parentId,
       termOrder: taxonomyDto.termOrder,
       status: taxonomyDto.status,
-      type
+      type: taxonomyDto.type
     };
-    if (type === TaxonomyType.TAG) {
+    if (taxonomyDto.type === TaxonomyType.TAG) {
       taxonomyDto.slug = taxonomyDto.description = taxonomyDto.name;
       taxonomyDto.parentId = '';
     }
     let taxonomy: TaxonomyModel;
     if (taxonomyDto.taxonomyId) {
       taxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyDto.taxonomyId);
-      // if is_required is 1, then can not modify parentId
+      /* if is_required is 1, then can not modify parentId */
       if (taxonomy.isRequired === 1 && taxonomyDto.parentId !== taxonomy.parentId) {
-        throw new BadRequestException(Message.TAXONOMY_CAN_NOT_MODIFY_PARENT);
+        throw new BadRequestException(Message.TAXONOMY_REQUIRED_CAN_NOT_MODIFY_PARENT);
       }
     }
     if (taxonomyDto.parentId) {
       const parentTaxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyDto.parentId);
-      // disallow create when parent is TRASH
+      /* disallow create when parent is TRASH */
       if (parentTaxonomy.status === TaxonomyStatus.TRASH && !taxonomyDto.taxonomyId) {
         throw new BadRequestException(Message.TAXONOMY_CAN_NOT_ADD_CHILD);
+      }
+      /*
+       * if the parent's status is not PUBLISH, create is disallowed;
+       * if the parent is changed and its status is not PUBLISH, it is disallowed
+       */
+      if (
+        parentTaxonomy.status !== TaxonomyStatus.PUBLISH &&
+        (!taxonomy || taxonomy && taxonomyDto.parentId !== taxonomy.parentId)
+      ) {
+        throw new BadRequestException(Message.TAXONOMY_NOT_PUBLISH_CAN_NOT_MODIFY_PARENT);
       }
     }
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);

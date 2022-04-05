@@ -15,7 +15,7 @@ export class BasicTaxonomyDto {
     { message: '不支持的参数' }
   )
   @IsNotEmpty({ message: '缺少参数' })
-  type?: string;
+  type?: TaxonomyType;
 
   @IsTaxonomyExist({ message: '修改的分类不存在' })
   @IsId({ message: '参数非法' })
@@ -47,7 +47,7 @@ export class BasicTaxonomyDto {
     { message: '状态选择错误' }
   )
   @IsNotEmpty({ message: '状态不能为空' })
-  status: string;
+  status: TaxonomyStatus;
 }
 
 export class AdditionalTaxonomyDto {

@@ -34,7 +34,8 @@ export enum Message {
   TAXONOMY_SLUG_EXIST = '$0“$1”已存在',
   TAXONOMY_EXISTS_RELATED_CONTENT = '分类下仍有$0，请删除内容后再进行删除操作',
   TAXONOMY_DELETE_ERROR = '$0删除失败',
-  TAXONOMY_CAN_NOT_MODIFY_PARENT = '基础数据不允许修改节点的父子关系',
+  TAXONOMY_REQUIRED_CAN_NOT_MODIFY_PARENT = '基础数据不允许修改节点的父子关系',
   TAXONOMY_CAN_NOT_ADD_CHILD = '父节点已删除，不允许增加子节点',
   TAXONOMY_CAN_NOT_BE_DELETED = '分类："$0"为基础数据，不允许删除',
+  TAXONOMY_NOT_PUBLISH_CAN_NOT_MODIFY_PARENT = '非公开分类不允许增加子节点',
 }
