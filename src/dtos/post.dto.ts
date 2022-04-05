@@ -1,14 +1,15 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
-import { POST_AUTHOR_LENGTH, POST_EXCERPT_LENGTH, POST_SOURCE_LENGTH, POST_TAG_LIMIT, POST_TAXONOMY_LIMIT, POST_TITLE_LENGTH } from '../common/constants';
 import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
+import { POST_AUTHOR_LENGTH, POST_EXCERPT_LENGTH, POST_SOURCE_LENGTH, POST_TAG_LIMIT, POST_TAXONOMY_LIMIT, POST_TITLE_LENGTH } from '../common/constants';
+import { Message } from '../common/message.enum';
 import { getEnumValues } from '../helpers/helper';
+import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
+import { IsPostExist } from '../validators/async/is-post-exist.validator';
 import { IsGuid } from '../validators/is-guid.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
-import { IsPostExist } from '../validators/async/is-post-exist.validator';
-import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
 
 export class BasicPostDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -114,4 +115,10 @@ export class PostFileDto extends BasicPostDto {
   postAuthor: string;
   postOriginal: 0 | 1;
   postGuid?: string;
+}
+
+export class PostRemoveDto {
+  @IsId({ message: '参数非法' })
+  @ArrayNotEmpty({ message: Message.POST_DELETE_EMPTY })
+  postIds: string[];
 }

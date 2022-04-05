@@ -60,7 +60,7 @@ export class AdditionalTaxonomyDto {
 export class TaxonomyDto extends IntersectionType(BasicTaxonomyDto, AdditionalTaxonomyDto) {
 }
 
-export class RemoveTaxonomyDto {
+export class TaxonomyRemoveDto {
   @IsIncludedIn(
     { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
     { message: '不支持的参数' }

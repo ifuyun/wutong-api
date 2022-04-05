@@ -28,11 +28,13 @@ export enum Message {
   POST_STATUS_MUST_NOT_TRASH = '要添加$0，请将状态设为非"删除"状态',
   POST_CATEGORY_IS_NULL = '分类不能为空',
   POST_DELETE_EMPTY = '请选择要删除的内容',
-  POST_DELETE_PARAM_INVALID = '参数错误，必须为ID字符串数组',
   COMMENT_SAVE_ERROR = '评论保存失败',
   TAXONOMY_NOT_FOUND = 'Taxonomy not exist',
   TAXONOMY_SAVE_ERROR = '$0保存失败',
   TAXONOMY_SLUG_EXIST = '$0“$1”已存在',
-  TAXONOMY_EXISTS_RELATED_CONTENT = '分类下仍有$0',
-  TAXONOMY_DELETE_ERROR = '$0删除失败'
+  TAXONOMY_EXISTS_RELATED_CONTENT = '分类下仍有$0，请删除内容后再进行删除操作',
+  TAXONOMY_DELETE_ERROR = '$0删除失败',
+  TAXONOMY_CAN_NOT_MODIFY_PARENT = '基础数据不允许修改节点的父子关系',
+  TAXONOMY_CAN_NOT_ADD_CHILD = '父节点已删除，不允许增加子节点',
+  TAXONOMY_CAN_NOT_BE_DELETED = '分类："$0"为基础数据，不允许删除',
 }

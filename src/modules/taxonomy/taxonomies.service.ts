@@ -123,6 +123,34 @@ export class TaxonomiesService {
     };
   }
 
+  async getTaxonomyById(taxonomyId: string): Promise<TaxonomyModel> {
+    return this.taxonomyModel.findByPk(taxonomyId);
+  }
+
+  async getTaxonomyBySlug(slug: string): Promise<TaxonomyModel> {
+    return this.taxonomyModel.findOne({
+      where: {
+        slug: {
+          [Op.eq]: slug
+        }
+      }
+    });
+  }
+
+  async getTaxonomiesByIds(ids: string[], isRequired?: boolean): Promise<TaxonomyModel[]> {
+    const where: WhereOptions = {
+      taxonomyId: {
+        [Op.in]: ids
+      }
+    };
+    if (typeof isRequired === 'boolean') {
+      where.isRequired = isRequired ? 1 : 0;
+    }
+    return this.taxonomyModel.findAll({
+      where
+    });
+  }
+
   async getAllChildTaxonomies<T extends string[] | TaxonomyNode[]>(
     param: {
       status: TaxonomyStatus | TaxonomyStatus[],
@@ -236,20 +264,6 @@ export class TaxonomiesService {
     });
   }
 
-  async getTaxonomyById(taxonomyId: string): Promise<TaxonomyModel> {
-    return this.taxonomyModel.findByPk(taxonomyId);
-  }
-
-  async getTaxonomyBySlug(slug: string): Promise<TaxonomyModel> {
-    return this.taxonomyModel.findOne({
-      where: {
-        slug: {
-          [Op.eq]: slug
-        }
-      }
-    });
-  }
-
   async checkTaxonomySlugExist(slug: string, type: string, taxonomyId?: string): Promise<{ taxonomy: TaxonomyModel, isExist: boolean }> {
     const where: WhereOptions = {
       slug: {
@@ -304,7 +318,10 @@ export class TaxonomiesService {
       });
       if (taxonomyDto.type !== TaxonomyType.TAG) {
         if (taxonomyDto.status !== TaxonomyStatus.PUBLISH) {
-          /* if status is not PUBLISH, also set it's all children's statuses to the same */
+          /* if status is PRIVATE, also set it's all PUBLISH children's statuses to PRIVATE
+          * if status is TRASH, also set it's all PUBLISH and PRIVATE children's statuses to TRASH */
+          const statusWhere = taxonomyDto.status === TaxonomyStatus.PRIVATE
+            ? TaxonomyStatus.PUBLISH : [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE];
           const subTaxonomyIds = await this.getAllChildTaxonomies<string[]>({
             status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE],
             type: TaxonomyType.POST,
@@ -314,10 +331,30 @@ export class TaxonomiesService {
             status: taxonomyDto.status
           }, {
             where: {
-              taxonomyId: subTaxonomyIds
+              taxonomyId: subTaxonomyIds,
+              status: statusWhere
             },
             transaction: t
           });
+          /* if status is PRIVATE, also set it's all TRASH parents' statuses to PRIVATE */
+          if (taxonomyDto.status === TaxonomyStatus.PRIVATE) {
+            const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({
+              status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH],
+              type: TaxonomyType.POST,
+              id: taxonomyDto.parentId
+            });
+            await this.taxonomyModel.update({
+              status: taxonomyDto.status
+            }, {
+              where: {
+                taxonomyId: parentTaxonomyIds,
+                status: {
+                  [Op.eq]: TaxonomyStatus.TRASH
+                }
+              },
+              transaction: t
+            });
+          }
         } else if (taxonomyDto.status === TaxonomyStatus.PUBLISH && taxonomyDto.parentId) {
           /* if status is PUBLISH, also set it's all parents' statuses to the same */
           const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({

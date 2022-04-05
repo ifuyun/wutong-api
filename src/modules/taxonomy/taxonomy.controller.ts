@@ -5,15 +5,15 @@ import { Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
-import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { RemoveTaxonomyDto, TaxonomyDto } from '../../dtos/taxonomy.dto';
+import { TaxonomyDto, TaxonomyRemoveDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { format } from '../../helpers/helper';
 import { AuthUserEntity } from '../../interfaces/auth.interface';
 import { TaxonomyQueryParam } from '../../interfaces/taxonomies.interface';
+import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -139,7 +139,21 @@ export class TaxonomyController {
       taxonomyDto.slug = taxonomyDto.description = taxonomyDto.name;
       taxonomyDto.parentId = '';
     }
-    // todo: check parent's status, disallow except PUBLISH when is create
+    let taxonomy: TaxonomyModel;
+    if (taxonomyDto.taxonomyId) {
+      taxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyDto.taxonomyId);
+      // if is_required is 1, then can not modify parentId
+      if (taxonomy.isRequired === 1 && taxonomyDto.parentId !== taxonomy.parentId) {
+        throw new BadRequestException(Message.TAXONOMY_CAN_NOT_MODIFY_PARENT);
+      }
+    }
+    if (taxonomyDto.parentId) {
+      const parentTaxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyDto.parentId);
+      // disallow create when parent is TRASH
+      if (parentTaxonomy.status === TaxonomyStatus.TRASH && !taxonomyDto.taxonomyId) {
+        throw new BadRequestException(Message.TAXONOMY_CAN_NOT_ADD_CHILD);
+      }
+    }
     const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);
     if (!result) {
       throw new UnknownException(
@@ -157,10 +171,15 @@ export class TaxonomyController {
   @Header('Content-Type', 'application/json')
   async removeTaxonomies(
     @Req() req: Request,
-    @Body(new TrimPipe()) removeTaxonomyDto: RemoveTaxonomyDto,
-    @Referer() referer: string
+    @Body(new TrimPipe()) removeDto: TaxonomyRemoveDto
   ) {
-    const { type, taxonomyIds } = removeTaxonomyDto;
+    const { type, taxonomyIds } = removeDto;
+    const taxonomies = (await this.taxonomiesService.getTaxonomiesByIds(taxonomyIds, true));
+    if (taxonomies.length > 0) {
+      throw new BadRequestException(
+        <Message>format(Message.TAXONOMY_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.name).join(', '))
+      );
+    }
     const { success, message } = await this.taxonomiesService.removeTaxonomies(type, taxonomyIds);
     if (!success) {
       if (message) {

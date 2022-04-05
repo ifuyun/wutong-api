@@ -9,7 +9,8 @@ import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { PostDto } from '../../dtos/post.dto';
+import { PostDto, PostRemoveDto } from '../../dtos/post.dto';
+import { TaxonomyRemoveDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
@@ -404,18 +405,11 @@ export class PostController {
   @Delete()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  @UseInterceptors(CheckIdInterceptor)
-  @IdParams({ idInBody: ['postIds'] })
   @Header('Content-Type', 'application/json')
   async deletePosts(
-    @Body(new TrimPipe()) { postIds }: { postIds: string[] }
+    @Body(new TrimPipe()) removeDto: PostRemoveDto,
   ) {
-    if (!postIds || postIds.length < 1) {
-      throw new BadRequestException(Message.POST_DELETE_EMPTY);
-    }
-    if (!Array.isArray(postIds)) {
-      throw new BadRequestException(Message.POST_DELETE_PARAM_INVALID);
-    }
+    const { postIds } = removeDto;
     const result = await this.postService.deletePosts(postIds);
     if (!result) {
       throw new UnknownException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
