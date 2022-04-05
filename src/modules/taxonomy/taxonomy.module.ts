@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TaxonomyController } from './taxonomy.controller';
-import { TaxonomiesService } from './taxonomies.service';
+import { TaxonomyService } from './taxonomy.service';
 import { UtilModule } from '../util/util.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
@@ -22,10 +22,10 @@ import { UserModule } from '../user/user.module';
   ],
   controllers: [TaxonomyController],
   providers: [
-    TaxonomiesService,
+    TaxonomyService,
     ParseTokenPipe
   ],
-  exports: [TaxonomiesService]
+  exports: [TaxonomyService]
 })
 export class TaxonomyModule {
 }

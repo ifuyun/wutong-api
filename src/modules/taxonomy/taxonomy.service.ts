@@ -17,7 +17,7 @@ import { LoggerService } from '../logger/logger.service';
 import { PaginatorService } from '../paginator/paginator.service';
 
 @Injectable()
-export class TaxonomiesService {
+export class TaxonomyService {
   constructor(
     @InjectModel(TaxonomyModel)
     private readonly taxonomyModel: typeof TaxonomyModel,

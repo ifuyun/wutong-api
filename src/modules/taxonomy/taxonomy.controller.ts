@@ -19,24 +19,24 @@ import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
-import { TaxonomiesService } from './taxonomies.service';
+import { TaxonomyService } from './taxonomy.service';
 
 @Controller('api/taxonomies')
 export class TaxonomyController {
   constructor(
-    private readonly taxonomiesService: TaxonomiesService
+    private readonly taxonomyService: TaxonomyService
   ) {
   }
 
   @Get('taxonomy-tree')
   @Header('Content-Type', 'application/json')
   async getTaxonomyTree(@AuthUser() user: AuthUserEntity) {
-    const { taxonomies } = await this.taxonomiesService.getTaxonomies({
+    const { taxonomies } = await this.taxonomyService.getTaxonomies({
       status: user.isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH,
       type: TaxonomyType.POST,
       pageSize: 0
     });
-    const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
+    const taxonomyTree = this.taxonomyService.generateTaxonomyTree(taxonomies);
 
     return getSuccessResponse(taxonomyTree);
   }
@@ -82,7 +82,7 @@ export class TaxonomyController {
       }, orders);
     }
 
-    const taxonomies = await this.taxonomiesService.getTaxonomies(param);
+    const taxonomies = await this.taxonomyService.getTaxonomies(param);
     return getSuccessResponse(taxonomies);
   }
 
@@ -96,7 +96,7 @@ export class TaxonomyController {
     if (!keyword) {
       throw new BadRequestException(Message.MISSED_PARAMS);
     }
-    const tags = await this.taxonomiesService.searchTags(keyword);
+    const tags = await this.taxonomyService.searchTags(keyword);
     const tagList: string[] = tags.map((item) => item.name);
 
     return getSuccessResponse(tagList);
@@ -110,7 +110,7 @@ export class TaxonomyController {
     if (body.type && ![TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK].includes(body.type)) {
       return new BadRequestException(Message.ILLEGAL_PARAM);
     }
-    await this.taxonomiesService.updateAllCount(body.type);
+    await this.taxonomyService.updateAllCount(body.type);
 
     return getSuccessResponse();
   }
@@ -140,14 +140,14 @@ export class TaxonomyController {
     }
     let taxonomy: TaxonomyModel;
     if (taxonomyDto.taxonomyId) {
-      taxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyDto.taxonomyId);
+      taxonomy = await this.taxonomyService.getTaxonomyById(taxonomyDto.taxonomyId);
       /* if is_required is 1, then can not modify parentId */
       if (taxonomy.isRequired === 1 && taxonomyDto.parentId !== taxonomy.parentId) {
         throw new BadRequestException(Message.TAXONOMY_REQUIRED_CAN_NOT_MODIFY_PARENT);
       }
     }
     if (taxonomyDto.parentId) {
-      const parentTaxonomy = await this.taxonomiesService.getTaxonomyById(taxonomyDto.parentId);
+      const parentTaxonomy = await this.taxonomyService.getTaxonomyById(taxonomyDto.parentId);
       /* disallow create when parent is TRASH */
       if (parentTaxonomy.status === TaxonomyStatus.TRASH && !taxonomyDto.taxonomyId) {
         throw new BadRequestException(Message.TAXONOMY_CAN_NOT_ADD_CHILD);
@@ -163,7 +163,7 @@ export class TaxonomyController {
         throw new BadRequestException(Message.TAXONOMY_NOT_PUBLISH_CAN_NOT_MODIFY_PARENT);
       }
     }
-    const result = await this.taxonomiesService.saveTaxonomy(taxonomyDto);
+    const result = await this.taxonomyService.saveTaxonomy(taxonomyDto);
     if (!result) {
       throw new UnknownException(
         <Message>format(Message.TAXONOMY_SAVE_ERROR, taxonomyDto.type === TaxonomyType.TAG ? '标签' : '分类'),
@@ -183,13 +183,13 @@ export class TaxonomyController {
     @Body(new TrimPipe()) removeDto: TaxonomyRemoveDto
   ) {
     const { type, taxonomyIds } = removeDto;
-    const taxonomies = (await this.taxonomiesService.getTaxonomiesByIds(taxonomyIds, true));
+    const taxonomies = (await this.taxonomyService.getTaxonomiesByIds(taxonomyIds, true));
     if (taxonomies.length > 0) {
       throw new BadRequestException(
         <Message>format(Message.TAXONOMY_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.name).join(', '))
       );
     }
-    const { success, message } = await this.taxonomiesService.removeTaxonomies(type, taxonomyIds);
+    const { success, message } = await this.taxonomyService.removeTaxonomies(type, taxonomyIds);
     if (!success) {
       if (message) {
         throw new BadRequestException(message);

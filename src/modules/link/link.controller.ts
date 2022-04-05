@@ -21,7 +21,7 @@ import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
-import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { UtilService } from '../util/util.service';
 import { LinksService } from './links.service';
 
@@ -30,7 +30,7 @@ export class LinkController {
   constructor(
     private readonly linkService: LinksService,
     private readonly optionsService: OptionsService,
-    private readonly taxonomiesService: TaxonomiesService,
+    private readonly taxonomyService: TaxonomyService,
     private readonly paginatorService: PaginatorService,
     private readonly utilService: UtilService
   ) {
@@ -156,7 +156,7 @@ export class LinkController {
         throw new CustomException('链接不存在。', HttpStatus.NOT_FOUND, ResponseCode.LINK_NOT_FOUND);
       }
     }
-    const { taxonomies } = await this.taxonomiesService.getTaxonomies({
+    const { taxonomies } = await this.taxonomyService.getTaxonomies({
       status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE],
       type: TaxonomyType.LINK,
       pageSize: 0

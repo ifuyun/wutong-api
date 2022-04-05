@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
-import { TaxonomiesService } from '../../modules/taxonomy/taxonomies.service';
+import { TaxonomyService } from '../../modules/taxonomy/taxonomy.service';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
 export class IsTaxonomyExistConstraint implements ValidatorConstraintInterface {
-  constructor(private readonly taxonomiesService: TaxonomiesService) {
+  constructor(private readonly taxonomyService: TaxonomyService) {
   }
 
   async validate(value: string, args?: ValidationArguments): Promise<boolean> {
@@ -13,7 +13,7 @@ export class IsTaxonomyExistConstraint implements ValidatorConstraintInterface {
       // 允许为空
       return true;
     }
-    return await this.taxonomiesService.checkTaxonomyExist(value);
+    return await this.taxonomyService.checkTaxonomyExist(value);
   }
 
   defaultMessage(args?: ValidationArguments): string {

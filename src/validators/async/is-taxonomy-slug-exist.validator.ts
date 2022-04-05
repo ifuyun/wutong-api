@@ -3,14 +3,14 @@ import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorCon
 import { TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { format } from '../../helpers/helper';
-import { TaxonomiesService } from '../../modules/taxonomy/taxonomies.service';
+import { TaxonomyService } from '../../modules/taxonomy/taxonomy.service';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
 export class IsTaxonomySlugExistConstraint implements ValidatorConstraintInterface {
   private taxonomyType: string;
 
-  constructor(private readonly taxonomiesService: TaxonomiesService) {
+  constructor(private readonly taxonomyService: TaxonomyService) {
   }
 
   async validate(value: string, args?: ValidationArguments): Promise<boolean> {
@@ -21,7 +21,7 @@ export class IsTaxonomySlugExistConstraint implements ValidatorConstraintInterfa
     }
     this.taxonomyType = args.object[type];
 
-    return !(await this.taxonomiesService.checkTaxonomySlugExist(value, args.object[type], args.object[id])).isExist;
+    return !(await this.taxonomyService.checkTaxonomySlugExist(value, args.object[type], args.object[id])).isExist;
   }
 
   defaultMessage(args?: ValidationArguments): string {

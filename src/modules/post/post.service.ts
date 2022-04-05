@@ -18,7 +18,7 @@ import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
 import { LoggerService } from '../logger/logger.service';
 import { OptionsService } from '../option/options.service';
 import { PaginatorService } from '../paginator/paginator.service';
-import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { PostMetaService } from './post-meta.service';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class PostService {
     private readonly optionsService: OptionsService,
     private readonly paginatorService: PaginatorService,
     private readonly postMetaService: PostMetaService,
-    private readonly taxonomiesService: TaxonomiesService,
+    private readonly taxonomyService: TaxonomyService,
     private readonly sequelize: Sequelize
   ) {
   }
@@ -319,7 +319,7 @@ export class PostService {
 
     const posts = await this.postModel.findAll(queryOpt);
     const postIds: string[] = posts.map((post) => post.postId);
-    const taxonomies = await this.taxonomiesService.getTaxonomiesByPostIds(postIds, isAdmin);
+    const taxonomies = await this.taxonomyService.getTaxonomiesByPostIds(postIds, isAdmin);
     const postMeta = await this.postMetaService.getPostMetaByPostIds(postIds);
 
     return {
@@ -499,7 +499,7 @@ export class PostService {
     postTaxonomies?: string[]
   }): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
-      const previousTaxonomies = (await this.taxonomiesService.getTaxonomiesByPostIds(
+      const previousTaxonomies = (await this.taxonomyService.getTaxonomiesByPostIds(
         data.postData.postId, true
       )).map((item) => item.taxonomyId);
       let latestTaxonomies: string[] = data.postTaxonomies;
@@ -551,7 +551,7 @@ export class PostService {
         });
       }
       for (const tag of data.postTags) {
-        const result = await this.taxonomiesService.checkTaxonomySlugExist(tag, TaxonomyType.TAG);
+        const result = await this.taxonomyService.checkTaxonomySlugExist(tag, TaxonomyType.TAG);
         let taxonomyId = getUuid();
         if (result.taxonomy) {
           taxonomyId = result.taxonomy.taxonomyId;

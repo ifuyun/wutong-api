@@ -28,7 +28,7 @@ import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CommentService } from '../comment/comment.service';
 import { LoggerService } from '../logger/logger.service';
-import { TaxonomiesService } from '../taxonomy/taxonomies.service';
+import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { UtilService } from '../util/util.service';
 import { PostService } from './post.service';
 
@@ -36,7 +36,7 @@ import { PostService } from './post.service';
 export class PostController {
   constructor(
     private readonly postService: PostService,
-    private readonly taxonomiesService: TaxonomiesService,
+    private readonly taxonomyService: TaxonomyService,
     private readonly commentService: CommentService,
     private readonly logger: LoggerService,
     private readonly utilService: UtilService
@@ -105,13 +105,13 @@ export class PostController {
     }
     let crumbs: CrumbEntity[] = [];
     if (category) {
-      const { taxonomies } = await this.taxonomiesService.getTaxonomies({
+      const { taxonomies } = await this.taxonomyService.getTaxonomies({
         status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH,
         type: TaxonomyType.POST,
         pageSize: 0
       });
-      const taxonomyTree = this.taxonomiesService.generateTaxonomyTree(taxonomies);
-      const subTaxonomyIds = await this.taxonomiesService.getAllChildTaxonomies<string[]>({
+      const taxonomyTree = this.taxonomyService.generateTaxonomyTree(taxonomies);
+      const subTaxonomyIds = await this.taxonomyService.getAllChildTaxonomies<string[]>({
         taxonomyTree,
         status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : [TaxonomyStatus.PUBLISH],
         type: TaxonomyType.POST,
@@ -121,7 +121,7 @@ export class PostController {
         throw new NotFoundException();
       }
       param.subTaxonomyIds = subTaxonomyIds;
-      crumbs = await this.taxonomiesService.getTaxonomyPath({
+      crumbs = await this.taxonomyService.getTaxonomyPath({
         taxonomyData: taxonomyTree,
         slug: category
       });
@@ -278,12 +278,12 @@ export class PostController {
         } else {
           crumbTaxonomyId = taxonomies[0].taxonomyId;
         }
-        const { taxonomies: allTaxonomies } = await this.taxonomiesService.getTaxonomies({
+        const { taxonomies: allTaxonomies } = await this.taxonomyService.getTaxonomies({
           status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH,
           type: TaxonomyType.POST,
           pageSize: 0
         });
-        crumbs = this.taxonomiesService.getTaxonomyPath({
+        crumbs = this.taxonomyService.getTaxonomyPath({
           taxonomyData: allTaxonomies,
           taxonomyId: crumbTaxonomyId
         });
@@ -414,7 +414,7 @@ export class PostController {
     if (!result) {
       throw new UnknownException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
     }
-    await this.taxonomiesService.updateAllCount([TaxonomyType.POST, TaxonomyType.TAG]);
+    await this.taxonomyService.updateAllCount([TaxonomyType.POST, TaxonomyType.TAG]);
 
     return getSuccessResponse();
   }
