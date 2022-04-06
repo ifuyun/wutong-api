@@ -93,8 +93,6 @@ export class CommentModel extends Model {
   })
   created: Date;
 
-  createdText: string;
-
   // todo: to be removed
   @Column({
     type: DataType.DATE,

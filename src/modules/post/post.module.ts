@@ -1,12 +1,10 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { CommentModule } from '../comment/comment.module';
-import { CrumbModule } from '../crumb/crumb.module';
 import { DatabaseModule } from '../database/database.module';
 import { LinkModule } from '../link/link.module';
 import { LoggerModule } from '../logger/logger.module';
 import { OptionModule } from '../option/option.module';
-import { PaginatorModule } from '../paginator/paginator.module';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { UserModule } from '../user/user.module';
 import { UtilModule } from '../util/util.module';
@@ -20,8 +18,6 @@ import { PostService } from './post.service';
     DatabaseModule,
     LoggerModule,
     UtilModule,
-    PaginatorModule,
-    CrumbModule,
     OptionModule,
     TaxonomyModule,
     forwardRef(() => CommentModule),

@@ -1,6 +1,6 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayNotEmpty, IsNotEmpty, MaxLength } from 'class-validator';
-import { LinkTarget, LinkVisible } from '../common/common.enum';
+import { LinkTarget, LinkScope } from '../common/common.enum';
 import { LINK_DESCRIPTION_LENGTH, LINK_NAME_LENGTH, LINK_URL_LENGTH } from '../common/constants';
 import { getEnumValues } from '../helpers/helper';
 import { IsId } from '../validators/is-id.validator';
@@ -25,11 +25,11 @@ export class BasicLinkDto {
   linkDescription: string;
 
   @IsIncludedIn(
-    { ranges: getEnumValues(LinkVisible) },
+    { ranges: getEnumValues(LinkScope) },
     { message: '可见性选择错误' }
   )
   @IsNotEmpty({ message: '请选择可见性' })
-  linkVisible: string;
+  linkScope: string;
 
   @IsIncludedIn(
     { ranges: getEnumValues(LinkTarget) },

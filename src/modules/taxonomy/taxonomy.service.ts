@@ -9,12 +9,11 @@ import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { format, getUuid } from '../../helpers/helper';
-import { CrumbEntity } from '../../interfaces/crumb.interface';
+import { BreadcrumbEntity } from '../../interfaces/breadcrumb.interface';
 import { TaxonomyList, TaxonomyNode, TaxonomyQueryParam } from '../../interfaces/taxonomies.interface';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
-import { PaginatorService } from '../paginator/paginator.service';
 
 @Injectable()
 export class TaxonomyService {
@@ -23,7 +22,6 @@ export class TaxonomyService {
     private readonly taxonomyModel: typeof TaxonomyModel,
     @InjectModel(TaxonomyRelationshipModel)
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
-    private readonly paginatorService: PaginatorService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
@@ -39,9 +37,9 @@ export class TaxonomyService {
     });
   }
 
-  getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): CrumbEntity[] {
+  getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): BreadcrumbEntity[] {
     let { taxonomyData, slug, taxonomyId } = param;
-    const crumbs: CrumbEntity[] = [];
+    const crumbs: BreadcrumbEntity[] = [];
 
     if (slug) {
       // 根据slug获取ID

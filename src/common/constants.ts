@@ -1,6 +1,3 @@
-export const DEFAULT_POST_TAXONOMY_ID = '0000000000000000';
-export const DEFAULT_LINK_TAXONOMY_ID = '0000000000000001';
-
 export const ID_REG = /^[0-9a-fA-F]{16}$/i;
 
 export const KEY_WX_MP_ACCESS_TOKEN = 'wx_mp_access_token';

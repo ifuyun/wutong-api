@@ -49,22 +49,9 @@ export enum PostStatus {
   PUBLISH = 'publish',
   PASSWORD = 'password',
   PRIVATE = 'private',
-  // PENDING = 'pending',
   DRAFT = 'draft',
   AUTO_DRAFT = 'auto-draft',
-  // INHERIT = 'inherit',
   TRASH = 'trash'
-}
-
-export enum PostStatusDesc {
-  PUBLISH = '公开',
-  PASSWORD = '加密',
-  PRIVATE = '隐藏',
-  // PENDING = '待定',
-  DRAFT = '草稿',
-  AUTO_DRAFT = '自动保存草稿',
-  // INHERIT = '子文章',
-  TRASH = '已删除'
 }
 
 export enum PostOriginal {
@@ -86,14 +73,6 @@ export enum CommentStatus {
   TRASH = 'trash'
 }
 
-export enum CommentStatusDesc {
-  NORMAL = '正常',
-  PENDING = '待审',
-  REJECT = '驳回',
-  SPAM = '垃圾评论',
-  TRASH = '已删除'
-}
-
 export enum TaxonomyType {
   POST = 'post',
   LINK = 'link',
@@ -106,28 +85,20 @@ export enum TaxonomyStatus {
   TRASH = 'trash'
 }
 
-export enum LinkVisible {
-  SITE = 'site',
-  HOMEPAGE = 'homepage',
-  INVISIBLE = 'invisible'
-}
-
-export enum LinkVisibleDesc {
-  SITE = '全站',
-  HOMEPAGE = '首页',
-  INVISIBLE = '不可见'
-}
-
 export enum LinkTarget {
   BLANK = '_blank',
-  TOP = '_top',
-  SELF = '_self'
+  SELF = '_self',
+  TOP = '_top'
 }
 
-export enum LinkTargetDesc {
-  BLANK = '新页面',
-  TOP = '父页面',
-  SELF = '当前页'
+export enum LinkScope {
+  SITE = 'site',
+  HOMEPAGE = 'homepage'
+}
+
+export enum LinkStatus {
+  NORMAL = 'normal',
+  TRASH = 'trash'
 }
 
 export enum CopyrightType {

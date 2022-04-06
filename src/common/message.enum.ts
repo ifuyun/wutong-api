@@ -38,4 +38,5 @@ export enum Message {
   TAXONOMY_CAN_NOT_ADD_CHILD = '父节点已删除，不允许增加子节点',
   TAXONOMY_CAN_NOT_BE_DELETED = '分类："$0"为基础数据，不允许删除',
   TAXONOMY_NOT_PUBLISH_CAN_NOT_MODIFY_PARENT = '非公开分类不允许增加子节点',
+  OPTION_MISSED = '缺少配置项'
 }

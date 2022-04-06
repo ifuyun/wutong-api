@@ -3,7 +3,6 @@ import { AuthModule } from '../auth/auth.module';
 import { CaptchaModule } from '../captcha/captcha.module';
 import { DatabaseModule } from '../database/database.module';
 import { OptionModule } from '../option/option.module';
-import { PaginatorModule } from '../paginator/paginator.module';
 import { PostModule } from '../post/post.module';
 import { UtilModule } from '../util/util.module';
 import { CommentController } from './comment.controller';
@@ -13,7 +12,6 @@ import { CommentService } from './comment.service';
   imports: [
     DatabaseModule,
     UtilModule,
-    PaginatorModule,
     forwardRef(() => PostModule),
     OptionModule,
     CaptchaModule,

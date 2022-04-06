@@ -16,11 +16,6 @@ export interface PostListVo {
   total: number;
 }
 
-export interface PostStatusMap {
-  name: string;
-  desc: string;
-}
-
 export interface PostQueryParam {
   page: number;
   pageSize?: number;

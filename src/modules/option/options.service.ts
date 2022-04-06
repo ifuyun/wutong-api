@@ -38,6 +38,16 @@ export class OptionsService {
     });
   }
 
+  async getOptionByKey(key: string): Promise<OptionModel> {
+    return this.optionModel.findOne({
+      where: {
+        optionName: {
+          [Op.eq]: key
+        }
+      }
+    });
+  }
+
   async saveOptions(options: Record<string, string>): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
       const keys = Object.keys(options);

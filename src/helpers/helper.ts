@@ -35,17 +35,6 @@ export function cutStr(srcStr: string, cutLength: number) {
 }
 
 /**
- * 过滤HTML标签
- * @param {string} srcStr 源字符串
- * @return {string} 过滤结果字符串
- * @version 1.0.0
- * @since 1.0.0
- */
-export function filterHtmlTag(srcStr: string) {
-  return srcStr.replace(/<\/?[^>]*>/ig, '');
-}
-
-/**
  * md5加密字符串
  * @param {string} value 源内容
  * @return {string} 加密结果
@@ -76,26 +65,6 @@ export function getUuid() {
   }
 
   return uuid + tmpStr;
-}
-
-/**
- * URL添加来源参数
- * @param {string} host URL
- * @param {string} path path
- * @param {string} from 来源
- * @return {string} 新的URL
- * @version 1.0.0
- * @since 1.0.0
- */
-export function appendUrlRef(host: string, path: string, from: string) {
-  const separator = path.indexOf('?') >= 0 ? '&' : '?';
-  if (!host.endsWith('/')) {
-    host += '/';
-  }
-  if (path.startsWith('/')) {
-    path = path.substring(1);
-  }
-  return host + path + separator + 'ref=' + from;
 }
 
 /**

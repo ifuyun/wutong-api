@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Header, Param, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  Param,
+  Post,
+  Query,
+  Req,
+  Session,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
 import { Request } from 'express';
 import { uniq } from 'lodash';
 import * as xss from 'sanitizer';
@@ -10,7 +23,6 @@ import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { PostDto, PostRemoveDto } from '../../dtos/post.dto';
-import { TaxonomyRemoveDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
@@ -19,7 +31,7 @@ import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { format, getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { CrumbEntity } from '../../interfaces/crumb.interface';
+import { BreadcrumbEntity } from '../../interfaces/breadcrumb.interface';
 import { PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
@@ -103,7 +115,7 @@ export class PostController {
         param.commentFlag = commentFlag;
       }
     }
-    let crumbs: CrumbEntity[] = [];
+    let crumbs: BreadcrumbEntity[] = [];
     if (category) {
       const { taxonomies } = await this.taxonomyService.getTaxonomies({
         status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : TaxonomyStatus.PUBLISH,
@@ -262,7 +274,7 @@ export class PostController {
       throw new ForbiddenException();
     }
 
-    let crumbs: CrumbEntity[] = [];
+    let crumbs: BreadcrumbEntity[] = [];
     if (post.postType === PostType.POST) {
       // post categories
       let taxonomies: TaxonomyModel[] = post.taxonomies.filter((item) => item.type === TaxonomyType.POST);

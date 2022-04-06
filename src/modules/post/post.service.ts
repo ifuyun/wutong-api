@@ -3,11 +3,11 @@ import { InjectModel } from '@nestjs/sequelize';
 import { difference, uniq } from 'lodash';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { PostStatus, PostStatusDesc, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { getUuid } from '../../helpers/helper';
 import { PostMetaVo } from '../../interfaces/post-meta.interface';
-import { PostArchiveDatesQueryParam, PostListVo, PostQueryParam, PostStatusMap, PostVo } from '../../interfaces/posts.interface';
+import { PostArchiveDatesQueryParam, PostListVo, PostQueryParam, PostVo } from '../../interfaces/posts.interface';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -17,7 +17,6 @@ import { VPostDateArchiveModel } from '../../models/v-post-date-archive.model';
 import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
 import { LoggerService } from '../logger/logger.service';
 import { OptionsService } from '../option/options.service';
-import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { PostMetaService } from './post-meta.service';
 
@@ -38,18 +37,10 @@ export class PostService {
     private readonly postMetaModel: typeof PostMetaModel,
     private readonly logger: LoggerService,
     private readonly optionsService: OptionsService,
-    private readonly paginatorService: PaginatorService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomyService: TaxonomyService,
     private readonly sequelize: Sequelize
   ) {
-  }
-
-  getAllPostStatus(): PostStatusMap[] {
-    return Object.keys(PostStatus).map((key) => ({
-      name: PostStatus[key],
-      desc: PostStatusDesc[key]
-    }));
   }
 
   transformArchiveDates(archiveDates: VPostDateArchiveModel[]) {

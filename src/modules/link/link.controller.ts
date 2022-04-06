@@ -1,13 +1,27 @@
-import { Body, Controller, Get, Header, HttpStatus, Param, Post, Query, Render, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Render,
+  Req,
+  Session,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
-import { LinkVisible, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { LinkStatus, LinkTarget, LinkScope, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Referer } from '../../decorators/referer.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { Search } from '../../decorators/search.decorator';
 import { LinkDto, RemoveLinkDto } from '../../dtos/link.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
@@ -20,64 +34,82 @@ import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { OptionsService } from '../option/options.service';
-import { PaginatorService } from '../paginator/paginator.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { UtilService } from '../util/util.service';
 import { LinksService } from './links.service';
 
-@Controller('')
+@Controller('api/links')
 export class LinkController {
   constructor(
     private readonly linkService: LinksService,
     private readonly optionsService: OptionsService,
     private readonly taxonomyService: TaxonomyService,
-    private readonly paginatorService: PaginatorService,
     private readonly utilService: UtilService
   ) {
   }
 
-  @Get('api/links/quick')
+  @Get('tool')
   @Header('Content-Type', 'application/json')
-  async getQuickLinks() {
-    const links = await this.linkService.getQuickLinks();
+  async getToolLinks() {
+    const links = await this.linkService.getToolLinks();
     return getSuccessResponse(links);
   }
 
-  @Get('api/links/friend')
+  @Get('friend')
   @Header('Content-Type', 'application/json')
   async getFriendLinks(
-    @Query('visible') visible: string | string[],
+    @Query('scope') scope: string | string[],
     @Query('isHome') isHome: string
   ) {
-    if (visible) {
-      visible = Array.isArray(visible) ? visible : visible.split(',') || [];
-      (visible as LinkVisible[]).forEach((v: LinkVisible) => {
-        if (![LinkVisible.HOMEPAGE, LinkVisible.SITE].includes(v)) {
+    if (scope) {
+      scope = Array.isArray(scope) ? scope : scope.split(',') || [];
+      (scope as LinkScope[]).forEach((v: LinkScope) => {
+        if (![LinkScope.HOMEPAGE, LinkScope.SITE].includes(v)) {
           throw new BadRequestException(Message.ILLEGAL_PARAM);
         }
       });
     } else {
-      visible = isHome === '1' || isHome === 'true' ? [LinkVisible.HOMEPAGE, LinkVisible.SITE] : LinkVisible.SITE;
+      scope = isHome === '1' || isHome === 'true' ? [LinkScope.HOMEPAGE, LinkScope.SITE] : LinkScope.SITE;
     }
-    const links = await this.linkService.getFriendLinks(<LinkVisible | LinkVisible[]> visible);
+    const links = await this.linkService.getFriendLinks(<LinkScope | LinkScope[]> scope);
     return getSuccessResponse(links);
   }
 
-  @Get('api/links')
+  @Get()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async getLinks(
     @Param('page', new ParseIntPipe(1)) page: number,
     @Param('pageSize', new ParseIntPipe(10)) pageSize: number,
-    @Query('visible', new TrimPipe()) visible: LinkVisible | LinkVisible[],
+    @Query('scope', new TrimPipe()) scope: LinkScope | LinkScope[],
+    @Query('status', new TrimPipe()) status: LinkStatus | LinkStatus[],
+    @Query('target', new TrimPipe()) target: LinkTarget | LinkTarget[],
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('orders', new TrimPipe()) orders: string[],
   ) {
-    if (visible) {
-      visible = Array.isArray(visible) ? visible : <LinkVisible[]>visible.split(',') || [];
-      const allowed = Object.keys(LinkVisible).map((key) => LinkVisible[key]);
-      (visible as LinkVisible[]).forEach((v: LinkVisible) => {
+    if (scope) {
+      scope = Array.isArray(scope) ? scope : [scope];
+      const allowed = Object.keys(LinkScope).map((key) => LinkScope[key]);
+      scope.forEach((v: LinkScope) => {
+        if (!allowed.includes(v)) {
+          throw new BadRequestException(Message.ILLEGAL_PARAM);
+        }
+      });
+    }
+    if (target) {
+      target = Array.isArray(target) ? target : [target];
+      const allowed = Object.keys(LinkTarget).map((key) => LinkTarget[key]);
+      target.forEach((v: LinkTarget) => {
+        if (!allowed.includes(v)) {
+          throw new BadRequestException(Message.ILLEGAL_PARAM);
+        }
+      });
+    }
+    if (status) {
+      status = Array.isArray(status) ? status : [status];
+      const allowed = Object.keys(LinkStatus).map((key) => LinkStatus[key]);
+      status.forEach((v: LinkStatus) => {
         if (!allowed.includes(v)) {
           throw new BadRequestException(Message.ILLEGAL_PARAM);
         }
@@ -86,51 +118,20 @@ export class LinkController {
     const param: LinkQueryParam = {
       page,
       pageSize,
-      visible,
+      scope,
+      status,
+      target,
       keyword
     };
     if (orders.length > 0) {
       param.orders = getQueryOrders({
         linkOrder: 1,
-        created: 2
+        modified: 2,
+        created: 3
       }, orders);
     }
     const links = await this.linkService.getLinks(param);
     return getSuccessResponse(links);
-  }
-
-  @Get(['admin/link', 'admin/link/page-:page'])
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
-  @Render('admin/pages/link-list')
-  async showLinks(
-    @Req() req: Request,
-    @Param('page', new ParseIntPipe(1)) page: number,
-    @Search() search: string
-  ) {
-    const linkList = await this.linkService.getLinks({ page });
-    const { links, total } = linkList;
-    const options = await this.optionsService.getOptions();
-    const titles = ['链接列表', '管理后台', options.site_name];
-    page = linkList.page;
-    page > 1 && titles.unshift(`第${page}页`);
-
-    return {
-      meta: {
-        title: this.utilService.getTitle(titles),
-        description: `${options.site_name}管理后台`,
-        author: options.site_author
-      },
-      pageBar: {
-        paginator: this.paginatorService.getPaginator(page, total),
-        linkUrl: '/admin/link/page-',
-        linkParam: search
-      },
-      curNav: 'taxonomy-link',
-      // token: req.csrfToken(),
-      options,
-      links
-    };
   }
 
   @Get('admin/link/detail')
@@ -189,7 +190,7 @@ export class LinkController {
     };
   }
 
-  @Post('admin/link/save')
+  @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
@@ -203,7 +204,7 @@ export class LinkController {
       linkName: xss.sanitize(linkDto.linkName),
       linkUrl: xss.sanitize(linkDto.linkUrl),
       linkDescription: xss.sanitize(linkDto.linkDescription),
-      linkVisible: linkDto.linkVisible,
+      linkScope: linkDto.linkScope,
       linkTarget: linkDto.linkTarget,
       linkOrder: linkDto.linkOrder,
       linkTaxonomy: linkDto.linkTaxonomy
@@ -223,9 +224,10 @@ export class LinkController {
     };
   }
 
-  @Post('admin/link/remove')
+  @Delete()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
   async removeLinks(
     @Req() req: Request,
     @Body(new TrimPipe()) removeLinkDto: RemoveLinkDto,

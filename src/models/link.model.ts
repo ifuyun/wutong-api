@@ -1,4 +1,5 @@
 import { BelongsToMany, Column, CreatedAt, DataType, Model, PrimaryKey, Sequelize, Table, UpdatedAt } from 'sequelize-typescript';
+import { LinkStatus, LinkTarget, LinkScope } from '../common/common.enum';
 import { TaxonomyModel } from './taxonomy.model';
 import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
 
@@ -19,20 +20,20 @@ export class LinkModel extends Model {
   taxonomies: TaxonomyModel[];
 
   @Column({
-    field: 'link_url',
-    type: DataType.STRING(255),
-    allowNull: false,
-    defaultValue: ''
-  })
-  linkUrl: string;
-
-  @Column({
     field: 'link_name',
     type: DataType.STRING(255),
     allowNull: false,
     defaultValue: ''
   })
   linkName: string;
+
+  @Column({
+    field: 'link_url',
+    type: DataType.STRING(255),
+    allowNull: false,
+    defaultValue: ''
+  })
+  linkUrl: string;
 
   @Column({
     field: 'link_image',
@@ -48,7 +49,7 @@ export class LinkModel extends Model {
     allowNull: false,
     defaultValue: '_blank'
   })
-  linkTarget: string;
+  linkTarget: LinkTarget;
 
   @Column({
     field: 'link_description',
@@ -59,12 +60,20 @@ export class LinkModel extends Model {
   linkDescription: string;
 
   @Column({
-    field: 'link_visible',
-    type: DataType.ENUM('site', 'homepage', 'invisible'),
+    field: 'link_scope',
+    type: DataType.ENUM('site', 'homepage'),
     allowNull: false,
     defaultValue: 'site'
   })
-  linkVisible: string;
+  linkScope: LinkScope;
+
+  @Column({
+    field: 'link_status',
+    type: DataType.ENUM('normal', 'trash'),
+    allowNull: false,
+    defaultValue: 'normal'
+  })
+  linkStatus: LinkStatus;
 
   @Column({
     field: 'link_owner',
@@ -104,8 +113,6 @@ export class LinkModel extends Model {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
   created: Date;
-
-  createdText: string;
 
   // todo: rename
   @UpdatedAt

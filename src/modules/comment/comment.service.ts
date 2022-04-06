@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op } from 'sequelize';
-import { CommentStatus, CommentStatusDesc } from '../../common/common.enum';
+import { CommentStatus } from '../../common/common.enum';
 import { CommentDto } from '../../dtos/comment.dto';
 import { getUuid } from '../../helpers/helper';
-import { CommentListVo, CommentQueryParam, CommentStatusMap } from '../../interfaces/comments.interface';
+import { CommentListVo, CommentQueryParam } from '../../interfaces/comments.interface';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
 
@@ -14,17 +14,6 @@ export class CommentService {
     @InjectModel(CommentModel)
     private readonly commentModel: typeof CommentModel
   ) {
-  }
-
-  getAllCommentStatus(): CommentStatusMap[] {
-    const status: CommentStatusMap[] = [];
-    Object.keys(CommentStatus).forEach((key) => {
-      status.push({
-        name: CommentStatus[key],
-        desc: CommentStatusDesc[key]
-      });
-    });
-    return status;
   }
 
   async saveComment(commentDto: CommentDto): Promise<boolean> {

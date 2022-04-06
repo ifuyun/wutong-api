@@ -1,5 +1,5 @@
 import { Order } from 'sequelize';
-import { LinkVisible } from '../common/common.enum';
+import { LinkStatus, LinkTarget, LinkScope } from '../common/common.enum';
 import { LinkModel } from '../models/link.model';
 
 export interface LinkListVo {
@@ -12,6 +12,8 @@ export interface LinkQueryParam {
   page: number;
   pageSize?: number;
   keyword?: string;
-  visible?: LinkVisible | LinkVisible[];
+  scope?: LinkScope | LinkScope[];
+  status?: LinkStatus | LinkStatus[];
+  target?: LinkTarget | LinkTarget[];
   orders?: Order;
 }

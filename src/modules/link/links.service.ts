@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import * as moment from 'moment';
-import { Op } from 'sequelize';
+import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { LoggerService } from '../logger/logger.service';
-import { PaginatorService } from '../paginator/paginator.service';
-import { CommentStatus, LinkTarget, LinkTargetDesc, LinkVisible, LinkVisibleDesc, TaxonomyType } from '../../common/common.enum';
+import { LinkStatus, LinkScope, TaxonomyType } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { LinkDto } from '../../dtos/link.dto';
-import { getEnumKeyByValue, getUuid } from '../../helpers/helper';
+import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
+import { getUuid } from '../../helpers/helper';
 import { LinkListVo, LinkQueryParam } from '../../interfaces/links.interface';
 import { LinkModel } from '../../models/link.model';
-import { TaxonomyModel } from '../../models/taxonomy.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
+import { TaxonomyModel } from '../../models/taxonomy.model';
+import { LoggerService } from '../logger/logger.service';
+import { OptionsService } from '../option/options.service';
 
 @Injectable()
 export class LinksService {
@@ -20,59 +21,70 @@ export class LinksService {
     private readonly linkModel: typeof LinkModel,
     @InjectModel(TaxonomyRelationshipModel)
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
-    private readonly paginatorService: PaginatorService,
+    private readonly optionsService: OptionsService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
     this.logger.setLogger(this.logger.sysLogger);
   }
 
-  async getLinksByType(param: { slug: string, visible: LinkVisible | LinkVisible[] }): Promise<LinkModel[]> {
+  async getLinksByTaxonomy(taxonomyId: string, visible?: LinkScope | LinkScope[]): Promise<LinkModel[]> {
+    const where: WhereOptions = {
+      linkStatus: LinkStatus.NORMAL
+    };
+    if (visible) {
+      where['linkScope'] = visible;
+    }
     return this.linkModel.findAll({
       attributes: ['linkName', 'linkUrl', 'linkDescription', 'linkTarget'],
       include: [{
         model: TaxonomyModel,
-        through: { attributes: []},
+        through: { attributes: [] },
         attributes: ['created', 'modified'],
         where: {
-          slug: {
-            [Op.eq]: param.slug
+          taxonomyId: {
+            [Op.eq]: taxonomyId
           },
           type: {
-            [Op.eq]: 'link'
+            [Op.eq]: TaxonomyType.LINK
           }
         }
       }],
-      where: {
-        linkVisible: param.visible
-      },
+      where,
       order: [
         ['linkOrder', 'desc']
       ]
     });
   }
 
-  async getFriendLinks(visible: LinkVisible | LinkVisible[]): Promise<LinkModel[]> {
-    return this.getLinksByType({
-      slug: 'friendlink',
-      visible: visible
-    });
+  async getFriendLinks(visible: LinkScope | LinkScope[]): Promise<LinkModel[]> {
+    const friendOption = await this.optionsService.getOptionByKey('friend_link_taxonomy_id');
+    if (!friendOption || !friendOption.optionValue) {
+      throw new InternalServerErrorException(Message.OPTION_MISSED);
+    }
+    return this.getLinksByTaxonomy(friendOption.optionValue, visible);
   }
 
-  async getQuickLinks(): Promise<LinkModel[]> {
-    return this.getLinksByType({
-      slug: 'quicklink',
-      visible: [LinkVisible.HOMEPAGE, LinkVisible.SITE]
-    });
+  async getToolLinks(): Promise<LinkModel[]> {
+    const toolOption = await this.optionsService.getOptionByKey('tool_link_taxonomy_id');
+    if (!toolOption || !toolOption.optionValue) {
+      throw new InternalServerErrorException(Message.OPTION_MISSED);
+    }
+    return this.getLinksByTaxonomy(toolOption.optionValue);
   }
 
   async getLinks(param: LinkQueryParam): Promise<LinkListVo> {
-    const { visible, keyword, orders } = param;
+    const { scope, status, target, keyword, orders } = param;
     const pageSize = param.pageSize || 10;
-    const where = {
-    };
-    if (Array.isArray(visible) && visible.length > 0 || visible) {
-      where['linkVisible'] = visible;
+    const where = {};
+    if (scope && scope.length > 0) {
+      where['linkScope'] = scope;
+    }
+    if (status && status.length > 0) {
+      where['linkStatus'] = status;
+    }
+    if (target && target.length > 0) {
+      where['linkTarget'] = target;
     }
     if (keyword) {
       where[Op.or] = [{
@@ -85,22 +97,29 @@ export class LinksService {
         }
       }];
     }
+    const queryOpt: FindOptions = {
+      where,
+      include: [{
+        model: TaxonomyModel,
+        through: { attributes: [] }
+      }],
+      order: orders || [['linkOrder', 'desc']],
+      limit: pageSize
+    };
 
     const total = await this.linkModel.count({ where });
     const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+    queryOpt.offset = pageSize * (page - 1);
+
     /* findAndCountAll无法判断page大于最大页数的情况 */
-    const links = await this.linkModel.findAll({
-      where,
-      order: orders || [['linkOrder', 'desc']],
-      limit: pageSize,
-      offset: pageSize * (page - 1)
-    });
+    const links = await this.linkModel.findAll(queryOpt);
+
     return { links, page, total };
   }
 
   async getLinkById(linkId: string): Promise<LinkModel> {
     return this.linkModel.findByPk(linkId, {
-      attributes: ['linkId', 'linkUrl', 'linkName', 'linkTarget', 'linkDescription', 'linkVisible', 'linkOrder'],
+      attributes: ['linkId', 'linkUrl', 'linkName', 'linkTarget', 'linkDescription', 'linkScope', 'linkOrder'],
       include: [{
         model: TaxonomyModel,
         attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'count'],

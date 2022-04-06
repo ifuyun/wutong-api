@@ -1,20 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
-import { LinkController } from './link.controller';
-import { LinksService } from './links.service';
-import { UtilModule } from '../util/util.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
 import { OptionModule } from '../option/option.module';
-import { PaginatorModule } from '../paginator/paginator.module';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
+import { UtilModule } from '../util/util.module';
+import { LinkController } from './link.controller';
+import { LinksService } from './links.service';
 
 @Module({
   imports: [
     DatabaseModule,
     LoggerModule,
     UtilModule,
-    PaginatorModule,
     TaxonomyModule,
     OptionModule,
     AuthModule
