@@ -6,7 +6,7 @@ import { OptionModule } from '../option/option.module';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
 import { UtilModule } from '../util/util.module';
 import { LinkController } from './link.controller';
-import { LinksService } from './links.service';
+import { LinkService } from './link.service';
 
 @Module({
   imports: [
@@ -18,8 +18,8 @@ import { LinksService } from './links.service';
     AuthModule
   ],
   controllers: [LinkController],
-  providers: [LinksService],
-  exports: [LinksService]
+  providers: [LinkService],
+  exports: [LinkService]
 })
 export class LinkModule {
 }

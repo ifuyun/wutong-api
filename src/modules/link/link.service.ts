@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, WhereOptions } from 'sequelize';
+import { FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { LinkStatus, LinkScope, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
@@ -15,12 +15,14 @@ import { LoggerService } from '../logger/logger.service';
 import { OptionsService } from '../option/options.service';
 
 @Injectable()
-export class LinksService {
+export class LinkService {
   constructor(
     @InjectModel(LinkModel)
     private readonly linkModel: typeof LinkModel,
     @InjectModel(TaxonomyRelationshipModel)
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
+    @InjectModel(TaxonomyModel)
+    private readonly taxonomyModel: typeof TaxonomyModel,
     private readonly optionsService: OptionsService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
@@ -74,7 +76,7 @@ export class LinksService {
   }
 
   async getLinks(param: LinkQueryParam): Promise<LinkListVo> {
-    const { scope, status, target, keyword, orders } = param;
+    const { scope, status, target, keyword, taxonomyId, orders } = param;
     const pageSize = param.pageSize || 10;
     const where = {};
     if (scope && scope.length > 0) {
@@ -97,12 +99,23 @@ export class LinksService {
         }
       }];
     }
+    const includeWhere: WhereOptions = {
+      type: {
+        [Op.eq]: TaxonomyType.LINK
+      }
+    };
+    if (taxonomyId) {
+      includeWhere['taxonomyId'] = taxonomyId;
+    }
+    const includeOpt: IncludeOptions[] = [{
+      model: TaxonomyModel,
+      through: { attributes: [] },
+      where: includeWhere,
+      required: !!taxonomyId
+    }];
     const queryOpt: FindOptions = {
       where,
-      include: [{
-        model: TaxonomyModel,
-        through: { attributes: [] }
-      }],
+      include: includeOpt,
       order: orders || [['linkOrder', 'desc']],
       limit: pageSize
     };
@@ -119,15 +132,15 @@ export class LinksService {
 
   async getLinkById(linkId: string): Promise<LinkModel> {
     return this.linkModel.findByPk(linkId, {
-      attributes: ['linkId', 'linkUrl', 'linkName', 'linkTarget', 'linkDescription', 'linkScope', 'linkOrder'],
       include: [{
         model: TaxonomyModel,
-        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'count'],
+        through: { attributes: [] },
         where: {
           type: {
             [Op.eq]: TaxonomyType.LINK
           }
-        }
+        },
+        required: false
       }]
     });
   }
@@ -137,13 +150,21 @@ export class LinksService {
       if (!linkDto.linkId) {
         linkDto.linkId = getUuid();
         await this.linkModel.create({ ...linkDto }, { transaction: t });
-        await this.taxonomyRelationshipModel.create({
-          objectId: linkDto.linkId,
-          termTaxonomyId: linkDto.linkTaxonomy
-        }, {
+        await this.taxonomyModel.increment({ count: 1 }, {
+          where: {
+            taxonomyId: linkDto.linkTaxonomy
+          },
           transaction: t
         });
       } else {
+        await this.taxonomyRelationshipModel.destroy({
+          where: {
+            objectId: {
+              [Op.eq]: linkDto.linkId
+            }
+          },
+          transaction: t
+        });
         await this.linkModel.update({ ...linkDto }, {
           where: {
             linkId: {
@@ -152,17 +173,31 @@ export class LinksService {
           },
           transaction: t
         });
-        await this.taxonomyRelationshipModel.update({
-          termTaxonomyId: linkDto.linkTaxonomy
-        }, {
-          where: {
-            objectId: {
-              [Op.eq]: linkDto.linkId
-            }
-          },
-          transaction: t
-        });
+        const link = await this.getLinkById(linkDto.linkId);
+        const previousTaxonomy = link.taxonomies && link.taxonomies[0] && link.taxonomies[0].taxonomyId;
+        if (previousTaxonomy && linkDto.linkTaxonomy !== previousTaxonomy) {
+          await this.taxonomyModel.decrement({ count: 1 }, {
+            where: {
+              taxonomyId: previousTaxonomy
+            },
+            transaction: t
+          });
+        }
+        if (!previousTaxonomy || linkDto.linkTaxonomy !== previousTaxonomy) {
+          await this.taxonomyModel.increment({ count: 1 }, {
+            where: {
+              taxonomyId: linkDto.linkTaxonomy
+            },
+            transaction: t
+          });
+        }
       }
+      await this.taxonomyRelationshipModel.create({
+        objectId: linkDto.linkId,
+        termTaxonomyId: linkDto.linkTaxonomy
+      }, {
+        transaction: t
+      });
     }).then(() => {
       return Promise.resolve(true);
     }).catch((err) => {
@@ -177,7 +212,9 @@ export class LinksService {
 
   async removeLinks(linkIds: string[]): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
-      await this.linkModel.destroy({
+      await this.linkModel.update({
+        linkStatus: LinkStatus.TRASH
+      }, {
         where: {
           linkId: {
             [Op.in]: linkIds

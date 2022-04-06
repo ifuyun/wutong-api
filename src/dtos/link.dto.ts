@@ -1,8 +1,7 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayNotEmpty, IsNotEmpty, MaxLength } from 'class-validator';
-import { LinkTarget, LinkScope } from '../common/common.enum';
+import { LinkScope, LinkStatus, LinkTarget } from '../common/common.enum';
 import { LINK_DESCRIPTION_LENGTH, LINK_NAME_LENGTH, LINK_URL_LENGTH } from '../common/constants';
-import { getEnumValues } from '../helpers/helper';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 import { IsNumber } from '../validators/is-number.validator';
@@ -25,18 +24,24 @@ export class BasicLinkDto {
   linkDescription: string;
 
   @IsIncludedIn(
-    { ranges: getEnumValues(LinkScope) },
+    { ranges: [LinkScope.SITE, LinkScope.HOMEPAGE] },
     { message: '可见性选择错误' }
   )
   @IsNotEmpty({ message: '请选择可见性' })
-  linkScope: string;
+  linkScope: LinkScope;
 
   @IsIncludedIn(
-    { ranges: getEnumValues(LinkTarget) },
+    { ranges: [LinkStatus.NORMAL, LinkStatus.TRASH] },
+    { message: '状态选择错误' }
+  )
+  linkStatus: LinkStatus;
+
+  @IsIncludedIn(
+    { ranges: [LinkTarget.BLANK, LinkTarget.SELF, LinkTarget.TOP] },
     { message: '打开方式选择错误' }
   )
   @IsNotEmpty({ message: '请选择打开方式' })
-  linkTarget: string;
+  linkTarget: LinkTarget;
 
   @IsNumber({ message: '排序必须为数字' })
   @IsNotEmpty({ message: '排序不能为空' })

@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
-import { UserLoginDto } from '../../dtos/user-login.dto';
 import { UserVo } from '../../interfaces/users.interface';
-import { UserModel } from '../../models/user.model';
 import { UserMetaModel } from '../../models/user-meta.model';
+import { UserModel } from '../../models/user.model';
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(
     @InjectModel(UserModel)
     private readonly userModel: typeof UserModel

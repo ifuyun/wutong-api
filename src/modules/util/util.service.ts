@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PostSlugPrefixBlacklist } from '../../common/common.enum';
 import { getEnumValues } from '../../helpers/helper';
-import { OptionEntity } from '../../interfaces/options.interface';
 
 @Injectable()
 export class UtilService {
@@ -22,10 +21,6 @@ export class UtilService {
     }
 
     return titleArr.join(delimiter);
-  }
-
-  getSiteDescription(options: OptionEntity): string {
-    return options.site_name + '：' + options.site_description;
   }
 
   isUrlPathLikePostSlug(urlPath: string): boolean {

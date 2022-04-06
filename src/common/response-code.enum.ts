@@ -54,7 +54,7 @@ export enum ResponseCode {
 
   // link: 83xx
   LINK_SAVE_ERROR = 8300,
-  LINK_REMOVE_ERROR,
+  LINK_DELETE_ERROR,
   LINK_NOT_FOUND,
 
   // form: 84xx

@@ -12,6 +12,7 @@ export interface LinkQueryParam {
   page: number;
   pageSize?: number;
   keyword?: string;
+  taxonomyId?: string;
   scope?: LinkScope | LinkScope[];
   status?: LinkStatus | LinkStatus[];
   target?: LinkTarget | LinkTarget[];

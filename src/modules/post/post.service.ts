@@ -35,10 +35,10 @@ export class PostService {
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
     @InjectModel(PostMetaModel)
     private readonly postMetaModel: typeof PostMetaModel,
-    private readonly logger: LoggerService,
     private readonly optionsService: OptionsService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomyService: TaxonomyService,
+    private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
   }

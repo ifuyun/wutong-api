@@ -186,7 +186,7 @@ export class TaxonomyController {
     const taxonomies = (await this.taxonomyService.getTaxonomiesByIds(taxonomyIds, true));
     if (taxonomies.length > 0) {
       throw new BadRequestException(
-        <Message>format(Message.TAXONOMY_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.name).join(', '))
+        <Message>format(Message.TAXONOMY_REQUIRED_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.name).join(', '))
       );
     }
     const { success, message } = await this.taxonomyService.removeTaxonomies(type, taxonomyIds);

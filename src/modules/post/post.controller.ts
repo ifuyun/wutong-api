@@ -1,18 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Header,
-  Param,
-  Post,
-  Query,
-  Req,
-  Session,
-  UseGuards,
-  UseInterceptors
-} from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Delete, Get, Header, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { uniq } from 'lodash';
 import * as xss from 'sanitizer';
 import { CommentFlag, PostStatus, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
@@ -59,7 +45,6 @@ export class PostController {
   @Get()
   @Header('Content-Type', 'application/json')
   async getPosts(
-    @Req() req: Request,
     @Query('page', new ParseIntPipe(1)) page: number,
     @Query('pageSize', new ParseIntPipe(10)) pageSize: number,
     @Query('category', new TrimPipe()) category: string,
@@ -176,7 +161,7 @@ export class PostController {
       fromAdmin
     };
     if (status) {
-      status = typeof status === 'string' ? [status] : status;
+      status = Array.isArray(status) ? status : [status];
       const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
       status.forEach((v: PostStatus) => {
         if (!allowedStatuses.includes(v)) {
@@ -331,10 +316,8 @@ export class PostController {
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async savePost(
-    @Req() req: Request,
     @Body(new TrimPipe()) postDto: PostDto,
-    @AuthUser() user,
-    @Session() session: any
+    @AuthUser() user
   ) {
     const newPostId = postDto.postId || getUuid();
     const postData: PostDto = {
@@ -419,10 +402,9 @@ export class PostController {
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'application/json')
   async deletePosts(
-    @Body(new TrimPipe()) removeDto: PostRemoveDto,
+    @Body(new TrimPipe()) removeDto: PostRemoveDto
   ) {
-    const { postIds } = removeDto;
-    const result = await this.postService.deletePosts(postIds);
+    const result = await this.postService.deletePosts(removeDto.postIds);
     if (!result) {
       throw new UnknownException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
     }

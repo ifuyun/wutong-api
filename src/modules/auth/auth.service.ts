@@ -8,19 +8,19 @@ import { UserLoginDto } from '../../dtos/user-login.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { getMd5 } from '../../helpers/helper';
 import { AuthUserEntity } from '../../interfaces/auth.interface';
-import { UsersService } from '../user/users.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
+    private readonly userService: UserService,
     private readonly configService: ConfigService
   ) {
   }
 
   async login(loginDto: UserLoginDto) {
-    const user = await this.usersService.getUserByName(loginDto.username);
+    const user = await this.userService.getUserByName(loginDto.username);
     if (user) {
       const password = getMd5(`${user.userPassSalt}${loginDto.password}`);
       if (password === user.userPass) {
