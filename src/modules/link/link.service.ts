@@ -194,7 +194,7 @@ export class LinkService {
       }
       await this.taxonomyRelationshipModel.create({
         objectId: linkDto.linkId,
-        termTaxonomyId: linkDto.linkTaxonomy
+        taxonomyId: linkDto.linkTaxonomy
       }, {
         transaction: t
       });

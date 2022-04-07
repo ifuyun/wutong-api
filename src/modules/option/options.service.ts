@@ -19,7 +19,7 @@ export class OptionsService {
 
   async getOptions(onlyAutoLoad: boolean = true): Promise<OptionEntity> {
     const queryOpt: any = {
-      attributes: ['blogId', 'optionName', 'optionValue', 'autoload']
+      attributes: ['optionName', 'optionValue', 'autoload']
     };
     if (onlyAutoLoad) {
       queryOpt.where = {

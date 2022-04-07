@@ -39,9 +39,9 @@ export class BasicPostDto {
 
   @IsIncludedIn(
     { ranges: [PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.TRASH] },
-    { message: '状态选择错误' }
+    { message: '可见性选择错误' }
   )
-  @IsNotEmpty({ message: '状态不能为空' })
+  @IsNotEmpty({ message: '可见性不能为空' })
   postStatus: PostStatus;
 
   @IsId({ message: '参数非法' })

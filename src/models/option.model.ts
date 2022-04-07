@@ -13,18 +13,10 @@ export class OptionModel extends Model {
   })
   optionId: string;
 
-  @Column({
-    field: 'blog_id',
-    type: DataType.CHAR(16),
-    allowNull: false,
-    defaultValue: ''
-  })
-  blogId: string;
-
   @Unique
   @Column({
     field: 'option_name',
-    type: DataType.STRING(64),
+    type: DataType.STRING(191),
     allowNull: false,
     defaultValue: ''
   })

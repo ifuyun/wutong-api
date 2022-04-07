@@ -273,7 +273,7 @@ export class PostService {
         model: TaxonomyRelationshipModel,
         attributes: ['objectId'],
         where: {
-          termTaxonomyId: {
+          taxonomyId: {
             [Op.in]: subTaxonomyIds
           }
         }
@@ -536,7 +536,7 @@ export class PostService {
       for (const taxonomy of data.postTaxonomies) {
         await this.taxonomyRelationshipModel.create({
           objectId: data.newPostId,
-          termTaxonomyId: taxonomy
+          taxonomyId: taxonomy
         }, {
           transaction: t
         });
@@ -561,7 +561,7 @@ export class PostService {
         }
         await this.taxonomyRelationshipModel.create({
           objectId: data.newPostId,
-          termTaxonomyId: taxonomyId
+          taxonomyId: taxonomyId
         }, {
           transaction: t
         });

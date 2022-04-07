@@ -4,7 +4,7 @@ import { TaxonomyModel } from './taxonomy.model';
 import { LinkModel } from './link.model';
 
 @Table({
-  tableName: 'term_relationships',
+  tableName: 'taxonomy_relationships',
   timestamps: false
 })
 export class TaxonomyRelationshipModel extends Model {
@@ -24,12 +24,12 @@ export class TaxonomyRelationshipModel extends Model {
   @ForeignKey(() => TaxonomyModel)
   @PrimaryKey
   @Column({
-    field: 'term_taxonomy_id',
+    field: 'taxonomy_id',
     type: DataType.CHAR(16),
     allowNull: false,
     defaultValue: ''
   })
-  termTaxonomyId: string;
+  taxonomyId: string;
 
   @BelongsTo(() => TaxonomyModel)
   taxonomy: TaxonomyModel;

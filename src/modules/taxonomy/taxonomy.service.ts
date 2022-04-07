@@ -252,7 +252,7 @@ export class TaxonomyService {
       attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'status', 'count'],
       include: [{
         model: TaxonomyRelationshipModel,
-        attributes: ['objectId', 'termTaxonomyId'],
+        attributes: ['objectId', 'taxonomyId'],
         where: {
           objectId: postIds
         }
@@ -262,7 +262,10 @@ export class TaxonomyService {
     });
   }
 
-  async checkTaxonomySlugExist(slug: string, type: string, taxonomyId?: string): Promise<{ taxonomy: TaxonomyModel, isExist: boolean }> {
+  async checkTaxonomySlugExist(slug: string, type: string, taxonomyId?: string): Promise<{
+    taxonomy: TaxonomyModel,
+    isExist: boolean
+  }> {
     const where: WhereOptions = {
       slug: {
         [Op.eq]: slug
@@ -401,7 +404,7 @@ export class TaxonomyService {
       if (type === TaxonomyType.TAG) {
         await this.taxonomyRelationshipModel.destroy({
           where: {
-            termTaxonomyId: {
+            taxonomyId: {
               [Op.in]: taxonomyIds
             }
           },
@@ -415,7 +418,7 @@ export class TaxonomyService {
         });
         const objectCount = await this.taxonomyRelationshipModel.count({
           where: {
-            termTaxonomyId: {
+            taxonomyId: {
               [Op.in]: subTaxonomyIds
             }
           }
@@ -479,7 +482,7 @@ export class TaxonomyService {
     }
     return this.taxonomyModel.update({
       count: Sequelize.literal(
-        '(select count(1) total from term_relationships where term_relationships.term_taxonomy_id = term_taxonomy.taxonomy_id)'
+        '(select count(1) total from taxonomy_relationships where taxonomy_relationships.taxonomy_id = taxonomies.taxonomy_id)'
       )
     }, {
       where,

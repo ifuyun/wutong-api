@@ -5,7 +5,7 @@ import { PostModel } from './post.model';
 import { LinkModel } from './link.model';
 
 @Table({
-  tableName: 'term_taxonomy',
+  tableName: 'taxonomies',
   deletedAt: false
 })
 export class TaxonomyModel extends Model {
