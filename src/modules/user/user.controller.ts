@@ -6,7 +6,7 @@ import { AuthUserEntity } from '../../interfaces/auth.interface';
 import { HttpResponseEntity } from '../../interfaces/http-response';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { AuthService } from '../auth/auth.service';
-import { OptionsService } from '../option/options.service';
+import { OptionService } from '../option/option.service';
 import { UtilService } from '../util/util.service';
 import { UserService } from './user.service';
 
@@ -14,7 +14,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly optionsService: OptionsService,
+    private readonly optionService: OptionService,
     private readonly utilService: UtilService,
     private readonly configService: ConfigService,
     private readonly authService: AuthService

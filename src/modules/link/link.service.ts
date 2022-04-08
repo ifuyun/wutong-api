@@ -12,7 +12,7 @@ import { LinkModel } from '../../models/link.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
-import { OptionsService } from '../option/options.service';
+import { OptionService } from '../option/option.service';
 
 @Injectable()
 export class LinkService {
@@ -23,7 +23,7 @@ export class LinkService {
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
     @InjectModel(TaxonomyModel)
     private readonly taxonomyModel: typeof TaxonomyModel,
-    private readonly optionsService: OptionsService,
+    private readonly optionService: OptionService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
@@ -60,7 +60,7 @@ export class LinkService {
   }
 
   async getFriendLinks(visible: LinkScope | LinkScope[]): Promise<LinkModel[]> {
-    const friendOption = await this.optionsService.getOptionByKey('friend_link_taxonomy_id');
+    const friendOption = await this.optionService.getOptionByKey('friend_link_taxonomy_id');
     if (!friendOption || !friendOption.optionValue) {
       throw new InternalServerErrorException(Message.OPTION_MISSED);
     }
@@ -68,7 +68,7 @@ export class LinkService {
   }
 
   async getToolLinks(): Promise<LinkModel[]> {
-    const toolOption = await this.optionsService.getOptionByKey('tool_link_taxonomy_id');
+    const toolOption = await this.optionService.getOptionByKey('tool_link_taxonomy_id');
     if (!toolOption || !toolOption.optionValue) {
       throw new InternalServerErrorException(Message.OPTION_MISSED);
     }

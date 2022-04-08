@@ -16,7 +16,7 @@ import { UserModel } from '../../models/user.model';
 import { VPostDateArchiveModel } from '../../models/v-post-date-archive.model';
 import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
 import { LoggerService } from '../logger/logger.service';
-import { OptionsService } from '../option/options.service';
+import { OptionService } from '../option/option.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { PostMetaService } from './post-meta.service';
 
@@ -35,7 +35,7 @@ export class PostService {
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
     @InjectModel(PostMetaModel)
     private readonly postMetaModel: typeof PostMetaModel,
-    private readonly optionsService: OptionsService,
+    private readonly optionService: OptionService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomyService: TaxonomyService,
     private readonly logger: LoggerService,

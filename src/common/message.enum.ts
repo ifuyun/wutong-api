@@ -43,4 +43,5 @@ export enum Message {
   LINK_SAVE_DISALLOW_DELETE = '链接保存时不允许状态改为“已删除”',
   LINK_DELETE_ERROR = '链接删除失败',
   OPTION_MISSED = '缺少配置项',
+  OPTION_SAVE_ERROR = '设置保存失败',
 }

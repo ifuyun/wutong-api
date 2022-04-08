@@ -15,7 +15,7 @@ import { PostFileDto } from '../../dtos/post.dto';
 import { CustomException } from '../../exceptions/custom.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { getFileExt, getUuid } from '../../helpers/helper';
-import { OptionsService } from '../option/options.service';
+import { OptionService } from '../option/option.service';
 import { UtilService } from '../util/util.service';
 import { WatermarkService } from '../util/watermark.service';
 import { PostService } from './post.service';
@@ -25,7 +25,7 @@ import { PostService } from './post.service';
 @Roles(Role.ADMIN)
 export class AdminFileController {
   constructor(
-    private readonly optionsService: OptionsService,
+    private readonly optionService: OptionService,
     private readonly postService: PostService,
     private readonly utilService: UtilService,
     private readonly watermarkService: WatermarkService
@@ -39,7 +39,7 @@ export class AdminFileController {
     @Referer() referer: string,
     @Session() session: any
   ) {
-    const options = await this.optionsService.getOptions();
+    const options = await this.optionService.getOptions();
     session.uploadReferer = referer;
 
     return {
@@ -97,7 +97,7 @@ export class AdminFileController {
     if (result['fields'].watermark !== '0') {
       await this.watermarkService.watermark(result['filePath']);
     }
-    const options = await this.optionsService.getOptions(false);
+    const options = await this.optionService.getOptions(false);
     const postGuid = `${options.upload_url_prefix}/${curYear}/${curMonth}/${result['fileName']}`;
     const isPostGuidExist = await this.postService.checkPostGuidExist(postGuid);
     if (isPostGuidExist) {

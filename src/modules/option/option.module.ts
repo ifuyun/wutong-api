@@ -1,11 +1,10 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
-import { AdminOptionController } from './admin-option.controller';
-import { OptionsService } from './options.service';
-import { UtilModule } from '../util/util.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
+import { UtilModule } from '../util/util.module';
 import { OptionController } from './option.controller';
+import { OptionService } from './option.service';
 
 @Module({
   imports: [
@@ -14,9 +13,9 @@ import { OptionController } from './option.controller';
     UtilModule,
     forwardRef(() => AuthModule)
   ],
-  controllers: [AdminOptionController, OptionController],
-  providers: [OptionsService],
-  exports: [OptionsService]
+  controllers: [OptionController],
+  providers: [OptionService],
+  exports: [OptionService]
 })
 export class OptionModule {
 }

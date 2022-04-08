@@ -8,7 +8,7 @@ import { OptionEntity } from '../../interfaces/options.interface';
 import { OptionModel } from '../../models/option.model';
 
 @Injectable()
-export class OptionsService {
+export class OptionService {
   constructor(
     @InjectModel(OptionModel)
     private readonly optionModel: typeof OptionModel,
@@ -30,10 +30,8 @@ export class OptionsService {
     }
 
     return this.optionModel.findAll(queryOpt).then((data) => {
-      let options: OptionEntity = {};
-      data.forEach((item) => {
-        options[item.optionName] = item.optionValue;
-      });
+      const options: OptionEntity = {};
+      data.forEach((item) => options[item.optionName] = item.optionValue);
       return Promise.resolve(options);
     });
   }
@@ -48,7 +46,7 @@ export class OptionsService {
     });
   }
 
-  async saveOptions(options: Record<string, string>): Promise<boolean> {
+  async saveOptions(options: Record<string, string | number>): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
       const keys = Object.keys(options);
       for (let key of keys) {

@@ -1,7 +1,14 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
-import { POST_AUTHOR_LENGTH, POST_EXCERPT_LENGTH, POST_SOURCE_LENGTH, POST_TAG_LIMIT, POST_TAXONOMY_LIMIT, POST_TITLE_LENGTH } from '../common/constants';
+import {
+  POST_AUTHOR_LENGTH,
+  POST_EXCERPT_LENGTH,
+  POST_SOURCE_LENGTH,
+  POST_TAG_LIMIT,
+  POST_TAXONOMY_LIMIT,
+  POST_TITLE_LENGTH
+} from '../common/constants';
 import { Message } from '../common/message.enum';
 import { getEnumValues } from '../helpers/helper';
 import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';

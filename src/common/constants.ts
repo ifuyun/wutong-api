@@ -15,21 +15,21 @@ export const POST_AUTHOR_LENGTH = 50;
 
 export const COMMENT_LENGTH = 800;
 
+export const TAXONOMY_NAME_LENGTH = 20;
+export const TAXONOMY_SLUG_LENGTH = 50;
+export const TAXONOMY_DESCRIPTION_LENGTH = 40;
+
 export const LINK_NAME_LENGTH = 20;
 export const LINK_URL_LENGTH = 100;
 export const LINK_DESCRIPTION_LENGTH = 40;
 
-export const SITE_NAME_LENGTH = 20;
-export const SITE_DESCRIPTION_LENGTH = 500;
-export const SITE_SLOGAN_LENGTH = 200;
+export const SITE_TITLE_LENGTH = 20;
+export const SITE_DESCRIPTION_LENGTH = 400;
+export const SITE_SLOGAN_LENGTH = 100;
 export const SITE_URL_LENGTH = 100;
 export const SITE_KEYWORDS_LENGTH = 200;
 export const SITE_KEYWORDS_SIZE = 20;
-export const SITE_ADMIN_EMAIL_LENGTH = 200;
+export const SITE_ADMIN_EMAIL_LENGTH = 100;
 export const SITE_ICP_NUM_LENGTH = 50;
 export const SITE_COPYRIGHT_LENGTH = 100;
 export const UPLOAD_URL_PREFIX_LENGTH = 20;
-
-export const TAXONOMY_NAME_LENGTH = 20;
-export const TAXONOMY_SLUG_LENGTH = 50;
-export const TAXONOMY_DESCRIPTION_LENGTH = 40;
