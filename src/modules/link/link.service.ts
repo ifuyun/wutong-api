@@ -60,19 +60,11 @@ export class LinkService {
   }
 
   async getFriendLinks(visible: LinkScope | LinkScope[]): Promise<LinkModel[]> {
-    const friendOption = await this.optionService.getOptionByKey('friend_link_taxonomy_id');
+    const friendOption = await this.optionService.getOptionByKey('friend_link_category');
     if (!friendOption || !friendOption.optionValue) {
       throw new InternalServerErrorException(Message.OPTION_MISSED);
     }
     return this.getLinksByTaxonomy(friendOption.optionValue, visible);
-  }
-
-  async getToolLinks(): Promise<LinkModel[]> {
-    const toolOption = await this.optionService.getOptionByKey('tool_link_taxonomy_id');
-    if (!toolOption || !toolOption.optionValue) {
-      throw new InternalServerErrorException(Message.OPTION_MISSED);
-    }
-    return this.getLinksByTaxonomy(toolOption.optionValue);
   }
 
   async getLinks(param: LinkQueryParam): Promise<LinkListVo> {

@@ -26,13 +26,6 @@ export class LinkController {
   ) {
   }
 
-  @Get('tool')
-  @Header('Content-Type', 'application/json')
-  async getToolLinks() {
-    const links = await this.linkService.getToolLinks();
-    return getSuccessResponse(links);
-  }
-
   @Get('friend')
   @Header('Content-Type', 'application/json')
   async getFriendLinks(

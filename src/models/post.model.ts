@@ -1,4 +1,15 @@
-import { BelongsTo, BelongsToMany, Column, CreatedAt, ForeignKey, HasMany, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Sequelize,
+  Table
+} from 'sequelize-typescript';
 import { DataType } from 'sequelize-typescript';
 import { PostStatus } from '../common/common.enum';
 import { UserModel } from './user.model';
@@ -37,34 +48,12 @@ export class PostModel extends Model {
   @HasMany(() => TaxonomyRelationshipModel)
   taxonomyRelationships: TaxonomyRelationshipModel[];
 
-  @ForeignKey(() => UserModel)
   @Column({
-    field: 'post_author',
-    type: DataType.CHAR(16),
-    allowNull: false,
-    defaultValue: ''
+    field: 'post_title',
+    type: DataType.TEXT,
+    allowNull: false
   })
-  postAuthor: string;
-
-  @BelongsTo(() => UserModel)
-  author: UserModel;
-
-  @Column({
-    field: 'post_date',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  postDate: Date;
-
-  postDateText: string;
-
-  @Column({
-    field: 'post_date_gmt',
-    type: DataType.DATE,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  postDateGmt: Date;
+  postTitle: string;
 
   @Column({
     field: 'post_content',
@@ -74,18 +63,26 @@ export class PostModel extends Model {
   postContent: string;
 
   @Column({
-    field: 'post_title',
-    type: DataType.TEXT,
-    allowNull: false
-  })
-  postTitle: string;
-
-  @Column({
     field: 'post_excerpt',
     type: DataType.TEXT,
     allowNull: false
   })
   postExcerpt: string;
+
+  @Column({
+    field: 'post_date',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  postDate: Date;
+
+  @Column({
+    field: 'post_date_gmt',
+    type: DataType.DATE,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  postDateGmt: Date;
 
   @Column({
     field: 'post_status',
@@ -94,6 +91,14 @@ export class PostModel extends Model {
     defaultValue: 'publish'
   })
   postStatus: PostStatus;
+
+  @Column({
+    field: 'post_type',
+    type: DataType.ENUM('post', 'page', 'revision', 'attachment', 'status', 'quote', 'note', 'image', 'video', 'audio'),
+    allowNull: false,
+    defaultValue: 'post'
+  })
+  postType: string;
 
   @Column({
     field: 'comment_flag',
@@ -123,6 +128,26 @@ export class PostModel extends Model {
   postPassword: string;
 
   @Column({
+    field: 'post_guid',
+    type: DataType.STRING(255),
+    allowNull: false,
+    defaultValue: ''
+  })
+  postGuid: string;
+
+  @ForeignKey(() => UserModel)
+  @Column({
+    field: 'post_author',
+    type: DataType.CHAR(16),
+    allowNull: false,
+    defaultValue: ''
+  })
+  postAuthor: string;
+
+  @BelongsTo(() => UserModel)
+  author: UserModel;
+
+  @Column({
     field: 'post_name',
     type: DataType.STRING(200),
     allowNull: false,
@@ -131,52 +156,12 @@ export class PostModel extends Model {
   postName: string;
 
   @Column({
-    field: 'post_modified',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  postModified: Date;
-
-  @Column({
-    field: 'post_modified_gmt',
-    type: DataType.DATE,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  postModifiedGmt: Date;
-
-  @CreatedAt
-  @Column({
-    field: 'post_created',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  postCreated: Date;
-
-  @Column({
     field: 'post_parent',
     type: DataType.CHAR(16),
     allowNull: false,
     defaultValue: ''
   })
   postParent: string;
-
-  @Column({
-    field: 'post_guid',
-    type: DataType.STRING(255),
-    allowNull: false,
-    defaultValue: ''
-  })
-  postGuid: string;
-
-  @Column({
-    field: 'post_type',
-    type: DataType.ENUM('post', 'page', 'revision', 'attachment'),
-    allowNull: false,
-    defaultValue: 'post'
-  })
-  postType: string;
 
   @Column({
     field: 'post_mime_type',
@@ -201,4 +186,28 @@ export class PostModel extends Model {
     defaultValue: 0
   })
   postViewCount: number;
+
+  @CreatedAt
+  @Column({
+    field: 'post_created',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  postCreated: Date;
+
+  @Column({
+    field: 'post_modified',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  postModified: Date;
+
+  @Column({
+    field: 'post_modified_gmt',
+    type: DataType.DATE,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  postModifiedGmt: Date;
 }

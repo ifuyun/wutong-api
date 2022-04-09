@@ -33,16 +33,27 @@ export enum Role {
   ADMIN = 'admin'
 }
 
-export enum VoteType {
-  LIKE = 'like',
-  DISLIKE = 'dislike'
-}
-
 export enum PostType {
   POST = 'post',
   PAGE = 'page',
   REVISION = 'revision',
-  ATTACHMENT = 'attachment'
+  ATTACHMENT = 'attachment',
+  STATUS = 'status',
+  QUOTE = 'quote',
+  NOTE = 'note',
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio'
+}
+
+export enum PostFormat {
+  POST = 'post',
+  STATUS = 'status',
+  QUOTE = 'quote',
+  NOTE = 'note',
+  IMAGE = 'image',
+  VIDEO = 'video',
+  AUDIO = 'audio'
 }
 
 export enum PostStatus {
@@ -71,6 +82,11 @@ export enum CommentStatus {
   REJECT = 'reject',
   SPAM = 'spam',
   TRASH = 'trash'
+}
+
+export enum VoteType {
+  LIKE = 'like',
+  DISLIKE = 'dislike'
 }
 
 export enum TaxonomyType {
