@@ -1,5 +1,5 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsInt, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
 import {
   POST_AUTHOR_LENGTH,
@@ -16,7 +16,6 @@ import { IsPostExist } from '../validators/async/is-post-exist.validator';
 import { IsGuid } from '../validators/is-guid.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
-import { IsNumber } from '../validators/is-number.validator';
 
 export class BasicPostDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -68,11 +67,11 @@ export class AdditionalPostDto {
   postViewCount?: number;
   commentCount?: number;
 
-  @IsNumber({ message: '请选择是否插入名片' })
+  @IsInt({ message: '请选择是否插入名片' })
   @IsNotEmpty({ message: '请选择是否插入名片' })
   showWechatCard?: 0 | 1 | 2;
 
-  @IsNumber({ message: '请选择版权类型' })
+  @IsInt({ message: '请选择版权类型' })
   @IsNotEmpty({ message: '请选择版权类型' })
   copyrightType?: 0 | 1 | 2;
 }
@@ -83,7 +82,7 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   @ArrayMaxSize(POST_TAXONOMY_LIMIT, { message: '分类数应不大于$constraint1个' })
   postTaxonomies?: string[];
 
-  @IsNumber({ message: '请选择是否原创' })
+  @IsInt({ message: '请选择是否原创' })
   @IsNotEmpty({ message: '请选择是否原创' })
   postOriginal?: 0 | 1;
 
@@ -113,7 +112,7 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   @IsNotEmpty({ message: '请选择评论状态' })
   commentFlag?: string;
 
-  @IsNumber({ message: '请选择是否更新文章修改时间' })
+  @IsInt({ message: '请选择是否更新文章修改时间' })
   @IsNotEmpty({ message: '请选择是否更新文章修改时间' })
   updateModified?: 0 | 1;
 }

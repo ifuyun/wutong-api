@@ -15,7 +15,7 @@ export function IsRequired(validationOptions?: ValidationOptions) {
             return !!trim(value);
           }
           if (typeof value === 'number') {
-            return !isNaN(value);
+            return !isNaN(value) && isFinite(value);
           }
           return !!value;
         }

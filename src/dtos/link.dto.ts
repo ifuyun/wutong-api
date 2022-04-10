@@ -1,10 +1,9 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { ArrayNotEmpty, IsNotEmpty, MaxLength } from 'class-validator';
+import { ArrayNotEmpty, IsInt, IsNotEmpty, MaxLength } from 'class-validator';
 import { LinkScope, LinkStatus, LinkTarget } from '../common/common.enum';
 import { LINK_DESCRIPTION_LENGTH, LINK_NAME_LENGTH, LINK_URL_LENGTH } from '../common/constants';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
-import { IsNumber } from '../validators/is-number.validator';
 
 export class BasicLinkDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -43,7 +42,7 @@ export class BasicLinkDto {
   @IsNotEmpty({ message: '请选择打开方式' })
   linkTarget: LinkTarget;
 
-  @IsNumber({ message: '排序必须为数字' })
+  @IsInt({ message: '排序必须为数字' })
   @IsNotEmpty({ message: '排序不能为空' })
   linkOrder: number;
 

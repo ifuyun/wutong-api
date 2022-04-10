@@ -12,14 +12,14 @@ export function IsGuid(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: string) {
-          if (!value.startsWith('/')) {
+          if (value && !value.startsWith('/')) {
             return false;
           }
-          if (!/^(?:\/[a-zA-Z0-9+-_.,~%]+)+$/i.test(value)) {
+          if (value && !/^(?:\/[a-zA-Z0-9\-+_.,~%]+)+$/i.test(value)) {
             return false;
           }
           const blacklist = <string[]> getEnumValues(PostSlugPrefixBlacklist);
-          for (let prefix of blacklist) {
+          for (const prefix of blacklist) {
             if (value.startsWith(prefix)) {
               return false;
             }

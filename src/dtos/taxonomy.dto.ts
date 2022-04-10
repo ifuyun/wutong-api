@@ -1,12 +1,11 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
+import { ArrayNotEmpty, IsInt, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { TAXONOMY_DESCRIPTION_LENGTH, TAXONOMY_NAME_LENGTH, TAXONOMY_SLUG_LENGTH } from '../common/constants';
 import { IsTaxonomyExist } from '../validators/async/is-taxonomy-exist.validator';
 import { IsTaxonomySlugExist } from '../validators/async/is-taxonomy-slug-exist.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
-import { IsNumber } from '../validators/is-number.validator';
 
 export class BasicTaxonomyDto {
   // 验证顺序根据注解声明顺序从下往上
@@ -39,7 +38,7 @@ export class BasicTaxonomyDto {
   parentId?: string;
 
   @ValidateIf(o => o.type !== TaxonomyType.TAG)
-  @IsNumber({ message: '排序必须为数字' })
+  @IsInt({ message: '排序必须为数字' })
   termOrder?: number;
 
   @IsIncludedIn(

@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, Max, MaxLength, Min } from 'class-validator';
+import { ArrayNotEmpty, IsBoolean, IsEmail, IsInt, IsNotEmpty, IsUrl, Max, MaxLength, Min } from 'class-validator';
 import { CommentFlag, PostFormat } from '../common/common.enum';
 import {
   SITE_ADMIN_EMAIL_LENGTH,
@@ -9,10 +9,14 @@ import {
   SITE_SLOGAN_LENGTH,
   SITE_TITLE_LENGTH,
   SITE_URL_LENGTH,
-  UPLOAD_URL_PREFIX_LENGTH
+  STATIC_RESOURCE_HOST_LENGTH,
+  UPLOAD_PATH_LENGTH,
+  UPLOAD_URL_PREFIX_LENGTH,
+  WATERMARK_FONT_PATH_LENGTH
 } from '../common/constants';
 import { getEnumValues } from '../helpers/helper';
 import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
+import { IsFilePath } from '../validators/is-file-path.validator';
 import { IsHost } from '../validators/is-host.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
@@ -37,7 +41,7 @@ export class GeneralOptionsDto {
   siteUrl: string;
 
   @ArrayMaxSizePlus({ size: SITE_KEYWORDS_SIZE }, { message: '关键词数应不大于$constraint1个，实际为$constraint2个' })
-  @IsNotEmpty({ message: '关键词不能为空' })
+  @ArrayNotEmpty({ message: '关键词不能为空' })
   siteKeywords: string[];
 
   @MaxLength(SITE_COPYRIGHT_LENGTH, { message: '版权信息长度应不大于$constraint1字符' })
@@ -70,16 +74,17 @@ export class WritingOptionsDto {
 export class ReadingOptionsDto {
   @Min(1, { message: '博客每页显示篇数最小为$constraint1' })
   @Max(20, { message: '博客每页显示篇数最大为$constraint1' })
-  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 0 }, { message: '博客每页显示篇数必须为数字' })
+  @IsInt({ message: '博客每页显示篇数必须为数字' })
   @IsNotEmpty({ message: '博客每页显示篇数不能为空' })
   postsPerPage: number;
 
   @Min(1, { message: 'Feed中显示项目数最小为$constraint1' })
   @Max(20, { message: 'Feed中显示项目数最大为$constraint1' })
-  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 0 }, { message: 'Feed中显示项目数必须为数字' })
+  @IsInt({ message: 'Feed中显示项目数必须为数字' })
   @IsNotEmpty({ message: 'Feed中显示项目数不能为空' })
   postsPerRss: number;
 
+  @IsInt({ message: 'Feed中的每篇文章的显示方式选择有误' })
   @IsNotEmpty({ message: 'Feed中的每篇文章的显示方式不能为空' })
   rssUseExcerpt: 0 | 1;
 }
@@ -99,7 +104,7 @@ export class DiscussionOptionsDto {
 
   @Min(2, { message: '评论嵌套层数最小为$constraint1' })
   @Max(10, { message: '评论嵌套层数最大为$constraint1' })
-  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 0 }, { message: '评论嵌套层数必须为数字' })
+  @IsInt({ message: '评论嵌套层数必须为数字' })
   @IsNotEmpty({ message: '评论嵌套层数不能为空' })
   threadCommentsDepth: number;
 
@@ -108,7 +113,7 @@ export class DiscussionOptionsDto {
 
   @Min(1, { message: '每页显示评论数最小为$constraint1' })
   @Max(100, { message: '每页显示评论数最大为$constraint1' })
-  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 0 }, { message: '每页显示评论数必须为数字' })
+  @IsInt({ message: '每页显示评论数必须为数字' })
   @IsNotEmpty({ message: '每页显示评论数不能为空' })
   commentsPerPage: number;
 
@@ -145,7 +150,32 @@ export class DiscussionOptionsDto {
 }
 
 export class MediaOptionsDto {
-  @MaxLength(UPLOAD_URL_PREFIX_LENGTH, { message: '上传文件URL前缀长度应不大于$constraint1字符' })
-  @IsNotEmpty({ message: '上传文件URL前缀不能为空' })
+  @IsFilePath({message: '文件上传路径格式有误'})
+  @MaxLength(UPLOAD_PATH_LENGTH, { message: '文件上传路径长度应不大于$constraint1字符' })
+  @IsNotEmpty({ message: '文件上传路径不能为空' })
+  uploadPath: string;
+
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_host: true,
+    allow_query_components: false
+  }, { message: '静态资源服务地址格式有误' })
+  @MaxLength(STATIC_RESOURCE_HOST_LENGTH, { message: '静态资源服务地址长度应不大于$constraint1字符' })
+  @IsNotEmpty({ message: '静态资源服务地址不能为空' })
+  staticResourceHost: string;
+
+  @IsUrl({
+    require_protocol: false,
+    require_host: false,
+    allow_query_components: false
+  }, { message: '上传文件访问URL前缀格式有误' })
+  @MaxLength(UPLOAD_URL_PREFIX_LENGTH, { message: '上传文件访问URL前缀长度应不大于$constraint1字符' })
+  @IsNotEmpty({ message: '上传文件访问URL前缀不能为空' })
   uploadUrlPrefix: string;
+
+  @IsFilePath({message: '水印字体文件路径格式有误'})
+  @MaxLength(WATERMARK_FONT_PATH_LENGTH, { message: '水印字体文件路径长度应不大于$constraint1字符' })
+  @IsNotEmpty({ message: '水印字体文件路径不能为空' })
+  watermarkFontPath: string;
 }

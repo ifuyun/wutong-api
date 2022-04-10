@@ -4,7 +4,13 @@ import { Role } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { Roles } from '../../decorators/roles.decorator';
-import { DiscussionOptionsDto, GeneralOptionsDto, ReadingOptionsDto, WritingOptionsDto } from '../../dtos/option.dto';
+import {
+  DiscussionOptionsDto,
+  GeneralOptionsDto,
+  MediaOptionsDto,
+  ReadingOptionsDto,
+  WritingOptionsDto
+} from '../../dtos/option.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
@@ -114,6 +120,27 @@ export class OptionController {
       comment_previously_approved: optionDto.commentPreviouslyApproved ? 1 : 0,
       show_avatars: optionDto.showAvatars ? 1 : 0,
       avatar_default: optionDto.avatarDefault
+    };
+    const result = await this.optionService.saveOptions(data);
+    if (!result) {
+      throw new UnknownException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
+    }
+
+    return getSuccessResponse();
+  }
+
+  @Post('media')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async saveMediaOptions(
+    @Body(new TrimPipe()) optionDto: MediaOptionsDto
+  ) {
+    const data = {
+      upload_path: optionDto.uploadPath,
+      static_resource_host: optionDto.staticResourceHost,
+      upload_url_prefix: optionDto.uploadUrlPrefix,
+      watermark_font_path: optionDto.watermarkFontPath
     };
     const result = await this.optionService.saveOptions(data);
     if (!result) {
