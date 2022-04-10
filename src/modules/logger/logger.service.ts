@@ -96,30 +96,30 @@ export class LoggerService {
   }
 
   trace(logData: string | LogData, ...args: any[]) {
-    this.logger.trace.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.trace.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 
   debug(logData: string | LogData, ...args: any[]) {
-    this.logger.debug.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.debug.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 
   info(logData: string | LogData, ...args: any[]) {
-    this.logger.info.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.info.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 
   warn(logData: string | LogData, ...args: any[]) {
-    this.logger.warn.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.warn.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 
   error(logData: string | LogData, ...args: any[]) {
-    this.logger.error.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.error.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 
   fatal(logData: string | LogData, ...args: any[]) {
-    this.logger.fatal.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.fatal.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 
   mark(logData: string | LogData, ...args: any[]) {
-    this.logger.mark.bind(this.logger, ...this.transformLogData(logData, ...args));
+    this.logger.mark.call(this.logger, ...this.transformLogData(logData, ...args));
   }
 }

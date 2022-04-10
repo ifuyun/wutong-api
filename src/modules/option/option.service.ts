@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { Message } from '../../common/message.enum';
+import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
 import { LoggerService } from '../logger/logger.service';
 import { LinkDto } from '../../dtos/link.dto';
 import { OptionEntity } from '../../interfaces/options.interface';
@@ -37,12 +39,30 @@ export class OptionService {
   }
 
   async getOptionByKey(key: string): Promise<OptionModel> {
-    return this.optionModel.findOne({
+    const option = await this.optionModel.findOne({
       where: {
-        optionName: {
-          [Op.eq]: key
-        }
+        optionName: key
       }
+    });
+    if (!option) {
+      throw new InternalServerErrorException(Message.OPTION_MISSED);
+    }
+    return option;
+  }
+
+  async getOptionByKeys(keys: string | string[]): Promise<OptionEntity> {
+    return this.optionModel.findAll({
+      where: {
+        optionName: keys
+      }
+    }).then((data) => {
+      const count = Array.isArray(keys) ? keys.length : 1;
+      if (!data || data.length !== count) {
+        throw new InternalServerErrorException(Message.OPTION_MISSED);
+      }
+      const options: OptionEntity = {};
+      data.forEach((item) => options[item.optionName] = item.optionValue);
+      return Promise.resolve(options);
     });
   }
 

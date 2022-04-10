@@ -365,13 +365,13 @@ export class PostService {
     });
   }
 
-  async getPostBySlug(postSlug: string, isAdmin: boolean): Promise<PostModel> {
+  async getPostByGuid(postGuid: string, isAdmin: boolean): Promise<PostModel> {
     let where: WhereOptions = {
       postGuid: {
-        [Op.eq]: decodeURIComponent(postSlug)
+        [Op.eq]: decodeURIComponent(postGuid)
       },
       postType: {
-        [Op.in]: [PostType.POST, PostType.PAGE]
+        [Op.in]: [PostType.POST, PostType.PAGE, PostType.ATTACHMENT]
       }
     };
     if (!isAdmin) {
@@ -382,7 +382,7 @@ export class PostService {
     return this.postModel.findOne({
       attributes: [
         'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
-        'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified',
+        'commentFlag', 'postOriginal', 'postAuthor', 'postModified',
         'postCreated', 'postGuid', 'commentCount', 'postViewCount'
       ],
       include: [{

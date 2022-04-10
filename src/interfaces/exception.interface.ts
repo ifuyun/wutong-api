@@ -3,7 +3,7 @@ import { HttpStatus } from '@nestjs/common';
 
 export interface CustomExceptionLog {
   msg?: string;
-  stack?: unknown;
+  stack?: any;
   data?: any;
 }
 

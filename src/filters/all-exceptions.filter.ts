@@ -1,5 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Message } from '../common/message.enum';
 import { CustomException } from '../exceptions/custom.exception';
 import { CustomExceptionResponse } from '../interfaces/exception.interface';
 import { HttpResponseEntity } from '../interfaces/http-response';
@@ -24,29 +25,27 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     // 返回给终端的响应数据
     let resData: HttpResponseEntity;
     let resStatus: number;
-    const unknownErrorMsg = 'Unknown error.';
 
     if (exception instanceof CustomException) {
-      const err = <CustomExceptionResponse> exception.getResponse();
-      const errLog = err.log;
-      const errStack = errLog && <string>errLog.stack || '';
+      const errRes = <CustomExceptionResponse>exception.getResponse();
+      const errLog = errRes.log;
       resStatus = exception.getStatus();
-      resData = err.data;
+      resData = errRes.data;
 
-      if (isDev) {
-        if (errLog) {
+      if (errLog) {
+        if (isDev) {
           console.error(errLog);
+        } else {
+          this.logger.error({
+            message: errLog.msg || errRes.data.message,
+            data: errLog.data || errRes.data.data || '',
+            stack: errLog.stack || ''
+          });
         }
-      } else {
-        this.logger.error({
-          message: errLog && errLog.msg || err.data.message,
-          data: errLog && errLog.data || err.data.data || '',
-          stack: errStack
-        });
       }
     } else if (exception instanceof HttpException) {
-      const errRes = <string | Record<string, any>> exception.getResponse();
-      const msg = typeof errRes === 'string' ? errRes : errRes.message || errRes.error || exception.message || unknownErrorMsg;
+      const errRes = <string | Record<string, any>>exception.getResponse();
+      const msg = typeof errRes === 'string' ? errRes : errRes.message || errRes.error || exception.message || Message.UNKNOWN_ERROR;
       resStatus = exception.getStatus();
       resData = {
         code: exception.getStatus(),
@@ -64,7 +63,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
       resStatus = HttpStatus.INTERNAL_SERVER_ERROR;
       resData = {
         code: ResponseCode.INTERNAL_SERVER_ERROR,
-        message: unknownErrorMsg
+        message: Message.UNKNOWN_ERROR
       };
       if (exception instanceof Error) {
         resData.message = exception.message;
@@ -79,18 +78,12 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     }
 
     if (isXhr) {
-      // todo: only if isApiMode is closed
-      // res.cookie(this.configService.get('app.cookieCsrfKey'), req.csrfToken(), {
-      //   path: '/',
-      //   domain: this.configService.get('app.cookieDomain'),
-      //   maxAge: this.configService.get('app.cookieExpires')
-      // });
       res.status(resStatus).json(resData);
-    } else if(this.configService.get('env.isApiMode')) {
+    } else if (this.configService.get('env.isApiMode')) {
       res.status(resStatus).json(resData);
     } else {
       res.status(resStatus).type('text/html');
-      res.render('errors/error', {...resData, status: resStatus});
+      res.render('errors/error', { ...resData, status: resStatus });
     }
   }
 }

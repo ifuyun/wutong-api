@@ -206,7 +206,7 @@ export class PostController {
   }
 
   @Get('standalone')
-  async getPostBySlug(
+  async getPostByGuid(
     @Query('slug', new TrimPipe()) slug: string,
     @IsAdmin() isAdmin: boolean
   ) {
@@ -215,7 +215,7 @@ export class PostController {
     if (!isLikePost) {
       throw new NotFoundException();
     }
-    const post = await this.postService.getPostBySlug(slug, isAdmin);
+    const post = await this.postService.getPostByGuid(slug, isAdmin);
     if (!post) {
       throw new NotFoundException();
     }

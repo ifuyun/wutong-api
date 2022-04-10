@@ -9,7 +9,7 @@
 export enum Message {
   // todo: internationalize
   NOT_FOUND = 'Page not found',
-  UNKNOWN_ERROR = 'Operation fail',
+  UNKNOWN_ERROR = 'Unknown error',
   UNAUTHORIZED = 'Unauthorized',
   FORBIDDEN = 'Forbidden',
   BAD_REQUEST = 'Bad request',
@@ -44,4 +44,5 @@ export enum Message {
   LINK_DELETE_ERROR = '链接删除失败',
   OPTION_MISSED = '缺少配置项',
   OPTION_SAVE_ERROR = '设置保存失败',
+  FILE_NOT_FOUND = 'Request file not found'
 }

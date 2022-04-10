@@ -8,16 +8,13 @@ import * as cluster from 'cluster';
 import * as compress from 'compression';
 import * as connectRedis from 'connect-redis';
 import * as cookieParser from 'cookie-parser';
-import * as csrf from 'csurf';
 import * as ejs from 'ejs';
 import { Request, Response } from 'express';
 import * as session from 'express-session';
 import helmet from 'helmet';
 import * as log4js from 'log4js';
 import { cpus } from 'os';
-import { join } from 'path';
 import { createClient } from 'redis';
-import * as favicon from 'serve-favicon';
 import { AppModule } from './app.module';
 import { LogLevel } from './common/common.enum';
 import { LoggerService } from './modules/logger/logger.service';
@@ -95,21 +92,8 @@ async function bootstrap() {
     }));
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-    if (!config.get('env.isApiMode')) {
-      /* API服务在应用层做CSRF控制 */
-      app.use(csrf({ cookie: { key: config.get('app.cookieCsrfKey') } }));
-      /* API服务不需要静态资源 */
-      app.use(favicon(join(__dirname, '..', 'web', 'public', 'static', 'favicon.ico')));
-      app.useStaticAssets(join(__dirname, '..', 'web', 'public', 'static'));
-      app.useStaticAssets(join(__dirname, '..', 'web', 'public', config.get('env.isDev') ? 'dev' : 'dist'));
-      app.setBaseViewsDir(join(__dirname, '..', 'web', 'views', config.get('app.viewsPath')));
-    }
-
     app.use((req: Request, res: Response, next: Function) => {
       logger.updateContext();
-      threadLogger.trace(transformLogData({
-        message: `Request [${req.url}] is processed by ${isCluster ? 'Worker: ' + (cluster as any).worker.id : 'Master'}.`
-      })[0]);
       next();
     });
     app.use(log4js.connectLogger(accessLogger, {
