@@ -44,5 +44,8 @@ export enum Message {
   LINK_DELETE_ERROR = '链接删除失败',
   OPTION_MISSED = '缺少配置项',
   OPTION_SAVE_ERROR = '设置保存失败',
-  FILE_NOT_FOUND = 'Request file not found'
+  FILE_NOT_FOUND = '文件不存在',
+  FILE_UPLOAD_ERROR = '文件上传失败',
+  FILE_WATERMARK_ERROR = '添加水印失败',
+  FILE_GUID_IS_EXIST = '文件上传错误，请重新上传'
 }

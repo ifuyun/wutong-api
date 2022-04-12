@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { Message } from '../common/message.enum';
 import { NotFoundException } from '../exceptions/not-found.exception';
+import { CustomExceptionResponse } from '../interfaces/exception.interface';
 import { AuthService } from '../modules/auth/auth.service';
 import { LoggerService } from '../modules/logger/logger.service';
 import { OptionService } from '../modules/option/option.service';
@@ -22,7 +23,7 @@ export class ServeFileMiddleware implements NestMiddleware {
     const url = req.url;
     const token = req.headers.authorization;
     const user = this.authService.parse(token);
-    const fileEntity = await this.postService.getPostByGuid(req.url, user.isAdmin);
+    const fileEntity = await this.postService.getPostByGuid(url, user.isAdmin);
     if (!fileEntity) {
       this.logger.error({
         message: `${url} is not exist or can not be accessed`,
@@ -34,15 +35,17 @@ export class ServeFileMiddleware implements NestMiddleware {
       root: options['upload_path'],
       maxAge: '1y'
     };
+    res.header('Cross-Origin-Resource-Policy', 'same-site');
     res.sendFile(url.substring(options['upload_url_prefix'].length), fileOptions, (err) => {
       if (err) {
         this.logger.error({
           message: err.message,
           data: {
             file: url
-          }
+          },
+          stack: err.stack
         });
-        return next(new NotFoundException(Message.FILE_NOT_FOUND));
+        res.json((<CustomExceptionResponse>new NotFoundException(Message.FILE_NOT_FOUND).getResponse()).data);
       }
     });
   }

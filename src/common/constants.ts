@@ -1,10 +1,5 @@
 export const ID_REG = /^[0-9a-fA-F]{16}$/i;
-
-export const KEY_WX_MP_ACCESS_TOKEN = 'wx_mp_access_token';
-export const KEY_WX_MP_ACCESS_TOKEN_TIME = 'wx_mp_access_token_time';
-export const KEY_WX_MP_JSAPI_TICKET = 'wx_mp_jsapi_ticket';
-export const KEY_WX_MP_JSAPI_TICKET_TIME = 'wx_mp_jsapi_ticket_time';
-export const WX_MP_ACCESS_TOKEN_EXPIRES = 7200;
+export const ALLOWED_ORIGINS = Object.freeze([/\.ifuyun\.com$/, /\/\/ifuyun\.com$/]);
 
 export const POST_TITLE_LENGTH = 100;
 export const POST_EXCERPT_LENGTH = 140;

@@ -1,5 +1,24 @@
-import { Body, Controller, Delete, Get, Header, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
+import { Request } from 'express';
+import { File } from 'formidable';
+import * as formidable from 'formidable';
+import * as fs from 'fs';
 import { uniq } from 'lodash';
+import * as mkdirp from 'mkdirp';
+import * as moment from 'moment';
+import * as path from 'path';
 import * as xss from 'sanitizer';
 import { CommentFlag, PostStatus, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
@@ -8,17 +27,18 @@ import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Roles } from '../../decorators/roles.decorator';
-import { PostDto, PostRemoveDto } from '../../dtos/post.dto';
+import { PostDto, PostFileDto, PostRemoveDto } from '../../dtos/post.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
+import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { format, getUuid } from '../../helpers/helper';
+import { format, getFileExt, getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { BreadcrumbEntity } from '../../interfaces/breadcrumb.interface';
-import { PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
+import { FileData, PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -26,8 +46,10 @@ import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CommentService } from '../comment/comment.service';
 import { LoggerService } from '../logger/logger.service';
+import { OptionService } from '../option/option.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { UtilService } from '../util/util.service';
+import { WatermarkService } from '../util/watermark.service';
 import { PostService } from './post.service';
 
 @Controller('api/posts')
@@ -36,6 +58,8 @@ export class PostController {
     private readonly postService: PostService,
     private readonly taxonomyService: TaxonomyService,
     private readonly commentService: CommentService,
+    private readonly optionService: OptionService,
+    private readonly watermarkService: WatermarkService,
     private readonly logger: LoggerService,
     private readonly utilService: UtilService
   ) {
@@ -353,7 +377,7 @@ export class PostController {
     ) {
       throw new BadRequestException(Message.POST_CATEGORY_IS_NULL);
     }
-    const isPostGuidExist = await this.postService.checkPostGuidExist(postData.postGuid, postData.postId);
+    const isPostGuidExist = await this.postService.checkPostsExistByGuid(postData.postGuid, postData.postId);
     if (isPostGuidExist) {
       throw new BadRequestException(Message.POST_GUID_IS_EXIST, ResponseCode.POST_GUID_CONFLICT);
     }
@@ -409,6 +433,109 @@ export class PostController {
       throw new UnknownException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
     }
     await this.taxonomyService.updateAllCount([TaxonomyType.POST, TaxonomyType.TAG]);
+
+    return getSuccessResponse();
+  }
+
+  @Post('upload')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async uploadFile(
+    @Req() req: Request,
+    @AuthUser() user
+  ) {
+    const now = moment();
+    const curYear = now.format('YYYY');
+    const curMonth = now.format('MM');
+    const options = await this.optionService.getOptionByKeys([
+      'upload_path', 'upload_max_file_limit', 'upload_max_file_size', 'watermark_font_path', 'upload_url_prefix'
+    ]);
+    const maxFileLimit = Number(options['upload_max_file_limit']);
+    const maxFileSize = Number(options['upload_max_file_size']);
+    if (!maxFileLimit || !maxFileSize || !options['watermark_font_path']) {
+      throw new InternalServerErrorException(Message.OPTION_MISSED);
+    }
+    const uploadPath = path.join(options['upload_path'], curYear, curMonth);
+    mkdirp.sync(uploadPath);
+
+    const form = formidable({
+      keepExtensions: true,
+      allowEmptyFiles: false,
+      multiples: true,
+      uploadDir: uploadPath,
+      maxFileSize: maxFileLimit * maxFileSize * 1024,
+      maxFields: maxFileLimit * 2,
+      maxFieldsSize: maxFileSize * 1024
+    });
+    const result = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) {
+          return reject(err);
+        }
+        const fileList: File[] = Array.isArray(files['files']) ? files['files'] : [files['files']];
+        const resultList: FileData[] = [];
+        fileList.forEach((file) => {
+          const originalName = file.originalFilename;
+          const fileExt = getFileExt(originalName);
+          const id = getUuid();
+          const fileName = id + fileExt;
+          const filePath = path.join(uploadPath, fileName);
+          fs.renameSync(file.filepath, filePath);
+          resultList.push({
+            id,
+            guid: `${options['upload_url_prefix']}/${curYear}/${curMonth}/${fileName}`,
+            name: fileName,
+            originalName,
+            mimeType: file.mimetype,
+            path: filePath
+          });
+        });
+        resolve({
+          files: resultList,
+          fields
+        });
+      });
+    });
+
+    if (result['fields'].watermark !== '0') {
+      try {
+        /* only images should add watermark */
+        const imgTypes = ['image/png', 'image/jpeg', 'image/tiff', 'image/gif'];
+        const imgFiles = result['files'].filter((file: FileData) => imgTypes.includes(file.mimeType));
+        for (const file of imgFiles) {
+          await this.watermarkService.watermark(file.path, options['watermark_font_path']);
+        }
+      } catch (e) {
+        throw new InternalServerErrorException(<Message>e.message || Message.FILE_WATERMARK_ERROR)
+      }
+    }
+    const fileGuids = result['files'].map((file: FileData) => file.guid);
+    const isPostGuidExist = await this.postService.checkPostsExistByGuid(fileGuids);
+    if (isPostGuidExist) {
+      throw new InternalServerErrorException(Message.FILE_GUID_IS_EXIST, ResponseCode.UPLOAD_PATH_CONFLICT);
+    }
+    const fileData: PostFileDto[] = [];
+    result['files'].forEach((file: FileData) => {
+      const fileDesc = xss.sanitize(file.originalName);
+      fileData.push({
+        postTitle: fileDesc,
+        postContent: fileDesc,
+        postExcerpt: fileDesc,
+        postAuthor: user.userId,
+        postStatus: PostStatus.PUBLISH,
+        postType: PostType.ATTACHMENT,
+        postOriginal: parseInt(result['fields'].original, 10) ? 1 : 0,
+        postId: file.id,
+        postGuid: file.guid,
+        postDate: new Date(),
+        postMimeType: file.mimeType
+      });
+    });
+    const files = await this.postService.saveFiles(fileData);
+    if (!files) {
+      throw new UnknownException(Message.FILE_UPLOAD_ERROR, ResponseCode.UPLOAD_ERROR);
+    }
 
     return getSuccessResponse();
   }

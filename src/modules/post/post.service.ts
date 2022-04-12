@@ -448,12 +448,10 @@ export class PostService {
     });
   }
 
-  async checkPostGuidExist(guid: string, postId?: string): Promise<boolean> {
-    // 检查范围：全部，包含已删除文章和草稿
+  async checkPostsExistByGuid(guid: string | string[], postId?: string): Promise<boolean> {
+    // 检查范围：全部，包含已删除和草稿
     const where: WhereOptions = {
-      postGuid: {
-        [Op.eq]: guid
-      }
+      postGuid: guid
     };
     if (postId) {
       where.postId = {
@@ -478,8 +476,8 @@ export class PostService {
     return total > 0;
   }
 
-  async saveFile(postDto: PostFileDto): Promise<PostModel> {
-    return this.postModel.create({ ...postDto });
+  async saveFiles(files: PostFileDto[]): Promise<PostModel[]> {
+    return this.postModel.bulkCreate<PostModel>(files as any[]);
   }
 
   async savePost(data: {

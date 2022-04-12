@@ -1,4 +1,4 @@
-import { ArrayNotEmpty, IsBoolean, IsEmail, IsInt, IsNotEmpty, IsUrl, Max, MaxLength, Min } from 'class-validator';
+import { ArrayNotEmpty, IsBoolean, IsEmail, IsInt, IsNotEmpty, Matches, Max, MaxLength, Min } from 'class-validator';
 import { CommentFlag, PostFormat } from '../common/common.enum';
 import {
   SITE_ADMIN_EMAIL_LENGTH,
@@ -150,31 +150,41 @@ export class DiscussionOptionsDto {
 }
 
 export class MediaOptionsDto {
-  @IsFilePath({message: '文件上传路径格式有误'})
+  @Min(1, { message: '单次上传文件数量限制最小为$constraint1' })
+  @Max(20, { message: '单次上传文件数量限制最大为$constraint1' })
+  @IsInt({ message: '单次上传文件数量限制必须为数字' })
+  @IsNotEmpty({ message: '单次上传文件数量限制不能为空' })
+  uploadFileLimit: number;
+
+  @Min(100, { message: '单个上传文件大小限制最小为$constraint1 KB' })
+  @Max(8192, { message: '单个上传文件大小限制最大为$constraint1 KB' })
+  @IsInt({ message: '单个上传文件大小限制必须为数字' })
+  @IsNotEmpty({ message: '单个上传文件大小限制不能为空' })
+  uploadFileSize: number;
+
+  @IsFilePath({ message: '文件上传路径格式有误' })
   @MaxLength(UPLOAD_PATH_LENGTH, { message: '文件上传路径长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '文件上传路径不能为空' })
   uploadPath: string;
 
-  @IsUrl({
-    protocols: ['http', 'https'],
-    require_protocol: true,
-    require_host: true,
-    allow_query_components: false
-  }, { message: '静态资源服务地址格式有误' })
+  /* IsUrl can not match like http://localhost, so change to use RegExp */
+  @Matches(
+    /^https?:\/\/[a-zA-Z0-9]+(?:[\-_][a-zA-Z0-9]+)*(?:\.[a-zA-Z0-9]+(?:[\-_][a-zA-Z0-9]+)*)*(?::\d{1,5})?$/i,
+    { message: '静态资源服务地址格式有误' }
+  )
   @MaxLength(STATIC_RESOURCE_HOST_LENGTH, { message: '静态资源服务地址长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '静态资源服务地址不能为空' })
   staticResourceHost: string;
 
-  @IsUrl({
-    require_protocol: false,
-    require_host: false,
-    allow_query_components: false
-  }, { message: '上传文件访问URL前缀格式有误' })
+  @Matches(
+    /^(?:\/[a-zA-Z0-9\-+_.,~%]+)+$/i,
+    { message: '上传文件访问URL前缀格式有误' }
+  )
   @MaxLength(UPLOAD_URL_PREFIX_LENGTH, { message: '上传文件访问URL前缀长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '上传文件访问URL前缀不能为空' })
   uploadUrlPrefix: string;
 
-  @IsFilePath({message: '水印字体文件路径格式有误'})
+  @IsFilePath({ message: '水印字体文件路径格式有误' })
   @MaxLength(WATERMARK_FONT_PATH_LENGTH, { message: '水印字体文件路径长度应不大于$constraint1字符' })
   @IsNotEmpty({ message: '水印字体文件路径不能为空' })
   watermarkFontPath: string;

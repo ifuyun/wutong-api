@@ -4,10 +4,12 @@ import * as gmLib from 'gm';
 
 @Injectable()
 export class WatermarkService {
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService
+  ) {
   }
 
-  async watermark(imgPath: string) {
+  async watermark(imgPath: string, fontPath: string) {
     return new Promise((resolve, reject) => {
       const gm = gmLib.subClass({ imageMagick: true });
       const fontSize = 18;
@@ -19,8 +21,6 @@ export class WatermarkService {
       const markMarginY = 6;
       const copy = `@${this.configService.get('app.siteName')}`;
       const site = this.configService.get('app.domain');
-      // todo: move to db.options
-      const fontPath = process.env.WATERMARK_FONT_PATH;
       let imgWidth;
       let imgHeight;
       let markedWidth;

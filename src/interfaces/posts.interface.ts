@@ -41,3 +41,12 @@ export interface PostArchiveDatesQueryParam {
   isAdmin: boolean;
   fromAdmin?: boolean;
 }
+
+export interface FileData {
+  id: string,
+  guid: string,
+  name: string,
+  originalName: string,
+  mimeType: string,
+  path: string;
+}

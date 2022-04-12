@@ -137,6 +137,8 @@ export class OptionController {
     @Body(new TrimPipe()) optionDto: MediaOptionsDto
   ) {
     const data = {
+      upload_max_file_limit: optionDto.uploadFileLimit,
+      upload_max_file_size: optionDto.uploadFileSize,
       upload_path: optionDto.uploadPath,
       static_resource_host: optionDto.staticResourceHost,
       upload_url_prefix: optionDto.uploadUrlPrefix,

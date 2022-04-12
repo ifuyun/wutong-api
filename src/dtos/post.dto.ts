@@ -20,7 +20,7 @@ import { IsIncludedIn } from '../validators/is-included-in.validator';
 export class BasicPostDto {
   // 验证顺序根据注解声明顺序从下往上
   @IsIncludedIn(
-    { ranges: [PostType.POST, PostType.PAGE] },
+    { ranges: [PostType.POST, PostType.PAGE, PostType.ATTACHMENT] },
     { message: '不支持的操作' }
   )
   @IsNotEmpty({ message: '参数非法' })
@@ -58,6 +58,8 @@ export class BasicPostDto {
     { message: '标签数应不大于$constraint1个，实际为$constraint2个' }
   )
   postTags?: string | string[];
+
+  postMimeType?: string;
 }
 
 export class AdditionalPostDto {
