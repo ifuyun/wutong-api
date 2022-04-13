@@ -1,6 +1,6 @@
 import { Order } from 'sequelize';
-import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
-import { TaxonomyModel } from '../models/taxonomy.model';
+import { TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { TaxonomyModel } from '../../models/taxonomy.model';
 
 export interface TaxonomyNode extends TaxonomyModel {
   children?: TaxonomyNode[];

@@ -1,6 +1,6 @@
 import { Order } from 'sequelize';
-import { CommentStatus } from '../common/common.enum';
-import { CommentModel } from '../models/comment.model';
+import { CommentStatus } from '../../common/common.enum';
+import { CommentModel } from '../../models/comment.model';
 
 export interface CommentListVo {
   comments: CommentModel[];

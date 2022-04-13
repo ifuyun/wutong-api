@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
-import { UserVo } from '../../interfaces/users.interface';
+import { UserVo } from './user.interface';
 import { UserMetaModel } from '../../models/user-meta.model';
 import { UserModel } from '../../models/user.model';
 

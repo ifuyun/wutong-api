@@ -2,7 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { Message } from '../common/message.enum';
 import { NotFoundException } from '../exceptions/not-found.exception';
-import { CustomExceptionResponse } from '../interfaces/exception.interface';
+import { CustomExceptionResponse } from '../exceptions/exception.interface';
 import { AuthService } from '../modules/auth/auth.service';
 import { LoggerService } from '../modules/logger/logger.service';
 import { OptionService } from '../modules/option/option.service';

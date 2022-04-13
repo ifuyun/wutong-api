@@ -1,5 +1,5 @@
 import { ResponseCode } from '../common/response-code.enum';
-import { HttpResponseEntity } from '../interfaces/http-response';
+import { HttpResponseEntity } from '../common/http-response.interface';
 
 export function getSuccessResponse<T>(data?: T, message?: string): HttpResponseEntity {
   const resData: HttpResponseEntity = {

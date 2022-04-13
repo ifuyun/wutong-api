@@ -1,4 +1,4 @@
-import { HttpResponseEntity } from './http-response';
+import { HttpResponseEntity } from '../common/http-response.interface';
 import { HttpStatus } from '@nestjs/common';
 
 export interface CustomExceptionLog {

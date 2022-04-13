@@ -37,8 +37,8 @@ import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { format, getFileExt, getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { BreadcrumbEntity } from '../../interfaces/breadcrumb.interface';
-import { FileData, PostArchiveDatesQueryParam, PostQueryParam } from '../../interfaces/posts.interface';
+import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
+import { FileData, PostArchiveDatesQueryParam, PostQueryParam } from './post.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -449,7 +449,12 @@ export class PostController {
     const curYear = now.format('YYYY');
     const curMonth = now.format('MM');
     const options = await this.optionService.getOptionByKeys([
-      'upload_path', 'upload_max_file_limit', 'upload_max_file_size', 'watermark_font_path', 'upload_url_prefix'
+      'upload_path',
+      'upload_max_file_limit',
+      'upload_max_file_size',
+      'watermark_font_path',
+      'upload_url_prefix',
+      'site_name'
     ]);
     const maxFileLimit = Number(options['upload_max_file_limit']);
     const maxFileSize = Number(options['upload_max_file_size']);
@@ -504,7 +509,7 @@ export class PostController {
         const imgTypes = ['image/png', 'image/jpeg', 'image/tiff', 'image/gif'];
         const imgFiles = result['files'].filter((file: FileData) => imgTypes.includes(file.mimeType));
         for (const file of imgFiles) {
-          await this.watermarkService.watermark(file.path, options['watermark_font_path']);
+          await this.watermarkService.watermark(file.path, options);
         }
       } catch (e) {
         throw new InternalServerErrorException(<Message>e.message || Message.FILE_WATERMARK_ERROR)

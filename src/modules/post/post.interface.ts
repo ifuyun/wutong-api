@@ -1,7 +1,7 @@
 import { Order } from 'sequelize';
-import { PostModel } from '../models/post.model';
-import { TaxonomyModel } from '../models/taxonomy.model';
-import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
+import { PostModel } from '../../models/post.model';
+import { TaxonomyModel } from '../../models/taxonomy.model';
+import { CommentFlag, PostStatus, PostType } from '../../common/common.enum';
 
 export interface PostVo {
   post: PostModel;

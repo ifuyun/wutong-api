@@ -7,7 +7,7 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { UserLoginDto } from '../../dtos/user-login.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { getMd5 } from '../../helpers/helper';
-import { AuthUserEntity } from '../../interfaces/auth.interface';
+import { AuthUserEntity } from './auth.interface';
 import { UserService } from '../user/user.service';
 
 @Injectable()

@@ -6,8 +6,6 @@
 import { registerAs } from '@nestjs/config';
 
 const APP_CONFIG = () => ({
-  // todo: to be removed & replaced with db-options
-  siteName: '爱浮云',
   sessionKey: 'sid',
   sessionSecret: process.env.SESSION_SECRET,
   cookieCsrfKey: 'XSRF',

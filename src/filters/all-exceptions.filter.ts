@@ -2,8 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import { ConfigService } from '@nestjs/config';
 import { Message } from '../common/message.enum';
 import { CustomException } from '../exceptions/custom.exception';
-import { CustomExceptionResponse } from '../interfaces/exception.interface';
-import { HttpResponseEntity } from '../interfaces/http-response';
+import { CustomExceptionResponse } from '../exceptions/exception.interface';
+import { HttpResponseEntity } from '../common/http-response.interface';
 import { LoggerService } from '../modules/logger/logger.service';
 import { ResponseCode } from '../common/response-code.enum';
 

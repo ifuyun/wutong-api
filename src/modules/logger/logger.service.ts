@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { configure, getLogger, Logger } from 'log4js';
 import * as moment from 'moment';
 import { LogCategory } from '../../common/common.enum';
-import { LogData } from '../../interfaces/logger.interface';
+import { LogData } from './logger.interface';
 
 @Injectable()
 export class LoggerService {

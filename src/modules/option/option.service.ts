@@ -6,7 +6,7 @@ import { Message } from '../../common/message.enum';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
 import { LoggerService } from '../logger/logger.service';
 import { LinkDto } from '../../dtos/link.dto';
-import { OptionEntity } from '../../interfaces/options.interface';
+import { OptionEntity } from './option.interface';
 import { OptionModel } from '../../models/option.model';
 
 @Injectable()

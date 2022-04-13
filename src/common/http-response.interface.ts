@@ -1,4 +1,4 @@
-import { ResponseCode } from '../common/response-code.enum';
+import { ResponseCode } from './response-code.enum';
 
 export interface HttpResponseEntity {
   code: ResponseCode;

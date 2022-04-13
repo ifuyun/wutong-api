@@ -7,7 +7,7 @@ import { Message } from '../../common/message.enum';
 import { LinkDto } from '../../dtos/link.dto';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
 import { getUuid } from '../../helpers/helper';
-import { LinkListVo, LinkQueryParam } from '../../interfaces/links.interface';
+import { LinkListVo, LinkQueryParam } from './link.interface';
 import { LinkModel } from '../../models/link.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';

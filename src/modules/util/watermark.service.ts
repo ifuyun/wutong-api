@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as gmLib from 'gm';
+import { OptionEntity } from '../option/option.interface';
 
 @Injectable()
 export class WatermarkService {
@@ -9,7 +10,7 @@ export class WatermarkService {
   ) {
   }
 
-  async watermark(imgPath: string, fontPath: string) {
+  async watermark(imgPath: string, options: OptionEntity) {
     return new Promise((resolve, reject) => {
       const gm = gmLib.subClass({ imageMagick: true });
       const fontSize = 18;
@@ -19,7 +20,7 @@ export class WatermarkService {
       // 字体实际高度比字体大小略小≈17
       const markMarginX = 10;
       const markMarginY = 6;
-      const copy = `@${this.configService.get('app.siteName')}`;
+      const copy = `@${options['site_name']}`;
       const site = this.configService.get('app.domain');
       let imgWidth;
       let imgHeight;
@@ -40,7 +41,7 @@ export class WatermarkService {
           markedHeight = imgHeight * ratio;
           gmImg = gmImg.resize(markedWidth, markedHeight, '!');
         }
-        gmImg.font(fontPath, fontSize)
+        gmImg.font(options['watermark_font_path'], fontSize)
           .fill('#222222')
           .drawText(markMarginX, markMarginY + fontSize + lineMargin, copy, 'SouthEast')
           .drawText(markMarginX, markMarginY, site, 'SouthEast')

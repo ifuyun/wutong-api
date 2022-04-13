@@ -10,7 +10,7 @@ import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { LinkQueryParam } from '../../interfaces/links.interface';
+import { LinkQueryParam } from './link.interface';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';

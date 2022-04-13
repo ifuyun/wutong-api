@@ -1,6 +1,6 @@
 import { Order } from 'sequelize';
-import { LinkStatus, LinkTarget, LinkScope } from '../common/common.enum';
-import { LinkModel } from '../models/link.model';
+import { LinkStatus, LinkTarget, LinkScope } from '../../common/common.enum';
+import { LinkModel } from '../../models/link.model';
 
 export interface LinkListVo {
   links: LinkModel[];

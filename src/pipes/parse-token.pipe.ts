@@ -1,5 +1,5 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
-import { AuthUserEntity } from '../interfaces/auth.interface';
+import { AuthUserEntity } from '../modules/auth/auth.interface';
 import { AuthService } from '../modules/auth/auth.service';
 
 @Injectable()

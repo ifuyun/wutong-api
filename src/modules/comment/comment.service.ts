@@ -4,7 +4,7 @@ import { FindOptions, Op } from 'sequelize';
 import { CommentStatus } from '../../common/common.enum';
 import { CommentDto } from '../../dtos/comment.dto';
 import { getUuid } from '../../helpers/helper';
-import { CommentListVo, CommentQueryParam } from '../../interfaces/comments.interface';
+import { CommentListVo, CommentQueryParam } from './comment.interface';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
 

@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { Message } from '../common/message.enum';
 import { ResponseCode } from '../common/response-code.enum';
-import { CustomExceptionResponse } from '../interfaces/exception.interface';
+import { CustomExceptionResponse } from './exception.interface';
 import { CustomException } from './custom.exception';
 
 export class InternalServerErrorException extends CustomException {

@@ -1,5 +1,5 @@
 import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
-import { AuthUserEntity } from '../interfaces/auth.interface';
+import { AuthUserEntity } from '../modules/auth/auth.interface';
 
 @Injectable()
 export class IsAdminPipe implements PipeTransform {
