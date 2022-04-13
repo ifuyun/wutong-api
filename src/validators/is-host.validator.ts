@@ -10,7 +10,7 @@ export function IsHost(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: string) {
-          return !value || /^(https?:\/\/)?[a-zA-Z0-9_\-]+(?:\.[a-zA-Z0-9_\-]+)*(?:\/)?$/i.test(value);
+          return !value || /^(https?:\/\/)?[a-zA-Z0-9_\-]+(?:\.[a-zA-Z0-9_\-]+)*(\/)?$/i.test(value);
         }
       }
     });

@@ -85,7 +85,7 @@ export class PostController {
   ) {
     postType = postType || PostType.POST;
     if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType)) {
-      throw new BadRequestException(Message.ILLEGAL_PARAM);
+      throw new BadRequestException(Message.PARAM_ILLEGAL);
     }
     if (!isAdmin && postType !== PostType.POST) {
       throw new UnauthorizedException();
@@ -108,7 +108,7 @@ export class PostController {
         const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
         status.forEach((v: PostStatus) => {
           if (!allowedStatuses.includes(v)) {
-            throw new BadRequestException(Message.ILLEGAL_PARAM);
+            throw new BadRequestException(Message.PARAM_ILLEGAL);
           }
         });
         param.status = status;
@@ -118,7 +118,7 @@ export class PostController {
         const allowedFlags = Object.keys(CommentFlag).map((key) => CommentFlag[key]);
         commentFlag.forEach((v: CommentFlag) => {
           if (!allowedFlags.includes(v)) {
-            throw new BadRequestException(Message.ILLEGAL_PARAM);
+            throw new BadRequestException(Message.PARAM_ILLEGAL);
           }
         });
         param.commentFlag = commentFlag;
@@ -173,7 +173,7 @@ export class PostController {
     @IsAdmin() isAdmin: boolean
   ) {
     if (postType && ![PostType.POST, PostType.PAGE, PostType.ATTACHMENT].includes(postType)) {
-      throw new BadRequestException(Message.ILLEGAL_PARAM);
+      throw new BadRequestException(Message.PARAM_ILLEGAL);
     }
     postType = postType || PostType.POST;
     const fromAdmin = isAdmin && fa === '1';
@@ -189,7 +189,7 @@ export class PostController {
       const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
       status.forEach((v: PostStatus) => {
         if (!allowedStatuses.includes(v)) {
-          throw new BadRequestException(Message.ILLEGAL_PARAM);
+          throw new BadRequestException(Message.PARAM_ILLEGAL);
         }
       });
       params.status = status;
@@ -385,13 +385,6 @@ export class PostController {
     if (postDto.postId && postDto.updateModified === 1) {
       postData.postModified = new Date();
     }
-    let postTags: string[];
-    if (typeof postDto.postTags === 'string') {
-      postTags = uniq(postDto.postTags.split(/[,\s]/i).filter((v) => v.trim()));
-    } else {
-      postTags = postDto.postTags;
-    }
-    const postTaxonomies = postDto.postTaxonomies;
     const metaValue: [string, string][] = [
       ['show_wechat_card', postDto.showWechatCard.toString()],
       ['copyright_type', postDto.copyrightType.toString()]
@@ -411,8 +404,8 @@ export class PostController {
       newPostId,
       postData,
       postMeta: metaData,
-      postTaxonomies,
-      postTags
+      postTaxonomies: postDto.postTaxonomies,
+      postTags: postDto.postTags
     });
     if (!result) {
       throw new UnknownException(Message.POST_SAVE_ERROR, ResponseCode.POST_SAVE_ERROR);

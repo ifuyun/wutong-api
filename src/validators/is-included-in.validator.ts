@@ -1,10 +1,12 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
+import { Message } from '../common/message.enum';
+import { BadRequestException } from '../exceptions/bad-request.exception';
 
 export function IsIncludedIn(
   options: { ranges: (string | number)[], allowNull?: boolean, ignoreCase?: boolean },
   validationOptions?: ValidationOptions
 ) {
-  return function(object: Object, propertyName: string) {
+  return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'IsIncludedIn',
       target: object.constructor,
@@ -12,9 +14,12 @@ export function IsIncludedIn(
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: string | number) {
-          // todo: add error description
-          // todo: throw exception when options.range is undefined or is not an array
+        validate(value: string | number, args) {
+          args.constraints.push(value);
+
+          if (!options.ranges || !Array.isArray(options.ranges)) {
+            throw new BadRequestException(Message.PARAM_MUST_BE_ARRAY);
+          }
           // 默认忽略大小写
           if (typeof options.ignoreCase !== 'boolean') {
             options.ignoreCase = true;
@@ -23,7 +28,7 @@ export function IsIncludedIn(
             value = value.toLowerCase();
           }
 
-          return options.allowNull && !value || options.ranges.includes(value);
+          return options.allowNull && (value === undefined || value === null) || options.ranges.includes(value);
         }
       }
     });

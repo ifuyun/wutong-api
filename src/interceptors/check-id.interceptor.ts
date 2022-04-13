@@ -50,7 +50,7 @@ export class CheckIdInterceptor implements NestInterceptor {
       } else if (Array.isArray(bodyIds)) {
         bodyIds.forEach((id) => {
           if (typeof id !== 'string') {
-            throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, id), ResponseCode.ILLEGAL_PARAMS);
+            throw new BadRequestException(<Message>format(Message.PARAM_INVALID, id), ResponseCode.ILLEGAL_PARAMS);
           }
           id = id.trim();
           if (id) {
@@ -58,12 +58,12 @@ export class CheckIdInterceptor implements NestInterceptor {
           }
         });
       } else {
-        throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, bodyIds), ResponseCode.ILLEGAL_PARAMS);
+        throw new BadRequestException(<Message>format(Message.PARAM_INVALID, bodyIds), ResponseCode.ILLEGAL_PARAMS);
       }
     });
     ids.forEach((id) => {
       if (!id || !/^[0-9a-fA-F]{16}$/i.test(id)) {
-        throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, id), ResponseCode.ILLEGAL_PARAMS);
+        throw new BadRequestException(<Message>format(Message.PARAM_INVALID, id), ResponseCode.ILLEGAL_PARAMS);
       }
     });
     return next.handle();

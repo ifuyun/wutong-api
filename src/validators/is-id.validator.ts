@@ -2,7 +2,7 @@ import { registerDecorator, ValidationOptions } from 'class-validator';
 import { ID_REG } from '../common/constants';
 
 export function IsId(validationOptions?: ValidationOptions) {
-  return function(object: Object, propertyName: string) {
+  return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'IsId',
       target: object.constructor,
@@ -10,22 +10,17 @@ export function IsId(validationOptions?: ValidationOptions) {
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: string | string[]) {
+        validate(value: string | string[], args) {
+          args.constraints.push(value);
+
           if (!value) {
             return true;
           }
           if (typeof value === 'string') {
-            return !value || ID_REG.test(value);
+            return ID_REG.test(value);
           }
 
-          let result: boolean = true;
-          for (let v of value) {
-            result = ID_REG.test(v);
-            if (!result) {
-              break;
-            }
-          }
-          return result;
+          return value.every((item) => ID_REG.test(item));
         }
       }
     });

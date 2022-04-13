@@ -83,7 +83,7 @@ export class OptionController {
     @Body(new TrimPipe()) optionDto: ReadingOptionsDto
   ) {
     if (![0, 1].includes(optionDto.rssUseExcerpt)) {
-      throw new BadRequestException(Message.ILLEGAL_PARAM);
+      throw new BadRequestException(Message.PARAM_ILLEGAL);
     }
     const data = {
       posts_per_page: optionDto.postsPerPage,

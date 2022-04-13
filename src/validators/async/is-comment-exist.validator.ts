@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface
+} from 'class-validator';
 import { CommentService } from '../../modules/comment/comment.service';
 
 @ValidatorConstraint({ async: true })

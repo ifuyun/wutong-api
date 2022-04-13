@@ -54,7 +54,7 @@ export class TaxonomyController {
     @Query('orders', new TrimPipe()) orders: string[]
   ) {
     if (!type || !Object.keys(TaxonomyType).map((key) => TaxonomyType[key]).includes(type)) {
-      throw new BadRequestException(<Message>format(Message.INVALID_PARAMS, type), ResponseCode.TAXONOMY_TYPE_INVALID);
+      throw new BadRequestException(<Message>format(Message.PARAM_INVALID, type), ResponseCode.TAXONOMY_TYPE_INVALID);
     }
     const param: TaxonomyQueryParam = {
       page,
@@ -68,7 +68,7 @@ export class TaxonomyController {
       status.forEach((v) => {
         if (!allowedStatuses.includes(v)) {
           throw new BadRequestException(
-            <Message>format(Message.INVALID_PARAMS, JSON.stringify(status)),
+            <Message>format(Message.PARAM_INVALID, JSON.stringify(status)),
             ResponseCode.TAXONOMY_STATUS_INVALID
           );
         }
@@ -94,7 +94,7 @@ export class TaxonomyController {
     @Query('keyword', new TrimPipe()) keyword: string
   ) {
     if (!keyword) {
-      throw new BadRequestException(Message.MISSED_PARAMS);
+      throw new BadRequestException(Message.PARAM_MISSED);
     }
     const tags = await this.taxonomyService.searchTags(keyword);
     const tagList: string[] = tags.map((item) => item.name);
@@ -108,7 +108,7 @@ export class TaxonomyController {
   @Header('Content-Type', 'application/json')
   async updateCount(@Body(new TrimPipe()) body: { type: TaxonomyType }) {
     if (body.type && ![TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK].includes(body.type)) {
-      return new BadRequestException(Message.ILLEGAL_PARAM);
+      return new BadRequestException(Message.PARAM_ILLEGAL);
     }
     await this.taxonomyService.updateAllCount(body.type);
 

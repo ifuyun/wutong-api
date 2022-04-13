@@ -62,7 +62,7 @@ export class CommentController {
       const allowed = Object.keys(CommentStatus).map((key) => CommentStatus[key]);
       status.forEach((v: CommentStatus) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.ILLEGAL_PARAM);
+          throw new BadRequestException(Message.PARAM_ILLEGAL);
         }
       });
       param.status = status;

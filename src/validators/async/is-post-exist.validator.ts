@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface
+} from 'class-validator';
 import { PostService } from '../../modules/post/post.service';
 
 @ValidatorConstraint({ async: true })
@@ -17,7 +23,7 @@ export class IsPostExistConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args?: ValidationArguments): string {
-    return '文章不存在';
+    return '内容不存在';
   }
 }
 

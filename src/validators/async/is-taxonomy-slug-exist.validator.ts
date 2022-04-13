@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface
+} from 'class-validator';
 import { TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { format } from '../../helpers/helper';

@@ -36,7 +36,7 @@ export class LinkController {
       scope = Array.isArray(scope) ? scope : [scope];
       (scope as LinkScope[]).forEach((v: LinkScope) => {
         if (![LinkScope.HOMEPAGE, LinkScope.SITE].includes(v)) {
-          throw new BadRequestException(Message.ILLEGAL_PARAM);
+          throw new BadRequestException(Message.PARAM_ILLEGAL);
         }
       });
     } else {
@@ -67,7 +67,7 @@ export class LinkController {
       const allowed = Object.keys(LinkScope).map((key) => LinkScope[key]);
       scope.forEach((v: LinkScope) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.ILLEGAL_PARAM);
+          throw new BadRequestException(Message.PARAM_ILLEGAL);
         }
       });
     }
@@ -76,7 +76,7 @@ export class LinkController {
       const allowed = Object.keys(LinkTarget).map((key) => LinkTarget[key]);
       target.forEach((v: LinkTarget) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.ILLEGAL_PARAM);
+          throw new BadRequestException(Message.PARAM_ILLEGAL);
         }
       });
     }
@@ -85,7 +85,7 @@ export class LinkController {
       const allowed = Object.keys(LinkStatus).map((key) => LinkStatus[key]);
       status.forEach((v: LinkStatus) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.ILLEGAL_PARAM);
+          throw new BadRequestException(Message.PARAM_ILLEGAL);
         }
       });
     }
