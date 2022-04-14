@@ -15,6 +15,7 @@ import { LoggerService } from './modules/logger/logger.service';
 import { OptionModule } from './modules/option/option.module';
 import { OptionService } from './modules/option/option.service';
 import { PostModule } from './modules/post/post.module';
+import { StatisticModule } from './modules/statistic/statistic.module';
 import { TaxonomyModule } from './modules/taxonomy/taxonomy.module';
 import { UserModule } from './modules/user/user.module';
 import { VoteModule } from './modules/vote/vote.module';
@@ -37,7 +38,8 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
     TaxonomyModule,
     LinkModule,
     OptionModule,
-    CaptchaModule
+    CaptchaModule,
+    StatisticModule
   ],
   controllers: [],
   providers: [

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { uniq, uniqBy } from 'lodash';
 import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { GroupedCountResultItem } from 'sequelize/types/model';
 import { TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
@@ -488,5 +489,15 @@ export class TaxonomyService {
       where,
       silent: true
     }).then((result) => Promise.resolve(true));
+  }
+
+  async countTaxonomiesByType(): Promise<GroupedCountResultItem[]> {
+    return this.taxonomyModel.count({
+      where: {
+        type: [TaxonomyType.POST, TaxonomyType.TAG],
+        status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE]
+      },
+      group: ['type']
+    })
   }
 }

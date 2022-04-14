@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op } from 'sequelize';
+import { GroupedCountResultItem } from 'sequelize/types/model';
 import { CommentStatus } from '../../common/common.enum';
 import { CommentDto } from '../../dtos/comment.dto';
 import { getUuid } from '../../helpers/helper';
@@ -111,5 +112,13 @@ export class CommentService {
       }
     });
     return total > 0;
+  }
+
+  async countComments(): Promise<number> {
+    return this.commentModel.count({
+      where: {
+        commentStatus: [CommentStatus.NORMAL, CommentStatus.PENDING, CommentStatus.REJECT, CommentStatus.SPAM]
+      }
+    });
   }
 }

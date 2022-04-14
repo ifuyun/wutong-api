@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { difference, uniq } from 'lodash';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { GroupedCountResultItem } from 'sequelize/types/model';
 import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { getUuid } from '../../helpers/helper';
@@ -458,9 +459,7 @@ export class PostService {
         [Op.ne]: postId
       };
     }
-    const total = await this.postModel.count({
-      where
-    });
+    const total = await this.postModel.count({ where });
 
     return total > 0;
   }
@@ -628,6 +627,16 @@ export class PostService {
         stack: err.stack
       });
       return Promise.resolve(false);
+    });
+  }
+
+  async countPostsByType(): Promise<GroupedCountResultItem[]> {
+    return this.postModel.count({
+      where: {
+        postStatus: [PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE],
+        postType: [PostType.POST, PostType.PAGE, PostType.ATTACHMENT]
+      },
+      group: ['postType']
     });
   }
 }
