@@ -154,4 +154,16 @@ export class CommentController {
       commentFlag: post.commentFlag
     });
   }
+
+  @Get('recent')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'application/json')
+  async getRecentComments(
+    @Query('limit', new ParseIntPipe(5)) limit: number
+  ) {
+    const comments = await this.commentService.getRecentComments(limit);
+
+    return getSuccessResponse(comments);
+  }
 }

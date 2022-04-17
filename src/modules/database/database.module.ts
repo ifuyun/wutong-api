@@ -1,25 +1,24 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { DbConfigService } from './db-config.service';
-import { LoggerModule } from '../logger/logger.module';
-import { LoggerService } from '../logger/logger.service';
 import { BookModel } from '../../models/book.model';
-import { CommentModel } from '../../models/comment.model';
 import { CommentMetaModel } from '../../models/comment-meta.model';
+import { CommentModel } from '../../models/comment.model';
 import { LinkModel } from '../../models/link.model';
 import { MaterialModel } from '../../models/material.model';
 import { NoteModel } from '../../models/note.model';
 import { OptionModel } from '../../models/option.model';
-import { PostModel } from '../../models/post.model';
 import { PostMetaModel } from '../../models/post-meta.model';
-import { TaxonomyModel } from '../../models/taxonomy.model';
+import { PostModel } from '../../models/post.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
-import { UserModel } from '../../models/user.model';
+import { TaxonomyModel } from '../../models/taxonomy.model';
 import { UserMetaModel } from '../../models/user-meta.model';
-import { VoteModel } from '../../models/vote.model';
-import { VPostDateArchiveModel } from '../../models/v-post-date-archive.model';
+import { UserModel } from '../../models/user.model';
 import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
+import { VoteModel } from '../../models/vote.model';
+import { LoggerModule } from '../logger/logger.module';
+import { LoggerService } from '../logger/logger.service';
+import { DbConfigService } from './db-config.service';
 
 @Module({
   imports: [
@@ -43,7 +42,6 @@ import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
       UserModel,
       UserMetaModel,
       VoteModel,
-      VPostDateArchiveModel,
       VPostViewAverageModel
     ])
   ],

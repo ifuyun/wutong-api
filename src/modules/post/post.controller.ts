@@ -38,7 +38,7 @@ import { RolesGuard } from '../../guards/roles.guard';
 import { format, getFileExt, getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
-import { FileData, PostArchiveDatesQueryParam, PostQueryParam } from './post.interface';
+import { FileData, PostArchivesQueryParam, PostQueryParam } from './post.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -162,9 +162,9 @@ export class PostController {
     return getSuccessResponse({ postList, crumbs });
   }
 
-  @Get('archive-dates')
+  @Get('archives')
   @Header('Content-Type', 'application/json')
-  async getArchiveDates(
+  async getArchives(
     @Query('postType', new TrimPipe()) postType: PostType,
     @Query('showCount', new ParseIntPipe(1)) showCount: number,
     @Query('limit', new ParseIntPipe(10)) limit: number,
@@ -177,7 +177,7 @@ export class PostController {
     }
     postType = postType || PostType.POST;
     const fromAdmin = isAdmin && fa === '1';
-    const params: PostArchiveDatesQueryParam = {
+    const params: PostArchivesQueryParam = {
       postType,
       showCount: !!showCount,
       limit,
@@ -194,7 +194,7 @@ export class PostController {
       });
       params.status = status;
     }
-    const dateList = await this.postService.getArchiveDates(params);
+    const dateList = await this.postService.getArchives(params);
     return getSuccessResponse(dateList);
   }
 

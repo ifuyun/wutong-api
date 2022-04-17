@@ -33,7 +33,7 @@ export interface PostQueryParam {
   orders?: Order;
 }
 
-export interface PostArchiveDatesQueryParam {
+export interface PostArchivesQueryParam {
   postType: PostType;
   status?: PostStatus[];
   showCount: boolean;

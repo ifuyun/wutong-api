@@ -121,4 +121,19 @@ export class CommentService {
       }
     });
   }
+
+  async getRecentComments(limit?: number): Promise<CommentModel[]> {
+    return this.commentModel.findAll({
+      where: {
+        commentStatus: [CommentStatus.NORMAL, CommentStatus.PENDING]
+      },
+      include: [{
+        model: PostModel,
+        attributes: ['postId', 'postGuid', 'postTitle']
+      }],
+      order: [['created', 'desc']],
+      limit: limit || 5,
+      offset: 0
+    });
+  }
 }

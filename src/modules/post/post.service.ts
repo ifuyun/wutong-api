@@ -3,23 +3,22 @@ import { InjectModel } from '@nestjs/sequelize';
 import { difference, uniq } from 'lodash';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { GroupedCountResultItem } from 'sequelize/types/model';
+import { GroupedCountResultItem, ProjectionAlias } from 'sequelize/types/model';
 import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { getUuid } from '../../helpers/helper';
-import { PostMetaVo } from './post-meta.interface';
-import { PostArchiveDatesQueryParam, PostListVo, PostQueryParam, PostVo } from './post.interface';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { UserModel } from '../../models/user.model';
-import { VPostDateArchiveModel } from '../../models/v-post-date-archive.model';
 import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
 import { LoggerService } from '../logger/logger.service';
 import { OptionService } from '../option/option.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
+import { PostMetaVo } from './post-meta.interface';
 import { PostMetaService } from './post-meta.service';
+import { PostArchivesQueryParam, PostListVo, PostQueryParam, PostVo } from './post.interface';
 
 @Injectable()
 export class PostService {
@@ -28,8 +27,6 @@ export class PostService {
     private readonly postModel: typeof PostModel,
     @InjectModel(VPostViewAverageModel)
     private readonly postView: typeof VPostViewAverageModel,
-    @InjectModel(VPostDateArchiveModel)
-    private readonly postArchiveView: typeof VPostDateArchiveModel,
     @InjectModel(TaxonomyModel)
     private readonly taxonomyModel: typeof TaxonomyModel,
     @InjectModel(TaxonomyRelationshipModel)
@@ -42,24 +39,6 @@ export class PostService {
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
-  }
-
-  transformArchiveDates(archiveDates: VPostDateArchiveModel[]) {
-    const archiveDateList = {};
-    (archiveDates || []).forEach((item) => {
-      const data = item.get();
-      const year = data.dateText.split('/')[0];
-      archiveDateList[year] = archiveDateList[year] || {};
-      archiveDateList[year].list = archiveDateList[year].list || [];
-      archiveDateList[year].list.push(data);
-      archiveDateList[year].postCount = archiveDateList[year].postCount || 0;
-      archiveDateList[year].postCount += data.count;
-    });
-    const archiveDateYears = Object.keys(archiveDateList).sort((a, b) => a < b ? 1 : -1);
-
-    return {
-      archiveDateList, archiveDateYears
-    };
   }
 
   assemblePostData(posts: PostModel[], postMeta: PostMetaModel[], taxonomies: TaxonomyModel[]): PostVo[] {
@@ -143,10 +122,13 @@ export class PostService {
     });
   }
 
-  async getArchiveDates(param: PostArchiveDatesQueryParam): Promise<VPostDateArchiveModel[]> {
+  async getArchives(param: PostArchivesQueryParam): Promise<PostModel[]> {
     const { postType, status, limit, showCount, isAdmin, fromAdmin } = param;
-    const queryOpt: any = {
-      attributes: ['dateText', 'dateTitle'],
+    const queryOpt: FindOptions = {
+      attributes: [
+        [Sequelize.fn('date_format', Sequelize.col('post_date'), '%Y/%m'), 'dateText'],
+        [Sequelize.fn('date_format', Sequelize.col('post_date'), '%Y年%m月'), 'dateTitle']
+      ],
       where: {
         postStatus: {
           [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
@@ -155,35 +137,41 @@ export class PostService {
           [Op.eq]: postType
         }
       },
+      include: [{
+        model: TaxonomyModel,
+        through: { attributes: [] },
+        attributes: ['status'],
+        where: {
+          status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : [TaxonomyStatus.PUBLISH]
+        },
+        required: false
+      }],
       group: ['dateText'],
-      order: [['dateText', 'desc']]
+      order: [['postDate', 'desc']]
     };
     if (fromAdmin) {
       if (status && status.length > 0) {
-        queryOpt.where.postStatus[Op.in] = status.includes(PostStatus.DRAFT)
+        queryOpt.where['postStatus'][Op.in] = status.includes(PostStatus.DRAFT)
           ? uniq(status.concat([PostStatus.DRAFT, PostStatus.AUTO_DRAFT])) : status;
       } else {
-        queryOpt.where.postStatus[Op.in] = [
-          PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE, PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH];
+        queryOpt.where['postStatus'][Op.in] = [
+          PostStatus.PUBLISH, PostStatus.PASSWORD, PostStatus.PRIVATE,
+          PostStatus.DRAFT, PostStatus.AUTO_DRAFT, PostStatus.TRASH
+        ];
       }
-    }
-    // 0 is no limit, and default is 10
-    if (limit !== 0) {
-      queryOpt.limit = limit || 10;
-      queryOpt.offset = 0;
     }
     if (showCount) {
-      queryOpt.attributes.push([Sequelize.fn('count', 1), 'count']);
-      queryOpt.group = ['dateText', 'status'];
-      if (!isAdmin) {
-        queryOpt.having = {
-          status: {
-            [Op.eq]: 1
-          }
-        };
-      }
+      (queryOpt.attributes as (string | ProjectionAlias)[]).push([
+        Sequelize.fn('count', Sequelize.fn('distinct', Sequelize.col('post_id'))), 'count'
+      ]);
     }
-    return this.postArchiveView.findAll(queryOpt);
+    const result = await this.postModel.findAll(queryOpt);
+    // 0 is no limit, and default is 10
+    if (limit !== 0) {
+      // todo: limit will location in from(sub query)
+      return result.slice(0, limit || 10);
+    }
+    return result;
   }
 
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
