@@ -27,55 +27,47 @@ export class TaxonomyModel extends Model {
   links: LinkModel[];
 
   @Column({
-    field: 'type',
+    field: 'taxonomy_type',
     type: DataType.ENUM('post', 'link', 'tag'),
     allowNull: false,
     defaultValue: 'post'
   })
-  type: TaxonomyType;
+  taxonomyType: TaxonomyType;
 
   @Column({
-    field: 'name',
+    field: 'taxonomy_name',
     type: DataType.STRING(200),
     allowNull: false,
     defaultValue: ''
   })
-  name: string;
+  taxonomyName: string;
 
   @Unique
   @Column({
-    field: 'slug',
+    field: 'taxonomy_slug',
     type: DataType.STRING(200),
     allowNull: false,
     defaultValue: ''
   })
-  slug: string;
+  taxonomySlug: string;
 
   @Column({
-    field: 'description',
+    field: 'taxonomy_description',
     type: DataType.TEXT,
     allowNull: false
   })
-  description: string;
+  taxonomyDescription: string;
 
   @Column({
-    field: 'parent',
+    field: 'taxonomy_parent',
     type: DataType.CHAR(16),
     allowNull: false,
     defaultValue: ''
   })
-  parentId: string;
+  taxonomyParent: string;
 
   @Column({
-    field: 'term_group',
-    type: DataType.BIGINT,
-    allowNull: false,
-    defaultValue: 0
-  })
-  termGroup: number;
-
-  @Column({
-    field: 'term_order',
+    field: 'taxonomy_order',
     type: DataType.INTEGER({
       length: 11,
       unsigned: true
@@ -83,47 +75,47 @@ export class TaxonomyModel extends Model {
     allowNull: false,
     defaultValue: 0
   })
-  termOrder: number;
+  taxonomyOrder: number;
 
   @Column({
-    field: 'status',
+    field: 'taxonomy_status',
     type: DataType.ENUM('publish', 'private', 'trash'),
     allowNull: false,
     defaultValue: 'publish'
   })
-  status: TaxonomyStatus;
+  taxonomyStatus: TaxonomyStatus;
 
   @Column({
-    field: 'is_required',
+    field: 'taxonomy_is_required',
     type: DataType.TINYINT,
     allowNull: false,
     defaultValue: 0
   })
-  isRequired: number;
+  taxonomyIsRequired: number;
+
+  @CreatedAt
+  @Column({
+    field: 'taxonomy_created',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  taxonomyCreated: Date;
+
+  @UpdatedAt
+  @Column({
+    field: 'taxonomy_modified',
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+  })
+  taxonomyModified: Date;
 
   @Column({
-    field: 'count',
+    field: 'object_count',
     type: DataType.BIGINT,
     allowNull: false,
     defaultValue: 0
   })
-  count: number;
-
-  @CreatedAt
-  @Column({
-    field: 'created',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  created: Date;
-
-  @UpdatedAt
-  @Column({
-    field: 'modified',
-    type: DataType.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  modified: Date;
+  objectCount: number;
 }

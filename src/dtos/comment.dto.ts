@@ -23,7 +23,7 @@ export class BasicCommentDto {
 
   @IsCommentExist({ message: '回复的评论不存在' })
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
-  parentId?: string;
+  commentParent?: string;
 
   @IsNotEmpty({ message: '昵称不能为空' })
   commentAuthor?: string;

@@ -36,6 +36,14 @@ export class LinkModel extends Model {
   linkUrl: string;
 
   @Column({
+    field: 'link_description',
+    type: DataType.STRING(255),
+    allowNull: false,
+    defaultValue: ''
+  })
+  linkDescription: string;
+
+  @Column({
     field: 'link_image',
     type: DataType.STRING(255),
     allowNull: false,
@@ -50,14 +58,6 @@ export class LinkModel extends Model {
     defaultValue: '_blank'
   })
   linkTarget: LinkTarget;
-
-  @Column({
-    field: 'link_description',
-    type: DataType.STRING(255),
-    allowNull: false,
-    defaultValue: ''
-  })
-  linkDescription: string;
 
   @Column({
     field: 'link_scope',
@@ -76,15 +76,6 @@ export class LinkModel extends Model {
   linkStatus: LinkStatus;
 
   @Column({
-    field: 'link_owner',
-    type: DataType.CHAR(16),
-    allowNull: false,
-    defaultValue: ''
-  })
-  linkOwner: string;
-
-  // todo: rename
-  @Column({
     field: 'link_rating',
     type: DataType.INTEGER({
       length: 11,
@@ -93,9 +84,8 @@ export class LinkModel extends Model {
     allowNull: false,
     defaultValue: 0
   })
-  linkOrder: number;
+  linkRating: number;
 
-  // todo: change column order
   @Column({
     type: DataType.STRING(255),
     allowNull: false,
@@ -104,7 +94,14 @@ export class LinkModel extends Model {
   })
   linkRss: string;
 
-  // todo: rename
+  @Column({
+    field: 'link_owner',
+    type: DataType.CHAR(16),
+    allowNull: false,
+    defaultValue: ''
+  })
+  linkOwner: string;
+
   @CreatedAt
   @Column({
     field: 'link_created',
@@ -112,9 +109,8 @@ export class LinkModel extends Model {
     allowNull: false,
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
-  created: Date;
+  linkCreated: Date;
 
-  // todo: rename
   @UpdatedAt
   @Column({
     field: 'link_modified',
@@ -122,5 +118,5 @@ export class LinkModel extends Model {
     allowNull: false,
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
   })
-  modified: Date;
+  linkModified: Date;
 }

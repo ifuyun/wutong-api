@@ -51,8 +51,8 @@ export class PostService {
       const matched = taxonomies.filter(
         (item) => item.taxonomyRelationships.filter((r) => r.objectId === post.postId).length > 0
       );
-      const tags = matched.filter((item) => item.type === TaxonomyType.TAG);
-      const categories = matched.filter((item) => item.type === TaxonomyType.POST);
+      const tags = matched.filter((item) => item.taxonomyType === TaxonomyType.TAG);
+      const categories = matched.filter((item) => item.taxonomyType === TaxonomyType.POST);
 
       postList.push({
         post,
@@ -140,9 +140,9 @@ export class PostService {
       include: [{
         model: TaxonomyModel,
         through: { attributes: [] },
-        attributes: ['status'],
+        attributes: ['taxonomyStatus'],
         where: {
-          status: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : [TaxonomyStatus.PUBLISH]
+          taxonomyStatus: isAdmin ? [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE] : [TaxonomyStatus.PUBLISH]
         },
         required: false
       }],
@@ -175,7 +175,19 @@ export class PostService {
   }
 
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
-    const { isAdmin, keyword, fromAdmin, subTaxonomyIds, tag, year, month, status, commentFlag, author, orders } = param;
+    const {
+      isAdmin,
+      keyword,
+      fromAdmin,
+      subTaxonomyIds,
+      tag,
+      year,
+      month,
+      status,
+      commentFlag,
+      author,
+      orders
+    } = param;
     const pageSize = param.pageSize || 10;
     const postType = param.postType || PostType.POST;
     const where = {
@@ -232,12 +244,12 @@ export class PostService {
     const includeTmp = {
       model: TaxonomyModel,
       through: { attributes: [] },
-      attributes: ['taxonomyId', 'status'],
+      attributes: ['taxonomyId', 'taxonomyStatus'],
       where: {
-        type: {
+        taxonomyType: {
           [Op.in]: [TaxonomyType.POST]
         },
-        status: {
+        taxonomyStatus: {
           [Op.in]: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : [TaxonomyStatus.PUBLISH]
         }
       },
@@ -250,10 +262,10 @@ export class PostService {
       if (includeOpt.length < 1) {
         includeOpt.push(includeTmp);
       }
-      includeOpt[0].where['type'] = {
+      includeOpt[0].where['taxonomyType'] = {
         [Op.in]: postType === PostType.POST ? [TaxonomyType.POST, TaxonomyType.TAG] : [TaxonomyType.TAG]
       };
-      includeOpt[0].where['slug'] = {
+      includeOpt[0].where['taxonomySlug'] = {
         [Op.eq]: tag
       };
     }
@@ -270,11 +282,9 @@ export class PostService {
     }
     const queryOpt: FindOptions = {
       where,
-      attributes: [
-        'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt',
-        'postStatus', 'commentFlag', 'postOriginal', 'postType', 'postAuthor',
-        'postModified', 'postCreated', 'postGuid', 'commentCount', 'postViewCount'
-      ],
+      attributes: {
+        exclude: ['postPassword', 'postParent', 'postMimeType']
+      },
       include: [{
         model: UserModel,
         attributes: ['userNiceName']
@@ -321,11 +331,9 @@ export class PostService {
       };
     }
     return this.postModel.findOne({
-      attributes: [
-        'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
-        'commentFlag', 'postOriginal', 'postName', 'postAuthor', 'postModified',
-        'postCreated', 'postGuid', 'postType', 'commentCount', 'postViewCount'
-      ],
+      attributes: {
+        exclude: ['postPassword', 'postParent', 'postMimeType']
+      },
       include: [{
         model: UserModel,
         as: 'author',
@@ -337,14 +345,16 @@ export class PostService {
       }, {
         model: TaxonomyModel,
         as: 'taxonomies',
-        attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'termOrder', 'status', 'count'],
+        attributes: {
+          exclude: ['taxonomyCreated', 'taxonomyModified']
+        },
         where: {
           [Op.or]: [{
-            type: TaxonomyType.POST,
-            status: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : TaxonomyStatus.PUBLISH
+            taxonomyType: TaxonomyType.POST,
+            taxonomyStatus: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : TaxonomyStatus.PUBLISH
           }, {
-            type: TaxonomyType.TAG,
-            status: TaxonomyStatus.PUBLISH
+            taxonomyType: TaxonomyType.TAG,
+            taxonomyStatus: TaxonomyStatus.PUBLISH
           }]
         },
         // force to use left join
@@ -369,11 +379,9 @@ export class PostService {
       };
     }
     return this.postModel.findOne({
-      attributes: [
-        'postId', 'postTitle', 'postDate', 'postContent', 'postExcerpt', 'postStatus',
-        'commentFlag', 'postOriginal', 'postAuthor', 'postModified',
-        'postCreated', 'postGuid', 'commentCount', 'postViewCount'
-      ],
+      attributes: {
+        exclude: ['postPassword', 'postParent', 'postMimeType']
+      },
       include: [{
         model: UserModel,
         as: 'author',
@@ -535,11 +543,11 @@ export class PostService {
         } else {
           await this.taxonomyModel.create({
             taxonomyId,
-            type: TaxonomyType.TAG,
-            name: tag,
-            slug: tag,
-            description: tag,
-            count: 1
+            taxonomyType: TaxonomyType.TAG,
+            taxonomyName: tag,
+            taxonomySlug: tag,
+            taxonomyDescription: tag,
+            objectCount: 1
           }, {
             transaction: t
           });
@@ -557,7 +565,7 @@ export class PostService {
       const shouldIncrement = difference(latestTaxonomies, previousTaxonomies);
       const shouldDecrement = difference(previousTaxonomies, latestTaxonomies);
       if (shouldIncrement.length > 0) {
-        await this.taxonomyModel.increment({ count: 1 }, {
+        await this.taxonomyModel.increment({ objectCount: 1 }, {
           where: {
             taxonomyId: shouldIncrement
           },
@@ -565,7 +573,7 @@ export class PostService {
         });
       }
       if (shouldDecrement.length > 0) {
-        await this.taxonomyModel.decrement({ count: 1 }, {
+        await this.taxonomyModel.decrement({ objectCount: 1 }, {
           where: {
             taxonomyId: shouldDecrement
           },

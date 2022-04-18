@@ -36,6 +36,7 @@ export enum ResponseCode {
   POST_COMMENT_CLOSED,
   POST_TYPE_INVALID,
   POST_GUID_CONFLICT,
+  POST_TAXONOMY_MISSED,
   COPYRIGHT_ILLEGAL,
 
   // taxonomy: 81xx

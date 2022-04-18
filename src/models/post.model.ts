@@ -11,7 +11,7 @@ import {
   Table
 } from 'sequelize-typescript';
 import { DataType } from 'sequelize-typescript';
-import { PostStatus } from '../common/common.enum';
+import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
 import { UserModel } from './user.model';
 import { CommentModel } from './comment.model';
 import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
@@ -56,6 +56,14 @@ export class PostModel extends Model {
   postTitle: string;
 
   @Column({
+    field: 'post_name',
+    type: DataType.STRING(200),
+    allowNull: false,
+    defaultValue: ''
+  })
+  postName: string;
+
+  @Column({
     field: 'post_content',
     type: DataType.TEXT,
     allowNull: false
@@ -78,37 +86,6 @@ export class PostModel extends Model {
   postDate: Date;
 
   @Column({
-    field: 'post_date_gmt',
-    type: DataType.DATE,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-  })
-  postDateGmt: Date;
-
-  @Column({
-    field: 'post_status',
-    type: DataType.ENUM('publish', 'password', 'private', 'pending', 'draft', 'auto-draft', 'inherit', 'trash'),
-    allowNull: false,
-    defaultValue: 'publish'
-  })
-  postStatus: PostStatus;
-
-  @Column({
-    field: 'post_type',
-    type: DataType.ENUM('post', 'page', 'revision', 'attachment', 'status', 'quote', 'note', 'image', 'video', 'audio'),
-    allowNull: false,
-    defaultValue: 'post'
-  })
-  postType: string;
-
-  @Column({
-    field: 'comment_flag',
-    type: DataType.ENUM('open', 'verify', 'close'),
-    allowNull: false,
-    defaultValue: 'verify'
-  })
-  commentFlag: string;
-
-  @Column({
     field: 'post_original',
     type: DataType.TINYINT({
       length: 1,
@@ -120,6 +97,14 @@ export class PostModel extends Model {
   postOriginal: number;
 
   @Column({
+    field: 'post_status',
+    type: DataType.ENUM('publish', 'password', 'private', 'pending', 'draft', 'auto-draft', 'inherit', 'trash'),
+    allowNull: false,
+    defaultValue: 'publish'
+  })
+  postStatus: PostStatus;
+
+  @Column({
     field: 'post_password',
     type: DataType.STRING(20),
     allowNull: false,
@@ -128,12 +113,20 @@ export class PostModel extends Model {
   postPassword: string;
 
   @Column({
-    field: 'post_guid',
-    type: DataType.STRING(255),
+    field: 'comment_flag',
+    type: DataType.ENUM('open', 'verify', 'close'),
     allowNull: false,
-    defaultValue: ''
+    defaultValue: 'verify'
   })
-  postGuid: string;
+  commentFlag: CommentFlag;
+
+  @Column({
+    field: 'post_type',
+    type: DataType.ENUM('post', 'page', 'revision', 'attachment', 'status', 'quote', 'note', 'image', 'video', 'audio'),
+    allowNull: false,
+    defaultValue: 'post'
+  })
+  postType: PostType;
 
   @ForeignKey(() => UserModel)
   @Column({
@@ -148,12 +141,12 @@ export class PostModel extends Model {
   author: UserModel;
 
   @Column({
-    field: 'post_name',
-    type: DataType.STRING(200),
+    field: 'post_guid',
+    type: DataType.STRING(255),
     allowNull: false,
     defaultValue: ''
   })
-  postName: string;
+  postGuid: string;
 
   @Column({
     field: 'post_parent',
@@ -170,22 +163,6 @@ export class PostModel extends Model {
     defaultValue: ''
   })
   postMimeType: string;
-
-  @Column({
-    field: 'comment_count',
-    type: DataType.BIGINT,
-    allowNull: false,
-    defaultValue: 0
-  })
-  commentCount: number;
-
-  @Column({
-    field: 'post_view_count',
-    type: DataType.BIGINT,
-    allowNull: false,
-    defaultValue: 0
-  })
-  postViewCount: number;
 
   @CreatedAt
   @Column({
@@ -205,9 +182,18 @@ export class PostModel extends Model {
   postModified: Date;
 
   @Column({
-    field: 'post_modified_gmt',
-    type: DataType.DATE,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+    field: 'comment_count',
+    type: DataType.BIGINT,
+    allowNull: false,
+    defaultValue: 0
   })
-  postModifiedGmt: Date;
+  commentCount: number;
+
+  @Column({
+    field: 'post_view_count',
+    type: DataType.BIGINT,
+    allowNull: false,
+    defaultValue: 0
+  })
+  postViewCount: number;
 }

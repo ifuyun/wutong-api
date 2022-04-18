@@ -68,22 +68,6 @@ export function getUuid() {
 }
 
 /**
- * 生成验证码随机字符串
- * @return {string} 验证码
- */
-export function getRandomText(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const charsLength = chars.length;
-  const captchaLength = 4;
-  let captchaStr = '';
-  for (let i = 0; i < captchaLength; i += 1) {
-    captchaStr += chars[Math.floor(Math.random() * charsLength)];
-  }
-
-  return captchaStr;
-}
-
-/**
  * 判断是否空对象
  * @param {Object} obj 源对象
  * @return {boolean} 判断结果：为空返回true，否则返回false
@@ -108,22 +92,6 @@ export function getFileExt(fileName: string): string {
     fileExt = '';
   }
   return fileExt;
-}
-
-export function getEnumKeyByValue(enumData: Record<string, string | number>, value: string | number): string {
-  let key = '';
-  const keys = Object.keys(enumData);
-  for (let i = 0; i < keys.length; i += 1) {
-    if (enumData[keys[i]] === value) {
-      key = keys[i];
-      break;
-    }
-  }
-  return key;
-}
-
-export function getEnumValues(enumData: Record<string, string | number>): (string | number)[] {
-  return Object.keys(enumData).filter((key) => !/^\d+$/i.test(key)).map((key) => enumData[key]);
 }
 
 /**

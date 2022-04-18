@@ -77,8 +77,8 @@ export class TaxonomyController {
     }
     if (orders.length > 0) {
       param.orders = getQueryOrders({
-        count: 1,
-        termOrder: 2
+        objectCount: 1,
+        taxonomyOrder: 2
       }, orders);
     }
 
@@ -97,7 +97,7 @@ export class TaxonomyController {
       throw new BadRequestException(Message.PARAM_MISSED);
     }
     const tags = await this.taxonomyService.searchTags(keyword);
-    const tagList: string[] = tags.map((item) => item.name);
+    const tagList: string[] = tags.map((item) => item.taxonomyName);
 
     return getSuccessResponse(tagList);
   }
@@ -126,30 +126,30 @@ export class TaxonomyController {
   ) {
     taxonomyDto = {
       taxonomyId: taxonomyDto.taxonomyId,
-      name: xss.sanitize(taxonomyDto.name),
-      slug: xss.sanitize(taxonomyDto.slug),
-      description: xss.sanitize(taxonomyDto.description),
-      parentId: taxonomyDto.parentId,
-      termOrder: taxonomyDto.termOrder,
-      status: taxonomyDto.status,
-      type: taxonomyDto.type
+      taxonomyName: xss.sanitize(taxonomyDto.taxonomyName),
+      taxonomySlug: xss.sanitize(taxonomyDto.taxonomySlug),
+      taxonomyDescription: xss.sanitize(taxonomyDto.taxonomyDescription),
+      taxonomyParent: taxonomyDto.taxonomyParent,
+      taxonomyOrder: taxonomyDto.taxonomyOrder,
+      taxonomyStatus: taxonomyDto.taxonomyStatus,
+      taxonomyType: taxonomyDto.taxonomyType
     };
-    if (taxonomyDto.type === TaxonomyType.TAG) {
-      taxonomyDto.slug = taxonomyDto.description = taxonomyDto.name;
-      taxonomyDto.parentId = '';
+    if (taxonomyDto.taxonomyType === TaxonomyType.TAG) {
+      taxonomyDto.taxonomySlug = taxonomyDto.taxonomyDescription = taxonomyDto.taxonomyName;
+      taxonomyDto.taxonomyParent = '';
     }
     let taxonomy: TaxonomyModel;
     if (taxonomyDto.taxonomyId) {
       taxonomy = await this.taxonomyService.getTaxonomyById(taxonomyDto.taxonomyId);
       /* if is_required is 1, then can not modify parentId */
-      if (taxonomy.isRequired === 1 && taxonomyDto.parentId !== taxonomy.parentId) {
+      if (taxonomy.taxonomyIsRequired === 1 && taxonomyDto.taxonomyParent !== taxonomy.taxonomyParent) {
         throw new BadRequestException(Message.TAXONOMY_REQUIRED_CAN_NOT_MODIFY_PARENT);
       }
     }
-    if (taxonomyDto.parentId) {
-      const parentTaxonomy = await this.taxonomyService.getTaxonomyById(taxonomyDto.parentId);
+    if (taxonomyDto.taxonomyParent) {
+      const parentTaxonomy = await this.taxonomyService.getTaxonomyById(taxonomyDto.taxonomyParent);
       /* disallow create when parent is TRASH */
-      if (parentTaxonomy.status === TaxonomyStatus.TRASH && !taxonomyDto.taxonomyId) {
+      if (parentTaxonomy.taxonomyStatus === TaxonomyStatus.TRASH && !taxonomyDto.taxonomyId) {
         throw new BadRequestException(Message.TAXONOMY_CAN_NOT_ADD_CHILD);
       }
       /*
@@ -157,8 +157,8 @@ export class TaxonomyController {
        * if the parent is changed and its status is not PUBLISH, it is disallowed
        */
       if (
-        parentTaxonomy.status !== TaxonomyStatus.PUBLISH &&
-        (!taxonomy || taxonomy && taxonomyDto.parentId !== taxonomy.parentId)
+        parentTaxonomy.taxonomyStatus !== TaxonomyStatus.PUBLISH &&
+        (!taxonomy || taxonomy && taxonomyDto.taxonomyParent !== taxonomy.taxonomyParent)
       ) {
         throw new BadRequestException(Message.TAXONOMY_NOT_PUBLISH_CAN_NOT_MODIFY_PARENT);
       }
@@ -166,7 +166,7 @@ export class TaxonomyController {
     const result = await this.taxonomyService.saveTaxonomy(taxonomyDto);
     if (!result) {
       throw new UnknownException(
-        <Message>format(Message.TAXONOMY_SAVE_ERROR, taxonomyDto.type === TaxonomyType.TAG ? '标签' : '分类'),
+        <Message>format(Message.TAXONOMY_SAVE_ERROR, taxonomyDto.taxonomyType === TaxonomyType.TAG ? '标签' : '分类'),
         ResponseCode.POST_SAVE_ERROR
       );
     }
@@ -182,19 +182,19 @@ export class TaxonomyController {
     @Req() req: Request,
     @Body(new TrimPipe()) removeDto: TaxonomyRemoveDto
   ) {
-    const { type, taxonomyIds } = removeDto;
+    const { taxonomyType, taxonomyIds } = removeDto;
     const taxonomies = (await this.taxonomyService.getTaxonomiesByIds(taxonomyIds, true));
     if (taxonomies.length > 0) {
       throw new BadRequestException(
-        <Message>format(Message.TAXONOMY_REQUIRED_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.name).join(', '))
+        <Message>format(Message.TAXONOMY_REQUIRED_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.taxonomyName).join(', '))
       );
     }
-    const { success, message } = await this.taxonomyService.removeTaxonomies(type, taxonomyIds);
+    const { success, message } = await this.taxonomyService.removeTaxonomies(taxonomyType, taxonomyIds);
     if (!success) {
       if (message) {
         throw new BadRequestException(message);
       }
-      throw new UnknownException(<Message>format(Message.TAXONOMY_DELETE_ERROR, type === TaxonomyType.TAG ? '标签' : '分类'));
+      throw new UnknownException(<Message>format(Message.TAXONOMY_DELETE_ERROR, taxonomyType === TaxonomyType.TAG ? '标签' : '分类'));
     }
 
     return getSuccessResponse();

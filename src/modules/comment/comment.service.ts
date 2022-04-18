@@ -80,7 +80,7 @@ export class CommentService {
         model: PostModel,
         attributes: ['postId', 'postGuid', 'postTitle']
       }],
-      order: orders || [['created', 'desc']],
+      order: orders || [['commentCreated', 'desc']],
       subQuery: false,
       ...limitOpt
     });
@@ -131,7 +131,7 @@ export class CommentService {
         model: PostModel,
         attributes: ['postId', 'postGuid', 'postTitle']
       }],
-      order: [['created', 'desc']],
+      order: [['commentCreated', 'desc']],
       limit: limit || 5,
       offset: 0
     });

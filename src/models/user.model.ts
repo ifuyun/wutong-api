@@ -80,14 +80,6 @@ export class UserModel extends Model {
   userRegistered: Date;
 
   @Column({
-    field: 'user_activation_key',
-    type: DataType.STRING(60),
-    allowNull: false,
-    defaultValue: ''
-  })
-  userActivationKey: string;
-
-  @Column({
     type: DataType.INTEGER({
       length: 11,
       unsigned: true
@@ -98,12 +90,11 @@ export class UserModel extends Model {
   })
   userStatus: number;
 
-  // todo: to be removed
   @Column({
-    field: 'user_display_name',
-    type: DataType.STRING(250),
+    field: 'user_activation_key',
+    type: DataType.STRING(60),
     allowNull: false,
     defaultValue: ''
   })
-  userDisplayName: string;
+  userActivationKey: string;
 }

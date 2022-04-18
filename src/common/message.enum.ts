@@ -29,6 +29,7 @@ export enum Message {
   POST_STATUS_MUST_NOT_TRASH = '要添加$0，请将状态设为非"删除"状态',
   POST_CATEGORY_IS_NULL = '分类不能为空',
   POST_DELETE_EMPTY = '请选择要删除的内容',
+  POST_TAXONOMY_MISSED = '缺少分类',
   COMMENT_SAVE_ERROR = '评论保存失败',
   TAXONOMY_NOT_EXIST = '分类不存在',
   TAXONOMY_SAVE_ERROR = '$0保存失败',

@@ -100,9 +100,9 @@ export class LinkController {
     };
     if (orders.length > 0) {
       param.orders = getQueryOrders({
-        linkOrder: 1,
-        modified: 2,
-        created: 3
+        linkRating: 1,
+        linkModified: 2,
+        linkCreated: 3
       }, orders);
     }
     const links = await this.linkService.getLinks(param);
@@ -133,7 +133,7 @@ export class LinkController {
       linkScope: linkDto.linkScope,
       linkStatus: linkDto.linkStatus,
       linkTarget: linkDto.linkTarget,
-      linkOrder: linkDto.linkOrder,
+      linkRating: linkDto.linkRating,
       linkTaxonomy: linkDto.linkTaxonomy
     };
     const result = await this.linkService.saveLink(linkDto);

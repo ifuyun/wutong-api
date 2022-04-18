@@ -1,9 +1,11 @@
 import { IntersectionType } from '@nestjs/mapped-types';
-import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsNotEmpty, IsNotIn, Matches, MaxLength, ValidateIf } from 'class-validator';
 import { CommentFlag, PostStatus, PostType } from '../common/common.enum';
 import {
   POST_AUTHOR_LENGTH,
-  POST_EXCERPT_LENGTH, POST_PASSWORD_LENGTH,
+  POST_EXCERPT_LENGTH,
+  POST_PASSWORD_LENGTH,
+  POST_SLUG_PREFIX_BLACKLIST,
   POST_SOURCE_LENGTH,
   POST_TAG_LIMIT,
   POST_TAXONOMY_LIMIT,
@@ -13,7 +15,6 @@ import { Message } from '../common/message.enum';
 import { format } from '../helpers/helper';
 import { ArrayMaxSizePlus } from '../validators/array-max-size-plus.validator';
 import { IsPostExist } from '../validators/async/is-post-exist.validator';
-import { IsGuid } from '../validators/is-guid.validator';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 
@@ -50,6 +51,15 @@ export class BasicPostDto {
   @IsNotEmpty({ message: '可见性不能为空' })
   postStatus: PostStatus;
 
+  @ValidateIf(o => o.postType === PostType.PAGE || !!o.postName)
+  @Matches(
+    /^[a-zA-Z0-9]+(?:[~@$%&*\-_=+;:,]+[a-zA-Z0-9]+)*$/i,
+    { message: '别名格式有误' }
+  )
+  @IsNotIn(POST_SLUG_PREFIX_BLACKLIST, { message: `别名不能为以下关键词：${POST_SLUG_PREFIX_BLACKLIST.join(',')}` })
+  @IsNotEmpty({ message: '别名不能为空' })
+  postName?: string;
+
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
   postParent?: string;
 
@@ -63,7 +73,7 @@ export class BasicPostDto {
 }
 
 export class AdditionalPostDto {
-  postName?: string;
+  postGuid?: string;
   postCreated?: Date;
   postModified?: Date;
   postViewCount?: number;
@@ -97,11 +107,6 @@ export class PostDto extends IntersectionType(BasicPostDto, AdditionalPostDto) {
   @MaxLength(POST_AUTHOR_LENGTH, { message: '文章作者最大长度为$constraint1个字符' })
   @IsNotEmpty({ message: '转载文章请注明作者' })
   postAuthor: string;
-
-  @ValidateIf(o => o.postType === PostType.PAGE || !!o.postGuid)
-  @IsGuid({ message: 'URL格式有误' })
-  @IsNotEmpty({ message: 'URL不能为空' })
-  postGuid?: string;
 
   @ValidateIf(o => o.postStatus === 'password')
   @MaxLength(POST_PASSWORD_LENGTH, { message: '密码最大长度为$constraint1个字符' })

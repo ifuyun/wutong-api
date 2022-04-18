@@ -42,19 +42,19 @@ export class LinkService {
       include: [{
         model: TaxonomyModel,
         through: { attributes: [] },
-        attributes: ['created', 'modified'],
+        attributes: [],
         where: {
           taxonomyId: {
             [Op.eq]: taxonomyId
           },
-          type: {
+          taxonomyType: {
             [Op.eq]: TaxonomyType.LINK
           }
         }
       }],
       where,
       order: [
-        ['linkOrder', 'desc']
+        ['linkRating', 'desc']
       ]
     });
   }
@@ -92,7 +92,7 @@ export class LinkService {
       }];
     }
     const includeWhere: WhereOptions = {
-      type: {
+      taxonomyType: {
         [Op.eq]: TaxonomyType.LINK
       }
     };
@@ -108,7 +108,7 @@ export class LinkService {
     const queryOpt: FindOptions = {
       where,
       include: includeOpt,
-      order: orders || [['linkOrder', 'desc']],
+      order: orders || [['linkRating', 'desc']],
       limit: pageSize
     };
 
@@ -128,7 +128,7 @@ export class LinkService {
         model: TaxonomyModel,
         through: { attributes: [] },
         where: {
-          type: {
+          taxonomyType: {
             [Op.eq]: TaxonomyType.LINK
           }
         },

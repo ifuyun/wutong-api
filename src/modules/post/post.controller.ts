@@ -229,16 +229,11 @@ export class PostController {
     return getSuccessResponse({ prevPost, nextPost });
   }
 
-  @Get('standalone')
-  async getPostByGuid(
+  @Get('post')
+  async getPostByParam(
     @Query('slug', new TrimPipe()) slug: string,
     @IsAdmin() isAdmin: boolean
   ) {
-    // todo: move to validation
-    const isLikePost = this.utilService.isUrlPathLikePostSlug(slug);
-    if (!isLikePost) {
-      throw new NotFoundException();
-    }
     const post = await this.postService.getPostByGuid(slug, isAdmin);
     if (!post) {
       throw new NotFoundException();
@@ -286,14 +281,16 @@ export class PostController {
     let crumbs: BreadcrumbEntity[] = [];
     if (post.postType === PostType.POST) {
       // post categories
-      let taxonomies: TaxonomyModel[] = post.taxonomies.filter((item) => item.type === TaxonomyType.POST);
-      if (taxonomies.length < 1) {
-        throw new NotFoundException(Message.NOT_FOUND, ResponseCode.TAXONOMY_NOT_FOUND);
-      }
+      let taxonomies: TaxonomyModel[] = post.taxonomies.filter((item) => item.taxonomyType === TaxonomyType.POST);
       if (!fromAdmin) {
+        if (taxonomies.length < 1) {
+          throw new NotFoundException(Message.POST_TAXONOMY_MISSED, ResponseCode.POST_TAXONOMY_MISSED);
+        }
         let crumbTaxonomyId;
         // todo: parent category
-        const crumbTaxonomies = taxonomies.filter((item) => referer.split('?')[0].endsWith(`/${item.slug}`));
+        const crumbTaxonomies = taxonomies.filter(
+          (item) => referer.split('?')[0].endsWith(`/${item.taxonomySlug}`)
+        );
         if (crumbTaxonomies.length > 0) {
           crumbTaxonomyId = crumbTaxonomies[0].taxonomyId;
         } else {
@@ -323,9 +320,9 @@ export class PostController {
     const tags: TaxonomyModel[] = [];
     const categories: TaxonomyModel[] = [];
     post.taxonomies.forEach((v) => {
-      if (v.type === TaxonomyType.TAG) {
+      if (v.taxonomyType === TaxonomyType.TAG) {
         tags.push(v);
-      } else if (v.type === TaxonomyType.POST) {
+      } else if (v.taxonomyType === TaxonomyType.POST) {
         categories.push(v);
       }
     });
@@ -349,7 +346,10 @@ export class PostController {
       postTitle: xss.sanitize(postDto.postTitle),
       postContent: postDto.postContent,
       postExcerpt: xss.sanitize(postDto.postExcerpt),
-      postGuid: postDto.postGuid || `/post/${newPostId}`,
+      postName: postDto.postName,
+      postGuid: postDto.postName
+        ? postDto.postType === PostType.PAGE ? '/' + postDto.postName : '/post/' + postDto.postName
+        : `/post/${newPostId}`,
       postAuthor: user.userId,
       postStatus: postDto.postStatus,
       postPassword: postDto.postStatus === PostStatus.PASSWORD ? postDto.postPassword : '',
@@ -505,7 +505,7 @@ export class PostController {
           await this.watermarkService.watermark(file.path, options);
         }
       } catch (e) {
-        throw new InternalServerErrorException(<Message>e.message || Message.FILE_WATERMARK_ERROR)
+        throw new InternalServerErrorException(<Message>e.message || Message.FILE_WATERMARK_ERROR);
       }
     }
     const fileGuids = result['files'].map((file: FileData) => file.guid);

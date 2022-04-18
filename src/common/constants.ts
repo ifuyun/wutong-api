@@ -1,5 +1,9 @@
 export const ID_REG = /^[0-9a-fA-F]{16}$/i;
 export const ALLOWED_ORIGINS = Object.freeze([/\.ifuyun\.com$/, /\/\/ifuyun\.com$/]);
+/* 定义独立页面slug前缀黑名单，除了post外，已定义路由全部禁止，用于校验 */
+export const POST_SLUG_PREFIX_BLACKLIST = Object.freeze([
+  'category', 'tag', 'archive', 'comment', 'user', 'admin', 'api'
+]);
 
 export const POST_TITLE_LENGTH = 100;
 export const POST_EXCERPT_LENGTH = 140;

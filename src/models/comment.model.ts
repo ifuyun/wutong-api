@@ -1,4 +1,5 @@
 import { BelongsTo, Column, CreatedAt, DataType, ForeignKey, HasMany, Model, PrimaryKey, Sequelize, Table, UpdatedAt } from 'sequelize-typescript';
+import { CommentStatus } from '../common/common.enum';
 import { PostModel } from './post.model';
 import { CommentMetaModel } from './comment-meta.model';
 import { VoteModel } from './vote.model';
@@ -43,16 +44,6 @@ export class CommentModel extends Model {
   commentContent: string;
 
   @Column({
-    field: 'comment_status',
-    type: DataType.ENUM('normal', 'pending', 'reject', 'spam', 'trash'),
-    allowNull: false,
-    defaultValue: 'pending'
-  })
-  commentStatus: string;
-
-  commentStatusDesc: string;
-
-  @Column({
     type: DataType.TEXT,
     allowNull: false,
     field: 'comment_author'
@@ -83,43 +74,37 @@ export class CommentModel extends Model {
   })
   commentIp: string;
 
-  // todo: to be renamed
-  @CreatedAt
   @Column({
-    type: DataType.DATE,
+    type: DataType.STRING(255),
     allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-    field: 'comment_created'
+    defaultValue: '',
+    field: 'comment_agent'
   })
-  created: Date;
+  commentAgent: string;
 
-  // todo: to be removed
   @Column({
-    type: DataType.DATE,
+    field: 'comment_status',
+    type: DataType.ENUM('normal', 'pending', 'reject', 'spam', 'trash'),
     allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-    field: 'comment_created_gmt'
+    defaultValue: 'pending'
   })
-  commentCreatedGmt: Date;
+  commentStatus: CommentStatus;
 
-  // todo: to be renamed
-  @UpdatedAt
   @Column({
-    type: DataType.DATE,
+    type: DataType.CHAR(16),
     allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-    field: 'comment_modified'
+    defaultValue: '',
+    field: 'user_id'
   })
-  modified: Date;
+  userId: string;
 
-  // todo: to be removed
   @Column({
-    type: DataType.DATE,
+    type: DataType.CHAR(16),
     allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-    field: 'comment_modified_gmt'
+    defaultValue: '',
+    field: 'comment_parent'
   })
-  commentModifiedGmt: Date;
+  commentParent: string;
 
   @Column({
     type: DataType.INTEGER({
@@ -132,27 +117,21 @@ export class CommentModel extends Model {
   })
   commentVote: number;
 
+  @CreatedAt
   @Column({
-    type: DataType.STRING(255),
+    type: DataType.DATE,
     allowNull: false,
-    defaultValue: '',
-    field: 'comment_agent'
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    field: 'comment_created'
   })
-  commentAgent: string;
+  commentCreated: Date;
 
+  @UpdatedAt
   @Column({
-    type: DataType.CHAR(16),
+    type: DataType.DATE,
     allowNull: false,
-    defaultValue: '',
-    field: 'parent_id'
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    field: 'comment_modified'
   })
-  parentId: string;
-
-  @Column({
-    type: DataType.CHAR(16),
-    allowNull: false,
-    defaultValue: '',
-    field: 'user_id'
-  })
-  userId: string;
+  commentModified: Date;
 }

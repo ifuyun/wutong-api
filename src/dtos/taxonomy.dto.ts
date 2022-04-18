@@ -15,8 +15,8 @@ export class BasicTaxonomyDto {
     { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
     { message: format(Message.PARAM_INVALID, '$constraint1') }
   )
-  @IsNotEmpty({ message: '缺少参数“type”' })
-  type?: TaxonomyType;
+  @IsNotEmpty({ message: '缺少参数“taxonomyType”' })
+  taxonomyType?: TaxonomyType;
 
   @IsTaxonomyExist({ message: '修改的分类不存在' })
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
@@ -24,38 +24,37 @@ export class BasicTaxonomyDto {
 
   @MaxLength(TAXONOMY_NAME_LENGTH, { message: '名称最大长度为$constraint1个字符' })
   @IsNotEmpty({ message: '名称不能为空' })
-  name: string;
+  taxonomyName: string;
 
-  @IsTaxonomySlugExist({ typeField: 'type', idField: 'taxonomyId' })
+  @IsTaxonomySlugExist({ typeField: 'taxonomyType', idField: 'taxonomyId' })
   @MaxLength(TAXONOMY_SLUG_LENGTH, { message: '别名最大长度为$constraint1个字符' })
   @IsNotEmpty({ message: '别名不能为空' })
-  slug: string;
+  taxonomySlug: string;
 
   @MaxLength(TAXONOMY_DESCRIPTION_LENGTH, { message: '描述最大长度为$constraint1个字符' })
   @IsNotEmpty({ message: '描述不能为空' })
-  description: string;
+  taxonomyDescription: string;
 
   @IsTaxonomyExist({ message: '父节点不存在' })
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
-  parentId?: string;
+  taxonomyParent?: string;
 
-  @ValidateIf(o => o.type !== TaxonomyType.TAG)
+  @ValidateIf(o => o.taxonomyType !== TaxonomyType.TAG)
   @IsInt({ message: '排序必须为数字' })
-  termOrder?: number;
+  taxonomyOrder?: number;
 
   @IsIncludedIn(
     { ranges: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH] },
     { message: '状态“$constraint1”不支持' }
   )
   @IsNotEmpty({ message: '状态不能为空' })
-  status: TaxonomyStatus;
+  taxonomyStatus: TaxonomyStatus;
 }
 
 export class AdditionalTaxonomyDto {
-  termGroup?: string;
-  count?: number;
-  created?: Date;
-  modified?: Date;
+  objectCount?: number;
+  taxonomyCreated?: Date;
+  taxonomyModified?: Date;
 }
 
 export class TaxonomyDto extends IntersectionType(BasicTaxonomyDto, AdditionalTaxonomyDto) {
@@ -66,8 +65,8 @@ export class TaxonomyRemoveDto {
     { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
     { message: format(Message.PARAM_INVALID, '$constraint1') }
   )
-  @IsNotEmpty({ message: '缺少参数“type”' })
-  type: TaxonomyType;
+  @IsNotEmpty({ message: '缺少参数“taxonomyType”' })
+  taxonomyType: TaxonomyType;
 
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
   @ArrayNotEmpty({ message: '请选择要删除的分类' })

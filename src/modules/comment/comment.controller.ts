@@ -73,7 +73,7 @@ export class CommentController {
     if (fromAdmin && orders.length > 0) {
       param.orders = getQueryOrders({
         commentVote: 1,
-        created: 2
+        commentCreated: 2
       }, orders);
     }
     const comments = await this.commentService.getComments(param);
@@ -112,7 +112,7 @@ export class CommentController {
     let commentData: CommentDto = {
       postId: commentDto.postId,
       commentId: commentDto.commentId,
-      parentId: commentDto.parentId,
+      commentParent: commentDto.commentParent,
       commentContent: xss.sanitize(commentDto.commentContent),
       captchaCode: commentDto.captchaCode || ''
     };
@@ -132,7 +132,7 @@ export class CommentController {
       }
     }
     // 不是管理员，或，不是在后台修改、回复评论时
-    const shouldCheckCaptcha = !isAdmin || !commentData.commentId && !commentData.parentId;
+    const shouldCheckCaptcha = !isAdmin || !commentData.commentId && !commentData.commentParent;
     if (shouldCheckCaptcha && !commentData.captchaCode) {
       throw new CustomException('请输入验证码', HttpStatus.BAD_REQUEST, ResponseCode.CAPTCHA_INPUT_ERROR);
     }

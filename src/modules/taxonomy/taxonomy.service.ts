@@ -32,9 +32,9 @@ export class TaxonomyService {
   generateTaxonomyTree(taxonomyData: TaxonomyModel[]): TaxonomyNode[] {
     const nodes: TaxonomyNode[] = taxonomyData.map((item) => <TaxonomyNode>item.get());
     return nodes.filter((father) => {
-      father.children = nodes.filter((child) => father.taxonomyId === child.parentId);
+      father.children = nodes.filter((child) => father.taxonomyId === child.taxonomyParent);
       father.isLeaf = father.children.length < 1;
-      return !father.parentId;
+      return !father.taxonomyParent;
     });
   }
 
@@ -45,7 +45,7 @@ export class TaxonomyService {
     if (slug) {
       // 根据slug获取ID
       for (let i = 0; i < taxonomyData.length; i += 1) {
-        if (taxonomyData[i].slug === slug) {
+        if (taxonomyData[i].taxonomySlug === slug) {
           taxonomyId = taxonomyData[i].taxonomyId;
           break;
         }
@@ -56,12 +56,12 @@ export class TaxonomyService {
       for (let i = 0; i < taxonomyData.length; i += 1) {
         const curNode = taxonomyData[i];
         if (curNode.taxonomyId === taxonomyId) {
-          taxonomyId = curNode.parentId;
+          taxonomyId = curNode.taxonomyParent;
           crumbs.unshift({
-            'label': curNode.name,
-            'tooltip': curNode.description,
-            'slug': curNode.slug,
-            'url': '/category/' + curNode.slug,
+            'label': curNode.taxonomyName,
+            'tooltip': curNode.taxonomyDescription,
+            'slug': curNode.taxonomySlug,
+            'url': '/category/' + curNode.taxonomySlug,
             'headerFlag': false
           });
           break;
@@ -80,29 +80,29 @@ export class TaxonomyService {
     const { type, status, keyword, orders } = param;
     const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
     let where = {
-      type: type
+      taxonomyType: type
     };
     if (Array.isArray(status) && status.length > 0 || !Array.isArray(status) && status) {
-      where['status'] = status;
+      where['taxonomyStatus'] = status;
     }
     if (keyword) {
       where[Op.or] = [{
-        name: {
+        taxonomyName: {
           [Op.like]: `%${keyword}%`
         }
       }, {
-        slug: {
+        taxonomySlug: {
           [Op.like]: `%${keyword}%`
         }
       }, {
-        description: {
+        taxonomyDescription: {
           [Op.like]: `%${keyword}%`
         }
       }];
     }
     const queryOpt: FindOptions = {
       where,
-      order: orders || [['termOrder', 'asc'], ['created', 'desc']],
+      order: orders || [['taxonomyOrder', 'asc'], ['taxonomyCreated', 'desc']],
       subQuery: false
     };
     let total: number;
@@ -143,7 +143,7 @@ export class TaxonomyService {
       }
     };
     if (typeof isRequired === 'boolean') {
-      where.isRequired = isRequired ? 1 : 0;
+      where.taxonomyIsRequired = isRequired ? 1 : 0;
     }
     return this.taxonomyModel.findAll({
       where
@@ -178,7 +178,7 @@ export class TaxonomyService {
     const subTaxonomies: TaxonomyNode[] = [];
     const iterator = (nodes: TaxonomyNode[], checked = false, id?: string, slug?: string) => {
       nodes.forEach((curNode) => {
-        if (checked || (id && curNode.taxonomyId === id) || (slug && curNode.slug === slug)) {
+        if (checked || (id && curNode.taxonomyId === id) || (slug && curNode.taxonomySlug === slug)) {
           if (returnId) {
             subTaxonomyIds.push(curNode.taxonomyId);
           } else {
@@ -226,8 +226,8 @@ export class TaxonomyService {
           } else {
             parentTaxonomies.push(item);
           }
-          if (item.parentId) {
-            iterator(taxonomyData, item.parentId);
+          if (item.taxonomyParent) {
+            iterator(taxonomyData, item.taxonomyParent);
           }
           break;
         }
@@ -244,13 +244,15 @@ export class TaxonomyService {
     type: TaxonomyType | TaxonomyType[] = [TaxonomyType.POST, TaxonomyType.TAG]
   ): Promise<TaxonomyModel[]> {
     const where = {
-      type: {
+      taxonomyType: {
         [Op.in]: !type || Array.isArray(type) && type.length < 1 ? [TaxonomyType.POST, TaxonomyType.TAG] : type
       },
-      status: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : [TaxonomyStatus.PUBLISH]
+      taxonomyStatus: isAdmin ? [TaxonomyStatus.PRIVATE, TaxonomyStatus.PUBLISH] : [TaxonomyStatus.PUBLISH]
     };
     return this.taxonomyModel.findAll({
-      attributes: ['taxonomyId', 'type', 'name', 'slug', 'description', 'parentId', 'status', 'count'],
+      attributes: {
+        exclude: ['taxonomyCreated', 'taxonomyModified']
+      },
       include: [{
         model: TaxonomyRelationshipModel,
         attributes: ['objectId', 'taxonomyId'],
@@ -259,7 +261,7 @@ export class TaxonomyService {
         }
       }],
       where,
-      order: [['termOrder', 'asc']]
+      order: [['taxonomyOrder', 'asc']]
     });
   }
 
@@ -268,13 +270,13 @@ export class TaxonomyService {
     isExist: boolean
   }> {
     const where: WhereOptions = {
-      slug: {
+      taxonomySlug: {
         [Op.eq]: slug
       },
-      status: {
+      taxonomyStatus: {
         [Op.eq]: TaxonomyStatus.PUBLISH
       },
-      type: {
+      taxonomyType: {
         [Op.eq]: type
       }
     };
@@ -284,7 +286,9 @@ export class TaxonomyService {
       };
     }
     const taxonomy = await this.taxonomyModel.findOne({
-      attributes: ['taxonomyId', 'type', 'name', 'slug', 'status'],
+      attributes: {
+        exclude: ['taxonomyCreated', 'taxonomyModified', 'objectCount']
+      },
       where
     });
     return {
@@ -318,11 +322,11 @@ export class TaxonomyService {
         },
         transaction: t
       });
-      if (taxonomyDto.type !== TaxonomyType.TAG) {
-        if (taxonomyDto.status !== TaxonomyStatus.PUBLISH) {
+      if (taxonomyDto.taxonomyType !== TaxonomyType.TAG) {
+        if (taxonomyDto.taxonomyStatus !== TaxonomyStatus.PUBLISH) {
           /* if status is PRIVATE, also set it's all PUBLISH children's statuses to PRIVATE
           * if status is TRASH, also set it's all PUBLISH and PRIVATE children's statuses to TRASH */
-          const statusWhere = taxonomyDto.status === TaxonomyStatus.PRIVATE
+          const statusWhere = taxonomyDto.taxonomyStatus === TaxonomyStatus.PRIVATE
             ? TaxonomyStatus.PUBLISH : [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE];
           const subTaxonomyIds = await this.getAllChildTaxonomies<string[]>({
             status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE],
@@ -330,42 +334,42 @@ export class TaxonomyService {
             id: taxonomyDto.taxonomyId
           });
           await this.taxonomyModel.update({
-            status: taxonomyDto.status
+            taxonomyStatus: taxonomyDto.taxonomyStatus
           }, {
             where: {
               taxonomyId: subTaxonomyIds,
-              status: statusWhere
+              taxonomyStatus: statusWhere
             },
             transaction: t
           });
           /* if status is PRIVATE, also set it's all TRASH parents' statuses to PRIVATE */
-          if (taxonomyDto.status === TaxonomyStatus.PRIVATE) {
+          if (taxonomyDto.taxonomyStatus === TaxonomyStatus.PRIVATE) {
             const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({
               status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH],
-              type: taxonomyDto.type,
-              id: taxonomyDto.parentId
+              type: taxonomyDto.taxonomyType,
+              id: taxonomyDto.taxonomyParent
             });
             await this.taxonomyModel.update({
-              status: taxonomyDto.status
+              taxonomyStatus: taxonomyDto.taxonomyStatus
             }, {
               where: {
                 taxonomyId: parentTaxonomyIds,
-                status: {
+                taxonomyStatus: {
                   [Op.eq]: TaxonomyStatus.TRASH
                 }
               },
               transaction: t
             });
           }
-        } else if (taxonomyDto.status === TaxonomyStatus.PUBLISH && taxonomyDto.parentId) {
+        } else if (taxonomyDto.taxonomyStatus === TaxonomyStatus.PUBLISH && taxonomyDto.taxonomyParent) {
           /* if status is PUBLISH, also set it's all parents' statuses to the same */
           const parentTaxonomyIds = await this.getAllParentTaxonomies<string[]>({
             status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE, TaxonomyStatus.TRASH],
-            type: taxonomyDto.type,
-            id: taxonomyDto.parentId
+            type: taxonomyDto.taxonomyType,
+            id: taxonomyDto.taxonomyParent
           });
           await this.taxonomyModel.update({
-            status: taxonomyDto.status
+            taxonomyStatus: taxonomyDto.taxonomyStatus
           }, {
             where: {
               taxonomyId: parentTaxonomyIds
@@ -389,10 +393,10 @@ export class TaxonomyService {
   async removeTaxonomies(type: TaxonomyType, taxonomyIds: string[]): Promise<{ success: boolean, message?: Message }> {
     return this.sequelize.transaction(async (t) => {
       const updateValue: Record<string, any> = {
-        status: TaxonomyStatus.TRASH
+        taxonomyStatus: TaxonomyStatus.TRASH
       };
       if (type === TaxonomyType.TAG) {
-        updateValue.count = 0;
+        updateValue.object_count = 0;
       }
       await this.taxonomyModel.update(updateValue, {
         where: {
@@ -430,7 +434,7 @@ export class TaxonomyService {
           );
         }
         await this.taxonomyModel.update({
-          status: TaxonomyStatus.TRASH
+          taxonomyStatus: TaxonomyStatus.TRASH
         }, {
           where: {
             taxonomyId: {
@@ -458,14 +462,14 @@ export class TaxonomyService {
     const rowsLimit = 10;
     const queryOpt: FindOptions = {
       where: {
-        type: {
+        taxonomyType: {
           [Op.eq]: TaxonomyType.TAG
         },
-        name: {
+        taxonomyName: {
           [Op.like]: `%${keyword}%`
         }
       },
-      order: [['termOrder', 'asc'], ['created', 'desc']],
+      order: [['taxonomyOrder', 'asc'], ['taxonomyCreated', 'desc']],
       limit: rowsLimit,
       offset: 0
     };
@@ -474,15 +478,15 @@ export class TaxonomyService {
 
   async updateAllCount(type?: TaxonomyType | TaxonomyType[]): Promise<boolean> {
     const where: WhereOptions = {
-      status: {
+      taxonomyStatus: {
         [Op.ne]: TaxonomyStatus.TRASH
       }
     };
     if (type) {
-      where.type = type;
+      where.taxonomyType = type;
     }
     return this.taxonomyModel.update({
-      count: Sequelize.literal(
+      objectCount: Sequelize.literal(
         '(select count(1) total from taxonomy_relationships where taxonomy_relationships.taxonomy_id = taxonomies.taxonomy_id)'
       )
     }, {
@@ -494,10 +498,10 @@ export class TaxonomyService {
   async countTaxonomiesByType(): Promise<GroupedCountResultItem[]> {
     return this.taxonomyModel.count({
       where: {
-        type: [TaxonomyType.POST, TaxonomyType.TAG],
-        status: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE]
+        taxonomyType: [TaxonomyType.POST, TaxonomyType.TAG],
+        taxonomyStatus: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE]
       },
-      group: ['type']
+      group: ['taxonomyType']
     })
   }
 }

@@ -46,7 +46,7 @@ export class BasicLinkDto {
 
   @IsInt({ message: '排序必须为数字' })
   @IsNotEmpty({ message: '排序不能为空' })
-  linkOrder: number;
+  linkRating: number;
 
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
   @IsNotEmpty({ message: '请选择分类' })
@@ -57,8 +57,8 @@ export class AdditionalLinkDto {
   linkOwner?: string;
   linkImage?: string;
   linkRss?: string;
-  created?: Date;
-  modified?: Date;
+  linkCreated?: Date;
+  linkModified?: Date;
 }
 
 export class LinkDto extends IntersectionType(BasicLinkDto, AdditionalLinkDto) {
