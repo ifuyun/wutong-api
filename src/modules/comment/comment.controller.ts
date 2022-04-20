@@ -1,7 +1,20 @@
-import { Body, Controller, Get, Header, HttpStatus, Post, Query, Req, Session, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpStatus,
+  Post,
+  Query,
+  Req,
+  Session,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { CommentFlag, CommentStatus, Role } from '../../common/common.enum';
+import { HttpResponseEntity } from '../../common/http-response.interface';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
@@ -16,14 +29,13 @@ import { CustomException } from '../../exceptions/custom.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { CommentAuditParam, CommentQueryParam } from './comment.interface';
-import { HttpResponseEntity } from '../../common/http-response.interface';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CaptchaService } from '../captcha/captcha.service';
 import { PostService } from '../post/post.service';
+import { CommentAuditParam, CommentQueryParam } from './comment.interface';
 import { CommentService } from './comment.service';
 
 @Controller('api/comments')
@@ -93,6 +105,7 @@ export class CommentController {
       throw new ForbiddenException();
     }
     await this.commentService.auditComment(data.commentIds, data.action);
+    await this.postService.updateCommentCountByComments(data.commentIds);
 
     return getSuccessResponse();
   }
@@ -151,7 +164,7 @@ export class CommentController {
     this.captchaService.removeCaptcha(req.session);
 
     return getSuccessResponse({
-      commentFlag: post.commentFlag
+      status: post.commentFlag === CommentFlag.OPEN || isAdmin ? 'success' : 'verify'
     });
   }
 

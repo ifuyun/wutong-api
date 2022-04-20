@@ -4,9 +4,12 @@ import { difference, uniq } from 'lodash';
 import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupedCountResultItem, ProjectionAlias } from 'sequelize/types/model';
-import { PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { CommentStatus, PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
+import { UnknownException } from '../../exceptions/unknown.exception';
 import { getUuid } from '../../helpers/helper';
+import { CommentModel } from '../../models/comment.model';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -33,6 +36,8 @@ export class PostService {
     private readonly taxonomyRelationshipModel: typeof TaxonomyRelationshipModel,
     @InjectModel(PostMetaModel)
     private readonly postMetaModel: typeof PostMetaModel,
+    @InjectModel(CommentModel)
+    private readonly commentModel: typeof CommentModel,
     private readonly optionService: OptionService,
     private readonly postMetaService: PostMetaService,
     private readonly taxonomyService: TaxonomyService,
@@ -634,5 +639,35 @@ export class PostService {
       },
       group: ['postType']
     });
+  }
+
+  async updateCommentCountByComments(commentIds: string[]): Promise<boolean> {
+    const comments = await this.commentModel.findAll({
+      attributes: ['postId'],
+      where: {
+        commentId: commentIds
+      }
+    });
+    const postIds: string[] = uniq(comments.map((item) => item.postId));
+    return this.postModel.update({
+      commentCount: Sequelize.literal(
+        `(select count(1) total from comments where comments.post_id = posts.post_id` +
+        ` and comments.comment_status='${CommentStatus.NORMAL}')`
+      )
+    }, {
+      where: {
+        postId: postIds
+      },
+      silent: true
+    })
+      .then(() => Promise.resolve(true))
+      .catch((err) => {
+        this.logger.error({
+          message: '评论数量更新失败',
+          data: commentIds,
+          stack: err.stack
+        });
+        throw new UnknownException(Message.POST_COMMENT_COUNT_UPDATE_ERROR);
+      });
   }
 }

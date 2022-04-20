@@ -1,35 +1,81 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op } from 'sequelize';
-import { GroupedCountResultItem } from 'sequelize/types/model';
-import { CommentStatus } from '../../common/common.enum';
+import { Sequelize } from 'sequelize-typescript';
+import { CommentFlag, CommentStatus } from '../../common/common.enum';
+import { Message } from '../../common/message.enum';
 import { CommentDto } from '../../dtos/comment.dto';
+import { UnknownException } from '../../exceptions/unknown.exception';
 import { getUuid } from '../../helpers/helper';
-import { CommentListVo, CommentQueryParam } from './comment.interface';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
+import { LoggerService } from '../logger/logger.service';
+import { CommentListVo, CommentQueryParam } from './comment.interface';
 
 @Injectable()
 export class CommentService {
   constructor(
     @InjectModel(CommentModel)
-    private readonly commentModel: typeof CommentModel
+    private readonly commentModel: typeof CommentModel,
+    @InjectModel(PostModel)
+    private readonly postModel: typeof PostModel,
+    private readonly logger: LoggerService,
+    private readonly sequelize: Sequelize
   ) {
   }
 
   async saveComment(commentDto: CommentDto): Promise<boolean> {
-    // todo: update comment count of post
-    if (!commentDto.commentId) {
-      commentDto.commentId = getUuid();
-      return this.commentModel.create({ ...commentDto }).then((comment) => Promise.resolve(true));
-    }
-    return this.commentModel.update(commentDto, {
-      where: {
-        commentId: {
-          [Op.eq]: commentDto.commentId
+    return this.sequelize.transaction(async (t) => {
+      if (!commentDto.commentId) {
+        commentDto.commentId = getUuid();
+        await this.commentModel.create({ ...commentDto }, {
+          transaction: t
+        });
+        const post = await this.postModel.findByPk(commentDto.postId);
+        if (post.commentFlag === CommentFlag.OPEN) {
+          await this.postModel.increment({ commentCount: 1 }, {
+            where: {
+              postId: commentDto.postId
+            },
+            transaction: t
+          });
         }
+      } else {
+        const comment = await this.commentModel.findByPk(commentDto.commentId);
+        if (comment.commentStatus === CommentStatus.NORMAL && commentDto.commentStatus !== CommentStatus.NORMAL) {
+          await this.postModel.decrement({ commentCount: 1 }, {
+            where: {
+              postId: commentDto.postId
+            },
+            transaction: t
+          });
+        } else if (comment.commentStatus !== CommentStatus.NORMAL && commentDto.commentStatus === CommentStatus.NORMAL) {
+          await this.postModel.increment({ commentCount: 1 }, {
+            where: {
+              postId: commentDto.postId
+            },
+            transaction: t
+          });
+        }
+        await this.commentModel.update(commentDto, {
+          where: {
+            commentId: {
+              [Op.eq]: commentDto.commentId
+            }
+          },
+          transaction: t
+        });
       }
-    }).then((result) => Promise.resolve(true));
+    }).then(() => {
+      return Promise.resolve(true);
+    }).catch((err) => {
+      this.logger.error({
+        message: '评论保存失败',
+        data: commentDto,
+        stack: err.stack
+      });
+      return Promise.resolve(false);
+    });
   }
 
   async getCommentById(commentId: string): Promise<CommentModel> {
@@ -90,8 +136,7 @@ export class CommentService {
     };
   }
 
-  async auditComment(commentIds: string[], status: string): Promise<[affectedCount: number]> {
-    // todo: update comment count of post
+  async auditComment(commentIds: string[], status: CommentStatus): Promise<boolean> {
     return this.commentModel.update({
       commentStatus: status
     }, {
@@ -100,7 +145,16 @@ export class CommentService {
           [Op.in]: commentIds
         }
       }
-    });
+    })
+      .then((result) => Promise.resolve(true))
+      .catch((err) => {
+        this.logger.error({
+          message: '评论修改失败',
+          data: { commentIds, status },
+          stack: err.stack
+        });
+        throw new UnknownException(Message.COMMENT_AUDIT_ERROR);
+      });
   }
 
   async checkCommentExist(commentId: string): Promise<boolean> {
