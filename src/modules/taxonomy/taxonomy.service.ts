@@ -38,7 +38,7 @@ export class TaxonomyService {
     });
   }
 
-  getTaxonomyPath(param: { taxonomyData: TaxonomyNode[], slug?: string, taxonomyId?: string }): BreadcrumbEntity[] {
+  getTaxonomyPath(param: { taxonomyData: TaxonomyModel[], slug?: string, taxonomyId?: string }): BreadcrumbEntity[] {
     let { taxonomyData, slug, taxonomyId } = param;
     const crumbs: BreadcrumbEntity[] = [];
 
@@ -62,14 +62,14 @@ export class TaxonomyService {
             'tooltip': curNode.taxonomyDescription,
             'slug': curNode.taxonomySlug,
             'url': '/category/' + curNode.taxonomySlug,
-            'headerFlag': false
+            'isHeader': false
           });
           break;
         }
       }
     }
     if (crumbs.length > 0) {
-      crumbs[crumbs.length - 1].headerFlag = true;
+      crumbs[crumbs.length - 1].isHeader = true;
     }
 
     return crumbs;

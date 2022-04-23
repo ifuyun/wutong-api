@@ -143,7 +143,7 @@ export class PostController {
       }
       param.subTaxonomyIds = subTaxonomyIds;
       crumbs = await this.taxonomyService.getTaxonomyPath({
-        taxonomyData: taxonomyTree,
+        taxonomyData: taxonomies,
         slug: category
       });
     }

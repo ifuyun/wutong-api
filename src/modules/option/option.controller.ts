@@ -45,7 +45,7 @@ export class OptionController {
       site_url: optionDto.siteUrl,
       site_keywords: optionDto.siteKeywords.join(','),
       admin_email: optionDto.adminEmail,
-      icp_num: xss.sanitize(optionDto.icpNum),
+      icp_code: xss.sanitize(optionDto.icpCode),
       copyright_notice: xss.sanitize(optionDto.copyNotice)
     };
     const result = await this.optionService.saveOptions(data);

@@ -111,6 +111,7 @@ export function format(str: string, ...params: (string | number)[]): string {
   if (Array.isArray(params[0])) {
     params = params[0];
   }
-  return str.replace(/\$(\d+)/ig, (matched, ...args) =>
-    params[parseInt(args[0], 10)].toString() || '');
+  return str.replace(/\$(\d+)/ig, (matched, index) =>
+    params[index] && params[index].toString() || matched
+  );
 }

@@ -2,6 +2,6 @@ export interface BreadcrumbEntity {
   label: string;
   url: string;
   tooltip: string;
-  headerFlag: boolean;
+  isHeader: boolean;
   slug?: string;
 }

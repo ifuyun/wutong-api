@@ -4,7 +4,7 @@ import {
   SITE_ADMIN_EMAIL_LENGTH,
   SITE_COPYRIGHT_LENGTH,
   SITE_DESCRIPTION_LENGTH,
-  SITE_ICP_NUM_LENGTH,
+  SITE_ICP_CODE_LENGTH,
   SITE_KEYWORDS_SIZE,
   SITE_SLOGAN_LENGTH,
   SITE_TITLE_LENGTH,
@@ -49,9 +49,9 @@ export class GeneralOptionsDto {
   @IsNotEmpty({ message: '版权信息不能为空' })
   copyNotice: string;
 
-  @MaxLength(SITE_ICP_NUM_LENGTH, { message: 'ICP备案号最大长度为$constraint1个字符' })
+  @MaxLength(SITE_ICP_CODE_LENGTH, { message: 'ICP备案号最大长度为$constraint1个字符' })
   @IsNotEmpty({ message: 'ICP备案号不能为空' })
-  icpNum: string;
+  icpCode: string;
 
   @IsEmail({ allow_display_name: false }, { message: '管理员邮箱输入不正确' })
   @MaxLength(SITE_ADMIN_EMAIL_LENGTH, { message: '管理员邮箱最大长度为$constraint1个字符' })
