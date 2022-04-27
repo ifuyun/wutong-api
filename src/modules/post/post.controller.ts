@@ -12,14 +12,14 @@ import {
   UseInterceptors
 } from '@nestjs/common';
 import { Request } from 'express';
-import { File } from 'formidable';
 import * as formidable from 'formidable';
+import { File } from 'formidable';
 import * as fs from 'fs';
-import { uniq } from 'lodash';
 import * as mkdirp from 'mkdirp';
 import * as moment from 'moment';
 import * as path from 'path';
 import * as xss from 'sanitizer';
+import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
 import { CommentFlag, PostStatus, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
@@ -37,8 +37,6 @@ import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { format, getFileExt, getUuid } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
-import { FileData, PostArchivesQueryParam, PostQueryParam } from './post.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -48,8 +46,8 @@ import { CommentService } from '../comment/comment.service';
 import { LoggerService } from '../logger/logger.service';
 import { OptionService } from '../option/option.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
-import { UtilService } from '../util/util.service';
 import { WatermarkService } from '../util/watermark.service';
+import { FileData, PostArchivesQueryParam, PostQueryParam } from './post.interface';
 import { PostService } from './post.service';
 
 @Controller('api/posts')
@@ -60,8 +58,7 @@ export class PostController {
     private readonly commentService: CommentService,
     private readonly optionService: OptionService,
     private readonly watermarkService: WatermarkService,
-    private readonly logger: LoggerService,
-    private readonly utilService: UtilService
+    private readonly logger: LoggerService
   ) {
     this.logger.setLogger(this.logger.sysLogger);
   }
@@ -253,14 +250,14 @@ export class PostController {
     postMeta.postAuthor = postMeta.post_author || post.author.userNiceName;
 
     return getSuccessResponse({
-      post, meta: postMeta, tags: [], categories: [], crumbs: []
+      post, meta: postMeta, tags: post.taxonomies, categories: [], crumbs: []
     });
   }
 
   @Get(':postId')
   @UseInterceptors(CheckIdInterceptor)
   @IdParams({ idInParams: ['postId'] })
-  async getPost(
+  async getPostById(
     @Param('postId') postId: string,
     @Query('ref', new TrimPipe()) referer: string,
     @Query('fa', new TrimPipe()) fa: string,

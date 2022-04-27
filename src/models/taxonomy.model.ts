@@ -59,6 +59,14 @@ export class TaxonomyModel extends Model {
   taxonomyDescription: string;
 
   @Column({
+    field: 'taxonomy_icon',
+    type: DataType.STRING(100),
+    allowNull: false,
+    defaultValue: ''
+  })
+  taxonomyIcon: string;
+
+  @Column({
     field: 'taxonomy_parent',
     type: DataType.CHAR(16),
     allowNull: false,

@@ -362,7 +362,7 @@ export class PostService {
             taxonomyStatus: TaxonomyStatus.PUBLISH
           }]
         },
-        // force to use left join
+        // force using left join
         required: false
       }],
       where
@@ -395,6 +395,18 @@ export class PostService {
         model: PostMetaModel,
         as: 'postMeta',
         attributes: ['metaKey', 'metaValue']
+      }, {
+        model: TaxonomyModel,
+        as: 'taxonomies',
+        attributes: {
+          exclude: ['taxonomyCreated', 'taxonomyModified']
+        },
+        where: {
+          taxonomyType: TaxonomyType.TAG,
+          taxonomyStatus: TaxonomyStatus.PUBLISH
+        },
+        // force using left join
+        required: false
       }],
       where
     });
