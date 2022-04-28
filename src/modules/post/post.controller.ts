@@ -444,7 +444,8 @@ export class PostController {
       'upload_max_file_size',
       'watermark_font_path',
       'upload_url_prefix',
-      'site_name'
+      'site_name',
+      'site_domain'
     ]);
     const maxFileLimit = Number(options['upload_max_file_limit']);
     const maxFileSize = Number(options['upload_max_file_size']);

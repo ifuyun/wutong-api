@@ -1,9 +1,10 @@
 {
   "apps": [
     {
-      "name": "IFuyun",
-      "script": "./index.js",
+      "name": "antblog",
+      "script": "./dist/main.js",
       "watch": false,
+      "out_file": "NULL",
       "env": {
         "ENV": "production"
       },

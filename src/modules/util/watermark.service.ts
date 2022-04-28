@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as gmLib from 'gm';
 import { OptionEntity } from '../option/option.interface';
 
 @Injectable()
 export class WatermarkService {
-  constructor(
-    private readonly configService: ConfigService
-  ) {
+  constructor() {
   }
 
   async watermark(imgPath: string, options: OptionEntity) {
@@ -21,7 +18,7 @@ export class WatermarkService {
       const markMarginX = 10;
       const markMarginY = 6;
       const copy = `@${options['site_name']}`;
-      const site = this.configService.get('app.domain');
+      const domain = options['site_domain'];
       let imgWidth;
       let imgHeight;
       let markedWidth;
@@ -44,10 +41,10 @@ export class WatermarkService {
         gmImg.font(options['watermark_font_path'], fontSize)
           .fill('#222222')
           .drawText(markMarginX, markMarginY + fontSize + lineMargin, copy, 'SouthEast')
-          .drawText(markMarginX, markMarginY, site, 'SouthEast')
+          .drawText(markMarginX, markMarginY, domain, 'SouthEast')
           .fill('#ffffff')
           .drawText(markMarginX + 1, markMarginY + fontSize + lineMargin + 1, copy, 'SouthEast')
-          .drawText(markMarginX + 1, markMarginY + 1, site, 'SouthEast');
+          .drawText(markMarginX + 1, markMarginY + 1, domain, 'SouthEast');
         if (ratio > 1) {
           gmImg = gmImg.resize(markedWidth / ratio, markedHeight / ratio, '!');
         }

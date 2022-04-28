@@ -30,8 +30,8 @@ export class StatisticController {
     const files = postCount.filter((item) => item.postType === PostType.ATTACHMENT).map((item) => item.count);
     const comments = await this.commentService.countComments();
     const taxonomyCount = await this.taxonomyService.countTaxonomiesByType();
-    const categories = taxonomyCount.filter((item) => item.type === TaxonomyType.POST).map((item) => item.count);
-    const tags = taxonomyCount.filter((item) => item.type === TaxonomyType.TAG).map((item) => item.count);
+    const categories = taxonomyCount.filter((item) => item.taxonomyType === TaxonomyType.POST).map((item) => item.count);
+    const tags = taxonomyCount.filter((item) => item.taxonomyType === TaxonomyType.TAG).map((item) => item.count);
 
     return getSuccessResponse({
       posts: posts[0],
