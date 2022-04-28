@@ -1,4 +1,4 @@
-import { Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table } from 'Sequelize-typescript';
+import { Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
 import { NoteModel } from './note.model';
 
 @Table({

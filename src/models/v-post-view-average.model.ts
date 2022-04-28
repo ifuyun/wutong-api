@@ -1,4 +1,4 @@
-import { Column, DataType, Model, Table } from 'Sequelize-typescript';
+import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
 @Table({
   tableName: 'v_post_views_average',

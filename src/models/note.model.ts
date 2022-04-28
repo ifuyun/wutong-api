@@ -1,4 +1,4 @@
-import { Column, CreatedAt, DataType, ForeignKey, Model, PrimaryKey, Sequelize, Table } from 'Sequelize-typescript';
+import { Column, CreatedAt, DataType, ForeignKey, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
 import { BookModel } from './book.model';
 
 @Table({
