@@ -77,13 +77,6 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
       }
     }
 
-    if (isXhr) {
-      res.status(resStatus).json(resData);
-    } else if (this.configService.get('env.isApiMode')) {
-      res.status(resStatus).json(resData);
-    } else {
-      res.status(resStatus).type('text/html');
-      res.render('errors/error', { ...resData, status: resStatus });
-    }
+    res.status(resStatus).json(resData);
   }
 }

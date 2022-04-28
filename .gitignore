@@ -40,9 +40,4 @@ lerna-debug.log*
 package-lock.json
 ifuyun
 /env
-/web/public/dist/**
-/web/public/dev/**
-/web/public/static/**
-/web/public/upload/**
-/web/public/src/style/css/**
-/web/views/dist/**
+/web/upload/**
