@@ -1,20 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { uniq, uniqBy } from 'lodash';
 import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupedCountResultItem } from 'sequelize/types/model';
+import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
 import { TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { CustomException } from '../../exceptions/custom.exception';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { format, getUuid } from '../../helpers/helper';
-import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
-import { TaxonomyList, TaxonomyNode, TaxonomyQueryParam } from './taxonomy.interface';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
+import { TaxonomyList, TaxonomyNode, TaxonomyQueryParam } from './taxonomy.interface';
 
 @Injectable()
 export class TaxonomyService {
@@ -79,7 +80,7 @@ export class TaxonomyService {
     param.page = param.page || 1;
     const { type, status, keyword, orders } = param;
     const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
-    let where = {
+    const where = {
       taxonomyType: type
     };
     if (Array.isArray(status) && status.length > 0 || !Array.isArray(status) && status) {
@@ -105,25 +106,41 @@ export class TaxonomyService {
       order: orders || [['taxonomyOrder', 'asc'], ['taxonomyCreated', 'desc']],
       subQuery: false
     };
-    let total: number;
-    let page: number;
-    if (pageSize !== 0) {
-      total = await this.taxonomyModel.count({ where });
-      page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
-      queryOpt.limit = pageSize;
-      queryOpt.offset = pageSize * (page - 1);
-    }
-    const taxonomies = await this.taxonomyModel.findAll(queryOpt);
+    try {
+      let total: number;
+      let page: number;
+      if (pageSize !== 0) {
+        total = await this.taxonomyModel.count({ where });
+        page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+        queryOpt.limit = pageSize;
+        queryOpt.offset = pageSize * (page - 1);
+      }
+      const taxonomies = await this.taxonomyModel.findAll(queryOpt);
 
-    return {
-      taxonomies,
-      page: page || 1,
-      total: total || taxonomies.length
-    };
+      return {
+        taxonomies,
+        page: page || 1,
+        total: total || taxonomies.length
+      };
+    } catch (e) {
+      this.logger.error({
+        message: e.message || '分类查询失败',
+        data: param,
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    }
   }
 
   async getTaxonomyById(taxonomyId: string): Promise<TaxonomyModel> {
-    return this.taxonomyModel.findByPk(taxonomyId);
+    return this.taxonomyModel.findByPk(taxonomyId).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类查询失败',
+        data: { taxonomyId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async getTaxonomyBySlug(slug: string): Promise<TaxonomyModel> {
@@ -133,6 +150,13 @@ export class TaxonomyService {
           [Op.eq]: slug
         }
       }
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类查询失败',
+        data: { slug },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -147,6 +171,13 @@ export class TaxonomyService {
     }
     return this.taxonomyModel.findAll({
       where
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类查询失败',
+        data: { ids, isRequired },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -262,6 +293,13 @@ export class TaxonomyService {
       }],
       where,
       order: [['taxonomyOrder', 'asc']]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类查询失败',
+        data: { postIds, isAdmin, type },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -285,27 +323,40 @@ export class TaxonomyService {
         [Op.ne]: taxonomyId
       };
     }
-    const taxonomy = await this.taxonomyModel.findOne({
+
+    return this.taxonomyModel.findOne({
       attributes: {
         exclude: ['taxonomyCreated', 'taxonomyModified', 'objectCount']
       },
       where
-    });
-    return {
+    }).then((taxonomy) => ({
       taxonomy,
       isExist: !!taxonomy
-    };
+    })).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类查询失败',
+        data: { slug, type, taxonomyId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async checkTaxonomyExist(taxonomyId: string): Promise<boolean> {
-    const total = await this.taxonomyModel.count({
+    return this.taxonomyModel.count({
       where: {
         taxonomyId: {
           [Op.eq]: taxonomyId
         }
       }
+    }).then((total) => total > 0).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类是否存在查询失败',
+        data: { taxonomyId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
-    return total > 0;
   }
 
   async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<boolean> {
@@ -378,19 +429,20 @@ export class TaxonomyService {
           });
         }
       }
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '保存失败',
+        message: e.message || '分类保存失败',
         data: taxonomyDto,
-        stack: err.stack
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(
+        format(Message.TAXONOMY_SAVE_ERROR, taxonomyDto.taxonomyType === TaxonomyType.TAG ? '标签' : '分类'),
+        ResponseCode.TAXONOMY_SAVE_ERROR
+      );
     });
   }
 
-  async removeTaxonomies(type: TaxonomyType, taxonomyIds: string[]): Promise<{ success: boolean, message?: Message }> {
+  async removeTaxonomies(type: TaxonomyType, taxonomyIds: string[]): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
       const updateValue: Record<string, any> = {
         taxonomyStatus: TaxonomyStatus.TRASH
@@ -430,7 +482,7 @@ export class TaxonomyService {
         });
         if (objectCount > 0) {
           throw new BadRequestException(
-            <Message>format(Message.TAXONOMY_EXISTS_RELATED_CONTENT, type === TaxonomyType.LINK ? '链接' : '内容')
+            format(Message.TAXONOMY_EXISTS_RELATED_CONTENT, type === TaxonomyType.LINK ? '链接' : '内容')
           );
         }
         await this.taxonomyModel.update({
@@ -444,17 +496,17 @@ export class TaxonomyService {
           transaction: t
         });
       }
-    }).then(() => {
-      return Promise.resolve({ success: true });
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
+      const message = e instanceof HttpException ? e.getResponse() : e.message;
       this.logger.error({
-        message: '分类删除失败。',
+        message: message || '分类删除失败',
         data: { type, taxonomyIds },
-        stack: err.stack || ''
+        stack: e.stack
       });
-      const message = err instanceof CustomException ? err.getResponse() : err.message;
-
-      return Promise.resolve({ success: false, message });
+      if (e instanceof HttpException) {
+        throw e;
+      }
+      throw new DbQueryErrorException(format(Message.TAXONOMY_DELETE_ERROR, type === TaxonomyType.TAG ? '标签' : '分类'));
     });
   }
 
@@ -473,7 +525,14 @@ export class TaxonomyService {
       limit: rowsLimit,
       offset: 0
     };
-    return this.taxonomyModel.findAll(queryOpt);
+    return this.taxonomyModel.findAll(queryOpt).catch((e) => {
+      this.logger.error({
+        message: e.message || '标签搜索失败',
+        data: { keyword },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async updateAllCount(type?: TaxonomyType | TaxonomyType[]): Promise<boolean> {
@@ -492,7 +551,14 @@ export class TaxonomyService {
     }, {
       where,
       silent: true
-    }).then((result) => Promise.resolve(true));
+    }).then((result) => true).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类关联对象数量更新失败',
+        data: { type },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async countTaxonomiesByType(): Promise<GroupedCountResultItem[]> {
@@ -502,6 +568,12 @@ export class TaxonomyService {
         taxonomyStatus: [TaxonomyStatus.PUBLISH, TaxonomyStatus.PRIVATE]
       },
       group: ['taxonomyType']
-    })
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '分类总数查询失败',
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 }

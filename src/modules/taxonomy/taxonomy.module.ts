@@ -5,7 +5,6 @@ import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
 import { OptionModule } from '../option/option.module';
 import { UserModule } from '../user/user.module';
-import { UtilModule } from '../util/util.module';
 import { TaxonomyController } from './taxonomy.controller';
 import { TaxonomyService } from './taxonomy.service';
 
@@ -13,7 +12,6 @@ import { TaxonomyService } from './taxonomy.service';
   imports: [
     DatabaseModule,
     LoggerModule,
-    UtilModule,
     OptionModule,
     AuthModule,
     UserModule

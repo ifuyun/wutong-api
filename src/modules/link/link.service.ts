@@ -4,9 +4,11 @@ import { FindOptions, IncludeOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { LinkStatus, LinkScope, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { LinkDto } from '../../dtos/link.dto';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
-import { getUuid } from '../../helpers/helper';
+import { format, getUuid } from '../../helpers/helper';
 import { LinkListVo, LinkQueryParam } from './link.interface';
 import { LinkModel } from '../../models/link.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -56,13 +58,20 @@ export class LinkService {
       order: [
         ['linkRating', 'desc']
       ]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '链接查询失败',
+        data: { taxonomyId, visible },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
   async getFriendLinks(visible: LinkScope | LinkScope[]): Promise<LinkModel[]> {
     const friendOption = await this.optionService.getOptionByKey('friend_link_category');
-    if (!friendOption || !friendOption.optionValue) {
-      throw new InternalServerErrorException(Message.OPTION_MISSED);
+    if (!friendOption.optionValue) {
+      throw new InternalServerErrorException(format(Message.OPTION_VALUE_MISSED, 'friend_link_category'));
     }
     return this.getLinksByTaxonomy(friendOption.optionValue, visible);
   }
@@ -112,14 +121,23 @@ export class LinkService {
       limit: pageSize
     };
 
-    const total = await this.linkModel.count({ where });
-    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
-    queryOpt.offset = pageSize * (page - 1);
+    try {
+      const total = await this.linkModel.count({ where });
+      const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+      queryOpt.offset = pageSize * (page - 1);
 
-    /* findAndCountAll无法判断page大于最大页数的情况 */
-    const links = await this.linkModel.findAll(queryOpt);
+      /* findAndCountAll无法判断page大于最大页数的情况 */
+      const links = await this.linkModel.findAll(queryOpt);
 
-    return { links, page, total };
+      return { links, page, total };
+    } catch (e) {
+      this.logger.error({
+        message: e.message || '链接查询失败',
+        data: param,
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    }
   }
 
   async getLinkById(linkId: string): Promise<LinkModel> {
@@ -134,6 +152,13 @@ export class LinkService {
         },
         required: false
       }]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '链接查询失败',
+        data: { linkId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -190,15 +215,13 @@ export class LinkService {
       }, {
         transaction: t
       });
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '链接保存失败。',
+        message: e.message || '链接保存失败。',
         data: linkDto,
-        stack: err.stack
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(Message.LINK_SAVE_ERROR);
     });
   }
 
@@ -222,15 +245,13 @@ export class LinkService {
         },
         transaction: t
       });
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '链接删除失败。',
-        data: linkIds,
-        stack: err.stack
+        message: e.message || '链接删除失败',
+        data: { linkIds },
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(Message.LINK_DELETE_ERROR, ResponseCode.LINK_DELETE_ERROR);
     });
   }
 }

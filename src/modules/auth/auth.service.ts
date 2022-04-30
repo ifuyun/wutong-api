@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '../../common/common.enum';
@@ -7,8 +7,8 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { UserLoginDto } from '../../dtos/user-login.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { getMd5 } from '../../helpers/helper';
-import { AuthUserEntity } from './auth.interface';
 import { UserService } from '../user/user.service';
+import { AuthUserEntity } from './auth.interface';
 
 @Injectable()
 export class AuthService {

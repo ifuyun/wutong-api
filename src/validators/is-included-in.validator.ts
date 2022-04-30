@@ -1,6 +1,7 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
 import { Message } from '../common/message.enum';
 import { BadRequestException } from '../exceptions/bad-request.exception';
+import { format } from '../helpers/helper';
 
 export function IsIncludedIn(
   options: { ranges: (string | number)[], allowNull?: boolean, ignoreCase?: boolean },
@@ -18,7 +19,7 @@ export function IsIncludedIn(
           args.constraints.push(value);
 
           if (!options.ranges || !Array.isArray(options.ranges)) {
-            throw new BadRequestException(Message.PARAM_MUST_BE_ARRAY);
+            throw new BadRequestException(format(Message.PARAM_MUST_BE_ARRAY, propertyName));
           }
           // 默认忽略大小写
           if (typeof options.ignoreCase !== 'boolean') {

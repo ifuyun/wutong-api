@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { VoteDto } from '../../dtos/vote.dto';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { getUuid } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { VoteModel } from '../../models/vote.model';
@@ -39,15 +42,13 @@ export class VoteService {
       }
       voteDto.voteId = getUuid();
       await this.voteModel.create({ ...voteDto }, { transaction: t });
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '投票失败',
+        message: e.message || '投票失败',
         data: voteDto,
-        stack: err.stack
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(Message.DB_QUERY_ERROR, ResponseCode.VOTE_FAILURE);
     });
   }
 }

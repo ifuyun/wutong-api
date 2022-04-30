@@ -23,6 +23,7 @@ export enum ResponseCode {
   // custom response code
   SUCCESS = 0,
   UNKNOWN_ERROR = 4000,
+  DB_QUERY_ERROR,
   LOGIN_REJECT,
   ILLEGAL_PARAMS,
   SESSION_REGENERATE_ERROR,

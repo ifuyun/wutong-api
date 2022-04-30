@@ -2,20 +2,19 @@ import { Body, Controller, Delete, Get, Header, Param, Post, Query, UseGuards, U
 import * as xss from 'sanitizer';
 import { LinkScope, LinkStatus, LinkTarget, Role, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
-import { ResponseCode } from '../../common/response-code.enum';
 import { IdParams } from '../../decorators/id-params.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { LinkDto, RemoveLinkDto } from '../../dtos/link.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
+import { format } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
-import { LinkQueryParam } from './link.interface';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
+import { LinkQueryParam } from './link.interface';
 import { LinkService } from './link.service';
 
 @Controller('api/links')
@@ -36,7 +35,7 @@ export class LinkController {
       scope = Array.isArray(scope) ? scope : [scope];
       (scope as LinkScope[]).forEach((v: LinkScope) => {
         if (![LinkScope.HOMEPAGE, LinkScope.SITE].includes(v)) {
-          throw new BadRequestException(Message.PARAM_ILLEGAL);
+          throw new BadRequestException(format(Message.PARAM_INVALID, 'scope'));
         }
       });
     } else {
@@ -67,7 +66,7 @@ export class LinkController {
       const allowed = Object.keys(LinkScope).map((key) => LinkScope[key]);
       scope.forEach((v: LinkScope) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.PARAM_ILLEGAL);
+          throw new BadRequestException(format(Message.PARAM_INVALID, 'scope'));
         }
       });
     }
@@ -76,7 +75,7 @@ export class LinkController {
       const allowed = Object.keys(LinkTarget).map((key) => LinkTarget[key]);
       target.forEach((v: LinkTarget) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.PARAM_ILLEGAL);
+          throw new BadRequestException(format(Message.PARAM_INVALID, 'target'));
         }
       });
     }
@@ -85,7 +84,7 @@ export class LinkController {
       const allowed = Object.keys(LinkStatus).map((key) => LinkStatus[key]);
       status.forEach((v: LinkStatus) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.PARAM_ILLEGAL);
+          throw new BadRequestException(format(Message.PARAM_INVALID, 'status'));
         }
       });
     }
@@ -136,10 +135,7 @@ export class LinkController {
       linkRating: linkDto.linkRating,
       linkTaxonomy: linkDto.linkTaxonomy
     };
-    const result = await this.linkService.saveLink(linkDto);
-    if (!result) {
-      throw new UnknownException(Message.LINK_SAVE_ERROR);
-    }
+    await this.linkService.saveLink(linkDto);
 
     return getSuccessResponse();
   }
@@ -151,10 +147,7 @@ export class LinkController {
   async removeLinks(
     @Body(new TrimPipe()) removeLinkDto: RemoveLinkDto
   ) {
-    const result = await this.linkService.removeLinks(removeLinkDto.linkIds);
-    if (!result) {
-      throw new UnknownException(Message.LINK_DELETE_ERROR, ResponseCode.LINK_DELETE_ERROR);
-    }
+    await this.linkService.removeLinks(removeLinkDto.linkIds);
     await this.taxonomyService.updateAllCount([TaxonomyType.LINK]);
 
     return getSuccessResponse();

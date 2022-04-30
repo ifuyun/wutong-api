@@ -4,7 +4,6 @@ import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
 import { OptionModule } from '../option/option.module';
 import { TaxonomyModule } from '../taxonomy/taxonomy.module';
-import { UtilModule } from '../util/util.module';
 import { LinkController } from './link.controller';
 import { LinkService } from './link.service';
 
@@ -12,7 +11,6 @@ import { LinkService } from './link.service';
   imports: [
     DatabaseModule,
     LoggerModule,
-    UtilModule,
     TaxonomyModule,
     OptionModule,
     AuthModule

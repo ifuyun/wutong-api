@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
+import { LoggerService } from '../logger/logger.service';
 import { UserVo } from './user.interface';
 import { UserMetaModel } from '../../models/user-meta.model';
 import { UserModel } from '../../models/user.model';
@@ -9,7 +11,8 @@ import { UserModel } from '../../models/user.model';
 export class UserService {
   constructor(
     @InjectModel(UserModel)
-    private readonly userModel: typeof UserModel
+    private readonly userModel: typeof UserModel,
+    private readonly logger: LoggerService,
   ) {
   }
 
@@ -34,18 +37,32 @@ export class UserService {
         user.userMeta.forEach((item) => {
           userMeta[item.metaKey] = item.metaValue;
         });
-        return Promise.resolve({
+        return {
           ...user.get({
             plain: true
           }),
           meta: userMeta
-        });
+        };
       }
-      return Promise.resolve(null);
+      return null;
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '用户查询失败',
+        data: { username },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
   async getUserById(userId: string): Promise<UserModel> {
-    return this.userModel.findByPk(userId);
+    return this.userModel.findByPk(userId).catch((e) => {
+      this.logger.error({
+        message: e.message || '用户查询失败',
+        data: { userId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 }

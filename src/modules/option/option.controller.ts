@@ -2,7 +2,6 @@ import { Body, Controller, Get, Header, Post, Query, UseGuards } from '@nestjs/c
 import * as xss from 'sanitizer';
 import { Role } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
-import { ResponseCode } from '../../common/response-code.enum';
 import { Roles } from '../../decorators/roles.decorator';
 import {
   DiscussionOptionsDto,
@@ -12,8 +11,8 @@ import {
   WritingOptionsDto
 } from '../../dtos/option.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
+import { format } from '../../helpers/helper';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getSuccessResponse } from '../../transformers/response.transformers';
@@ -48,10 +47,7 @@ export class OptionController {
       icp_code: xss.sanitize(optionDto.icpCode),
       copyright_notice: xss.sanitize(optionDto.copyNotice)
     };
-    const result = await this.optionService.saveOptions(data);
-    if (!result) {
-      throw new UnknownException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
-    }
+    await this.optionService.saveOptions(data);
 
     return getSuccessResponse();
   }
@@ -67,10 +63,7 @@ export class OptionController {
       default_post_category: optionDto.defaultCategory,
       default_post_format: optionDto.defaultPostFormat
     };
-    const result = await this.optionService.saveOptions(data);
-    if (!result) {
-      throw new UnknownException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
-    }
+    await this.optionService.saveOptions(data);
 
     return getSuccessResponse();
   }
@@ -83,17 +76,14 @@ export class OptionController {
     @Body(new TrimPipe()) optionDto: ReadingOptionsDto
   ) {
     if (![0, 1].includes(optionDto.rssUseExcerpt)) {
-      throw new BadRequestException(Message.PARAM_ILLEGAL);
+      throw new BadRequestException(format(Message.PARAM_INVALID, 'scope'));
     }
     const data = {
       posts_per_page: optionDto.postsPerPage,
       posts_per_rss: optionDto.postsPerRss,
       rss_use_excerpt: optionDto.rssUseExcerpt
     };
-    const result = await this.optionService.saveOptions(data);
-    if (!result) {
-      throw new UnknownException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
-    }
+    await this.optionService.saveOptions(data);
 
     return getSuccessResponse();
   }
@@ -121,10 +111,7 @@ export class OptionController {
       show_avatars: optionDto.showAvatars ? 1 : 0,
       avatar_default: optionDto.avatarDefault
     };
-    const result = await this.optionService.saveOptions(data);
-    if (!result) {
-      throw new UnknownException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
-    }
+    await this.optionService.saveOptions(data);
 
     return getSuccessResponse();
   }
@@ -144,10 +131,7 @@ export class OptionController {
       upload_url_prefix: optionDto.uploadUrlPrefix,
       watermark_font_path: optionDto.watermarkFontPath
     };
-    const result = await this.optionService.saveOptions(data);
-    if (!result) {
-      throw new UnknownException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
-    }
+    await this.optionService.saveOptions(data);
 
     return getSuccessResponse();
   }

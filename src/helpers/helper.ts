@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { Message } from '../common/message.enum';
 
 /**
  * 截取字符串为指定长度，超过长度加'...'
@@ -107,11 +108,11 @@ export function getFileExt(fileName: string): string {
  * @param {(string | number)[]} params replacements
  * @return {string} output string
  */
-export function format(str: string, ...params: (string | number)[]): string {
+export function format(str: string, ...params: (string | number)[]): Message {
   if (Array.isArray(params[0])) {
     params = params[0];
   }
-  return str.replace(/\$(\d+)/ig, (matched, index) =>
+  return <Message>str.replace(/\$(\d+)/ig, (matched, index) =>
     params[index] && params[index].toString() || matched
   );
 }

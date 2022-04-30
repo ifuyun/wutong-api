@@ -28,6 +28,7 @@ import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { RolesGuard } from '../../guards/roles.guard';
+import { format } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -74,7 +75,7 @@ export class CommentController {
       const allowed = Object.keys(CommentStatus).map((key) => CommentStatus[key]);
       status.forEach((v: CommentStatus) => {
         if (!allowed.includes(v)) {
-          throw new BadRequestException(Message.PARAM_ILLEGAL);
+          throw new BadRequestException(format(Message.PARAM_INVALID, 'status'));
         }
       });
       param.status = status;

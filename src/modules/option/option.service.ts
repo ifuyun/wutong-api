@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { difference } from 'lodash';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
+import { format } from '../../helpers/helper';
 import { LoggerService } from '../logger/logger.service';
 import { LinkDto } from '../../dtos/link.dto';
 import { OptionEntity } from './option.interface';
@@ -19,7 +23,7 @@ export class OptionService {
   ) {
   }
 
-  async getOptions(onlyAutoLoad: boolean = true): Promise<OptionEntity> {
+  async getOptions(onlyAutoLoad = true): Promise<OptionEntity> {
     const queryOpt: any = {
       attributes: ['optionName', 'optionValue', 'autoload']
     };
@@ -34,20 +38,35 @@ export class OptionService {
     return this.optionModel.findAll(queryOpt).then((data) => {
       const options: OptionEntity = {};
       data.forEach((item) => options[item.optionName] = item.optionValue);
-      return Promise.resolve(options);
+      return options;
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '配置查询失败',
+        data: { onlyAutoLoad },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
   async getOptionByKey(key: string): Promise<OptionModel> {
-    const option = await this.optionModel.findOne({
+    return this.optionModel.findOne({
       where: {
         optionName: key
       }
+    }).then((option) => {
+      if (!option) {
+        throw new InternalServerErrorException(format(Message.OPTION_MISSED, key));
+      }
+      return option;
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '配置查询失败',
+        data: { key },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
-    if (!option) {
-      throw new InternalServerErrorException(Message.OPTION_MISSED);
-    }
-    return option;
   }
 
   async getOptionByKeys(keys: string | string[]): Promise<OptionEntity> {
@@ -58,11 +77,22 @@ export class OptionService {
     }).then((data) => {
       const count = Array.isArray(keys) ? keys.length : 1;
       if (!data || data.length !== count) {
-        throw new InternalServerErrorException(Message.OPTION_MISSED);
+        const exists = data.map((item) => item.optionName);
+        throw new InternalServerErrorException(
+          format(Message.OPTION_MISSED, Array.isArray(keys) ? difference(keys, exists).join(',') : keys)
+        );
       }
       const options: OptionEntity = {};
       data.forEach((item) => options[item.optionName] = item.optionValue);
-      return Promise.resolve(options);
+
+      return options;
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '配置查询失败',
+        data: { keys },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -81,15 +111,13 @@ export class OptionService {
           transaction: t
         });
       }
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '设置保存失败。',
+        message: e.message || '设置保存失败',
         data: LinkDto,
-        stack: err.stack
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(Message.OPTION_SAVE_ERROR, ResponseCode.OPTION_SAVE_ERROR);
     });
   }
 }

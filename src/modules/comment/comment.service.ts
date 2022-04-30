@@ -5,7 +5,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { CommentFlag, CommentStatus } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { CommentDto } from '../../dtos/comment.dto';
-import { UnknownException } from '../../exceptions/unknown.exception';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { getUuid } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
@@ -66,15 +66,13 @@ export class CommentService {
           transaction: t
         });
       }
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '评论保存失败',
+        message: e.message || '评论保存失败',
         data: commentDto,
-        stack: err.stack
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException();
     });
   }
 
@@ -84,6 +82,13 @@ export class CommentService {
         model: PostModel,
         attributes: ['postId', 'postGuid', 'postTitle']
       }]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '评论查询失败',
+        data: { commentId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -113,27 +118,36 @@ export class CommentService {
         };
       }
     }
-    const total = await this.commentModel.count({ where });
-    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+    try {
+      const total = await this.commentModel.count({ where });
+      const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
 
-    if (fromAdmin) {
-      limitOpt['limit'] = pageSize;
-      limitOpt['offset'] = pageSize * (page - 1);
+      if (fromAdmin) {
+        limitOpt['limit'] = pageSize;
+        limitOpt['offset'] = pageSize * (page - 1);
+      }
+      const comments = await this.commentModel.findAll({
+        where,
+        include: [{
+          model: PostModel,
+          attributes: ['postId', 'postGuid', 'postTitle']
+        }],
+        order: orders || [['commentCreated', 'desc']],
+        subQuery: false,
+        ...limitOpt
+      });
+
+      return {
+        comments, page, total
+      };
+    } catch (e) {
+      this.logger.error({
+        message: e.message || '评论查询失败',
+        data: param,
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     }
-    const comments = await this.commentModel.findAll({
-      where,
-      include: [{
-        model: PostModel,
-        attributes: ['postId', 'postGuid', 'postTitle']
-      }],
-      order: orders || [['commentCreated', 'desc']],
-      subQuery: false,
-      ...limitOpt
-    });
-
-    return {
-      comments, page, total
-    };
   }
 
   async auditComment(commentIds: string[], status: CommentStatus): Promise<boolean> {
@@ -145,27 +159,32 @@ export class CommentService {
           [Op.in]: commentIds
         }
       }
-    })
-      .then((result) => Promise.resolve(true))
-      .catch((err) => {
+    }).then(() => true)
+      .catch((e) => {
         this.logger.error({
-          message: '评论修改失败',
+          message: e.message || '评论修改失败',
           data: { commentIds, status },
-          stack: err.stack
+          stack: e.stack
         });
-        throw new UnknownException(Message.COMMENT_AUDIT_ERROR);
+        throw new DbQueryErrorException(Message.COMMENT_AUDIT_ERROR);
       });
   }
 
   async checkCommentExist(commentId: string): Promise<boolean> {
-    const total = await this.commentModel.count({
+    return this.commentModel.count({
       where: {
         commentId: {
           [Op.eq]: commentId
         }
       }
+    }).then((total) => total > 0).catch((e) => {
+      this.logger.error({
+        message: e.message || '评论是否存在查询失败',
+        data: { commentId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
-    return total > 0;
   }
 
   async countComments(): Promise<number> {
@@ -173,6 +192,12 @@ export class CommentService {
       where: {
         commentStatus: [CommentStatus.NORMAL, CommentStatus.PENDING, CommentStatus.REJECT, CommentStatus.SPAM]
       }
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '评论总数查询失败',
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -188,6 +213,13 @@ export class CommentService {
       order: [['commentCreated', 'desc']],
       limit: limit || 5,
       offset: 0
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '最新评论查询失败',
+        data: { limit },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 }

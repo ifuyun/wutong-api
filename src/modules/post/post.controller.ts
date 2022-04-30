@@ -82,7 +82,7 @@ export class PostController {
   ) {
     postType = postType || PostType.POST;
     if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType)) {
-      throw new BadRequestException(Message.PARAM_ILLEGAL);
+      throw new BadRequestException(format(Message.PARAM_INVALID, 'type'));
     }
     if (!isAdmin && postType !== PostType.POST) {
       throw new UnauthorizedException();
@@ -105,7 +105,7 @@ export class PostController {
         const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
         status.forEach((v: PostStatus) => {
           if (!allowedStatuses.includes(v)) {
-            throw new BadRequestException(Message.PARAM_ILLEGAL);
+            throw new BadRequestException(format(Message.PARAM_INVALID, 'status'));
           }
         });
         param.status = status;
@@ -115,7 +115,7 @@ export class PostController {
         const allowedFlags = Object.keys(CommentFlag).map((key) => CommentFlag[key]);
         commentFlag.forEach((v: CommentFlag) => {
           if (!allowedFlags.includes(v)) {
-            throw new BadRequestException(Message.PARAM_ILLEGAL);
+            throw new BadRequestException(format(Message.PARAM_INVALID, 'commentFlag'));
           }
         });
         param.commentFlag = commentFlag;
@@ -170,7 +170,7 @@ export class PostController {
     @IsAdmin() isAdmin: boolean
   ) {
     if (postType && ![PostType.POST, PostType.PAGE, PostType.ATTACHMENT].includes(postType)) {
-      throw new BadRequestException(Message.PARAM_ILLEGAL);
+      throw new BadRequestException(format(Message.PARAM_INVALID, 'postType'));
     }
     postType = postType || PostType.POST;
     const fromAdmin = isAdmin && fa === '1';
@@ -186,7 +186,7 @@ export class PostController {
       const allowedStatuses = Object.keys(PostStatus).map((key) => PostStatus[key]);
       status.forEach((v: PostStatus) => {
         if (!allowedStatuses.includes(v)) {
-          throw new BadRequestException(Message.PARAM_ILLEGAL);
+          throw new BadRequestException(format(Message.PARAM_INVALID, 'status'));
         }
       });
       params.status = status;
@@ -366,7 +366,7 @@ export class PostController {
       const errType: string[] = [];
       postDto.postTaxonomies.length > 0 && errType.push('分类');
       postDto.postTags.length > 0 && errType.push('标签');
-      throw new BadRequestException(<Message>format(Message.POST_STATUS_MUST_NOT_TRASH, errType.join('和')));
+      throw new BadRequestException(format(Message.POST_STATUS_MUST_NOT_TRASH, errType.join('和')));
     }
     if (postDto.postTaxonomies.length < 1
       && ![PostStatus.DRAFT, PostStatus.TRASH].includes(postDto.postStatus)
@@ -397,16 +397,13 @@ export class PostController {
       metaValue: item[1]
     }));
 
-    const result = await this.postService.savePost({
+    await this.postService.savePost({
       newPostId,
       postData,
       postMeta: metaData,
       postTaxonomies: postDto.postTaxonomies,
       postTags: postDto.postTags
     });
-    if (!result) {
-      throw new UnknownException(Message.POST_SAVE_ERROR, ResponseCode.POST_SAVE_ERROR);
-    }
 
     return getSuccessResponse();
   }
@@ -418,10 +415,7 @@ export class PostController {
   async deletePosts(
     @Body(new TrimPipe()) removeDto: PostRemoveDto
   ) {
-    const result = await this.postService.deletePosts(removeDto.postIds);
-    if (!result) {
-      throw new UnknownException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
-    }
+    await this.postService.deletePosts(removeDto.postIds);
     await this.taxonomyService.updateAllCount([TaxonomyType.POST, TaxonomyType.TAG]);
 
     return getSuccessResponse();
@@ -450,7 +444,13 @@ export class PostController {
     const maxFileLimit = Number(options['upload_max_file_limit']);
     const maxFileSize = Number(options['upload_max_file_size']);
     if (!maxFileLimit || !maxFileSize || !options['watermark_font_path']) {
-      throw new InternalServerErrorException(Message.OPTION_MISSED);
+      throw new InternalServerErrorException(
+        format(
+          Message.OPTION_VALUE_MISSED,
+          ['upload_max_file_limit', 'upload_max_file_size', 'watermark_font_path']
+            .filter((item) => !options[item]).join(',')
+        )
+      );
     }
     const uploadPath = path.join(options['upload_path'], curYear, curMonth);
     mkdirp.sync(uploadPath);
@@ -528,10 +528,7 @@ export class PostController {
         postMimeType: file.mimeType
       });
     });
-    const files = await this.postService.saveFiles(fileData);
-    if (!files) {
-      throw new UnknownException(Message.FILE_UPLOAD_ERROR, ResponseCode.UPLOAD_ERROR);
-    }
+    await this.postService.saveFiles(fileData);
 
     return getSuccessResponse();
   }

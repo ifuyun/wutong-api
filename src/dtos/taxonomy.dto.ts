@@ -15,7 +15,7 @@ export class BasicTaxonomyDto {
     { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
     { message: format(Message.PARAM_INVALID, '$constraint1') }
   )
-  @IsNotEmpty({ message: '缺少参数“taxonomyType”' })
+  @IsNotEmpty({ message: format(Message.PARAM_MISSED, 'taxonomyType') })
   taxonomyType?: TaxonomyType;
 
   @IsTaxonomyExist({ message: '修改的分类不存在' })
@@ -65,7 +65,7 @@ export class TaxonomyRemoveDto {
     { ranges: [TaxonomyType.POST, TaxonomyType.TAG, TaxonomyType.LINK] },
     { message: format(Message.PARAM_INVALID, '$constraint1') }
   )
-  @IsNotEmpty({ message: '缺少参数“taxonomyType”' })
+  @IsNotEmpty({ message: format(Message.PARAM_MISSED, 'taxonomyType') })
   taxonomyType: TaxonomyType;
 
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })

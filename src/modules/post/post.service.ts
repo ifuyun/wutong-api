@@ -6,8 +6,9 @@ import { Sequelize } from 'sequelize-typescript';
 import { GroupedCountResultItem, ProjectionAlias } from 'sequelize/types/model';
 import { CommentStatus, PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
-import { UnknownException } from '../../exceptions/unknown.exception';
+import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { getUuid } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { PostMetaModel } from '../../models/post-meta.model';
@@ -74,10 +75,10 @@ export class PostService {
       attributes: ['postId', 'postTitle', 'postGuid'],
       where: {
         postStatus: {
-          [Op.eq]: 'publish'
+          [Op.eq]: PostStatus.PUBLISH
         },
         postType: {
-          [Op.eq]: 'post'
+          [Op.eq]: PostType.POST
         }
       },
       order: [
@@ -86,6 +87,12 @@ export class PostService {
       ],
       limit: 10,
       offset: 0
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '最新文章查询失败',
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -94,10 +101,10 @@ export class PostService {
       attributes: ['postId', 'postTitle', 'postGuid'],
       where: {
         postStatus: {
-          [Op.eq]: 'publish'
+          [Op.eq]: PostStatus.PUBLISH
         },
         postType: {
-          [Op.eq]: 'post'
+          [Op.eq]: PostType.POST
         }
       },
       order: [
@@ -105,6 +112,12 @@ export class PostService {
       ],
       limit: 10,
       offset: 0
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '随机文章查询失败',
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -113,10 +126,10 @@ export class PostService {
       attributes: ['postId', 'postTitle', 'postGuid'],
       where: {
         postStatus: {
-          [Op.eq]: 'publish'
+          [Op.eq]: PostStatus.PUBLISH
         },
         postType: {
-          [Op.eq]: 'post'
+          [Op.eq]: PostType.POST
         }
       },
       order: [
@@ -124,6 +137,12 @@ export class PostService {
       ],
       limit: 10,
       offset: 0
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '热门文章查询失败',
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -170,13 +189,21 @@ export class PostService {
         Sequelize.fn('count', Sequelize.fn('distinct', Sequelize.col('post_id'))), 'count'
       ]);
     }
-    const result = await this.postModel.findAll(queryOpt);
-    // 0 is no limit, and default is 10
-    if (limit !== 0) {
-      // todo: limit will location in from(sub query)
-      return result.slice(0, limit || 10);
-    }
-    return result;
+    return this.postModel.findAll(queryOpt).then((result) => {
+      // 0 is no limit, and default is 10
+      if (limit !== 0) {
+        // todo: limit will location in from(sub query)
+        return result.slice(0, limit || 10);
+      }
+      return result;
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '归档查询失败',
+        data: param,
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
@@ -308,20 +335,29 @@ export class PostService {
       queryOpt.group = ['postId'];
       countOpt.include = includeOpt;
     }
-    const total = await this.postModel.count(countOpt);
-    const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
-    queryOpt.offset = pageSize * (page - 1);
+    try {
+      const total = await this.postModel.count(countOpt);
+      const page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+      queryOpt.offset = pageSize * (page - 1);
 
-    const posts = await this.postModel.findAll(queryOpt);
-    const postIds: string[] = posts.map((post) => post.postId);
-    const taxonomies = await this.taxonomyService.getTaxonomiesByPostIds(postIds, isAdmin);
-    const postMeta = await this.postMetaService.getPostMetaByPostIds(postIds);
+      const posts = await this.postModel.findAll(queryOpt);
+      const postIds: string[] = posts.map((post) => post.postId);
+      const taxonomies = await this.taxonomyService.getTaxonomiesByPostIds(postIds, isAdmin);
+      const postMeta = await this.postMetaService.getPostMetaByPostIds(postIds);
 
-    return {
-      posts: this.assemblePostData(posts, postMeta, taxonomies),
-      page,
-      total
-    };
+      return {
+        posts: this.assemblePostData(posts, postMeta, taxonomies),
+        page,
+        total
+      };
+    } catch (e) {
+      this.logger.error({
+        message: e.message || '文章查询失败',
+        data: param,
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    }
   }
 
   async getPostById(postId: string, isAdmin?: boolean): Promise<PostModel> {
@@ -366,6 +402,13 @@ export class PostService {
         required: false
       }],
       where
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章查询失败',
+        data: { postId, isAdmin },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -409,6 +452,13 @@ export class PostService {
         required: false
       }],
       where
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章查询失败',
+        data: { postGuid, isAdmin },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -417,6 +467,13 @@ export class PostService {
       where: {
         postId
       }
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章查询失败',
+        data: { postId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -438,6 +495,13 @@ export class PostService {
       order: [
         ['postCreated', 'asc']
       ]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '上一篇文章查询失败',
+        data: { postId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -459,6 +523,13 @@ export class PostService {
       order: [
         ['postCreated', 'desc']
       ]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '下一篇文章查询失败',
+        data: { postId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -472,24 +543,42 @@ export class PostService {
         [Op.ne]: postId
       };
     }
-    const total = await this.postModel.count({ where });
-
-    return total > 0;
+    return this.postModel.count({ where }).then((total) => total > 0).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章Guid是否存在查询失败',
+        data: { guid, postId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async checkPostExist(postId: string): Promise<boolean> {
-    const total = await this.postModel.count({
+    return this.postModel.count({
       where: {
         postId: {
           [Op.eq]: postId
         }
       }
+    }).then((total) => total > 0).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章是否存在查询失败',
+        data: { postId },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
-    return total > 0;
   }
 
   async saveFiles(files: PostFileDto[]): Promise<PostModel[]> {
-    return this.postModel.bulkCreate<PostModel>(files as any[]);
+    return this.postModel.bulkCreate<PostModel>(files as any[]).catch((e) => {
+      this.logger.error({
+        message: e.message || '文件保存失败',
+        data: { files },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException(Message.FILE_UPLOAD_ERROR, ResponseCode.UPLOAD_ERROR);
+    });
   }
 
   async savePost(data: {
@@ -554,7 +643,7 @@ export class PostService {
       for (const tag of data.postTags) {
         const result = await this.taxonomyService.checkTaxonomySlugExist(tag, TaxonomyType.TAG);
         let taxonomyId = getUuid();
-        if (result.taxonomy) {
+        if (result.isExist) {
           taxonomyId = result.taxonomy.taxonomyId;
           latestTags.push(taxonomyId);
         } else {
@@ -597,15 +686,13 @@ export class PostService {
           transaction: t
         });
       }
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '内容保存失败',
+        message: e.message || '文章保存失败',
         data: data,
-        stack: err.stack
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(Message.POST_SAVE_ERROR, ResponseCode.POST_SAVE_ERROR);
     });
   }
 
@@ -631,15 +718,13 @@ export class PostService {
         },
         transaction: t
       });
-    }).then(() => {
-      return Promise.resolve(true);
-    }).catch((err) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
-        message: '内容删除失败',
-        data: postIds,
-        stack: err.stack
+        message: e.message || '文章删除失败',
+        data: { postIds },
+        stack: e.stack
       });
-      return Promise.resolve(false);
+      throw new DbQueryErrorException(Message.POST_DELETE_ERROR, ResponseCode.POST_DELETE_ERROR);
     });
   }
 
@@ -650,6 +735,12 @@ export class PostService {
         postType: [PostType.POST, PostType.PAGE, PostType.ATTACHMENT]
       },
       group: ['postType']
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章总数查询失败',
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
   }
 
@@ -659,6 +750,13 @@ export class PostService {
       where: {
         commentId: commentIds
       }
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '评论查询失败',
+        data: { commentIds },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
     });
     const postIds: string[] = uniq(comments.map((item) => item.postId));
     return this.postModel.update({
@@ -671,15 +769,13 @@ export class PostService {
         postId: postIds
       },
       silent: true
-    })
-      .then(() => Promise.resolve(true))
-      .catch((err) => {
-        this.logger.error({
-          message: '评论数量更新失败',
-          data: commentIds,
-          stack: err.stack
-        });
-        throw new UnknownException(Message.POST_COMMENT_COUNT_UPDATE_ERROR);
+    }).then(() => true).catch((e) => {
+      this.logger.error({
+        message: e.message || '评论数量更新失败',
+        data: { commentIds },
+        stack: e.stack
       });
+      throw new DbQueryErrorException(Message.POST_COMMENT_COUNT_UPDATE_ERROR);
+    });
   }
 }
