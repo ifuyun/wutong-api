@@ -5,11 +5,12 @@ import { CountOptions, FindOptions, IncludeOptions, Op, WhereOptions } from 'seq
 import { Sequelize } from 'sequelize-typescript';
 import { GroupedCountResultItem, ProjectionAlias } from 'sequelize/types/model';
 import { CommentStatus, PostStatus, PostType, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { POST_EXCERPT_LENGTH } from '../../common/constants';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
-import { getUuid } from '../../helpers/helper';
+import { filterHtmlTag, getUuid, truncateString } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
@@ -315,7 +316,7 @@ export class PostService {
     const queryOpt: FindOptions = {
       where,
       attributes: {
-        exclude: ['postPassword', 'postParent', 'postMimeType']
+        exclude: ['postCreated', 'postPassword', 'postParent', 'postMimeType']
       },
       include: [{
         model: UserModel,
@@ -341,6 +342,13 @@ export class PostService {
       queryOpt.offset = pageSize * (page - 1);
 
       const posts = await this.postModel.findAll(queryOpt);
+      posts.forEach(
+        (post) => {
+          post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
+          !fromAdmin && (post.postContent = '');
+        }
+      );
+
       const postIds: string[] = posts.map((post) => post.postId);
       const taxonomies = await this.taxonomyService.getTaxonomiesByPostIds(postIds, isAdmin);
       const postMeta = await this.postMetaService.getPostMetaByPostIds(postIds);

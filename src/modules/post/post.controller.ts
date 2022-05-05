@@ -21,6 +21,7 @@ import * as path from 'path';
 import * as xss from 'sanitizer';
 import { BreadcrumbEntity } from '../../common/breadcrumb.interface';
 import { CommentFlag, PostStatus, PostType, Role, TaxonomyStatus, TaxonomyType } from '../../common/common.enum';
+import { POST_EXCERPT_LENGTH } from '../../common/constants';
 import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
@@ -35,7 +36,7 @@ import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { format, getFileExt, getUuid } from '../../helpers/helper';
+import { filterHtmlTag, format, getFileExt, getUuid, truncateString } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
@@ -243,6 +244,8 @@ export class PostController {
     }
     await this.postService.increasePostView(post.postId);
 
+    post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
+
     const postMeta: Record<string, string> = {};
     post.postMeta.forEach((meta) => {
       postMeta[meta.metaKey] = meta.metaValue;
@@ -307,6 +310,8 @@ export class PostController {
     if (!fromAdmin) {
       await this.postService.increasePostView(postId);
     }
+
+    post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
 
     const postMeta: Record<string, string> = {};
     post.postMeta.forEach((meta) => {

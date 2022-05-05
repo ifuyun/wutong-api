@@ -3,8 +3,8 @@
     {
       "name": "antblog",
       "script": "./dist/main.js",
+      "out_file": "/dev/null",
       "watch": false,
-      "out_file": "NULL",
       "env": {
         "ENV": "production"
       },

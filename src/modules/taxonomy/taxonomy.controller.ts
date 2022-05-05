@@ -8,17 +8,16 @@ import { AuthUser } from '../../decorators/auth-user.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { TaxonomyDto, TaxonomyRemoveDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { format } from '../../helpers/helper';
-import { AuthUserEntity } from '../auth/auth.interface';
-import { TaxonomyQueryParam } from './taxonomy.interface';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LowerCasePipe } from '../../pipes/lower-case.pipe';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
+import { AuthUserEntity } from '../auth/auth.interface';
+import { TaxonomyQueryParam } from './taxonomy.interface';
 import { TaxonomyService } from './taxonomy.service';
 
 @Controller('api/taxonomies')

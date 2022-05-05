@@ -282,7 +282,7 @@ export class TaxonomyService {
     };
     return this.taxonomyModel.findAll({
       attributes: {
-        exclude: ['taxonomyCreated', 'taxonomyModified']
+        exclude: ['taxonomyOrder', 'taxonomyStatus', 'taxonomyIsRequired', 'objectCount', 'taxonomyCreated', 'taxonomyModified']
       },
       include: [{
         model: TaxonomyRelationshipModel,

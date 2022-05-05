@@ -80,10 +80,7 @@ async function bootstrap() {
     app.use(bodyParser.json({ limit: '2mb' }));
     app.use(bodyParser.urlencoded({ extended: true }));
     app.enable('trust proxy');
-    app.use(helmet({
-      contentSecurityPolicy: false,
-      crossOriginEmbedderPolicy: false
-    }));
+    app.use(helmet());
     app.useGlobalPipes(new ValidationPipe({
       transform: true,
       skipNullProperties: true,
