@@ -2,5 +2,5 @@ export interface LogData {
   message?: string;
   data?: any;
   stack?: string;
-  ipAndAgent?: string;
+  visitorInfo?: string;
 }

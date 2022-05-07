@@ -1,11 +1,11 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { HttpResponseEntity } from '../common/http-response.interface';
 import { Message } from '../common/message.enum';
 import { CustomException } from '../exceptions/custom.exception';
 import { CustomExceptionResponse } from '../exceptions/exception.interface';
-import { HttpResponseEntity } from '../common/http-response.interface';
+import { getIPAndUserAgent } from '../helpers/request-parser';
 import { LoggerService } from '../modules/logger/logger.service';
-import { ResponseCode } from '../common/response-code.enum';
 
 @Catch()
 export class AllExceptionsFilter<T> implements ExceptionFilter {
@@ -20,7 +20,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const req = ctx.getRequest();
     const res = ctx.getResponse();
-    const isXhr = req.xhr;
+    const visitorInfo = getIPAndUserAgent(req);
     const isDev = this.configService.get('env.isDev');
     // 返回给终端的响应数据
     let resData: HttpResponseEntity;
@@ -37,9 +37,10 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
           console.error(errLog);
         } else {
           this.logger.error({
-            message: errLog.msg || errRes.data.message,
-            data: errLog.data || errRes.data.data || '',
-            stack: errLog.stack || ''
+            message: errLog.message || errRes.data.message,
+            data: errLog.data || errRes.data.data,
+            visitorInfo,
+            stack: ![HttpStatus.NOT_FOUND].includes(resStatus) && exception.stack
           });
         }
       }
@@ -48,21 +49,23 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
       const msg = typeof errRes === 'string' ? errRes : errRes.message || errRes.error || exception.message || Message.UNKNOWN_ERROR;
       resStatus = exception.getStatus();
       resData = {
-        code: exception.getStatus(),
+        code: resStatus,
         message: msg
       };
+      const stack = ![HttpStatus.NOT_FOUND].includes(resStatus) && exception.stack;
       if (isDev) {
-        console.error(exception.stack);
+        console.error(stack);
       } else {
         this.logger.error({
           message: msg,
-          stack: exception.stack
+          visitorInfo,
+          stack
         });
       }
     } else {
       resStatus = HttpStatus.INTERNAL_SERVER_ERROR;
       resData = {
-        code: ResponseCode.INTERNAL_SERVER_ERROR,
+        code: resStatus,
         message: Message.UNKNOWN_ERROR
       };
       if (exception instanceof Error) {
@@ -71,6 +74,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
           console.error(exception.stack);
         } else {
           this.logger.error({
+            visitorInfo,
             stack: exception.stack
           });
         }

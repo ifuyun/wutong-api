@@ -11,7 +11,8 @@ const ENV_CONFIG = () => ({
   isDev: environment === 'development',
   isProd: environment === 'production',
   isCluster: process.env.IS_CLUSTER?.toLowerCase().trim() === 'true',
-  isApiMode: true
+  isApiMode: true,
+  serverIP: process.env.SERVER_IP.trim()
 });
 
 export default registerAs('env', ENV_CONFIG);

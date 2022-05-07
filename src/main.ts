@@ -17,6 +17,7 @@ import { cpus } from 'os';
 import { createClient } from 'redis';
 import { AppModule } from './app.module';
 import { LogLevel } from './common/common.enum';
+import { getIP } from './helpers/request-parser';
 import { LoggerService } from './modules/logger/logger.service';
 import { ExceptionFactory } from './validators/exception-factory';
 
@@ -95,7 +96,13 @@ async function bootstrap() {
     });
     app.use(log4js.connectLogger(accessLogger, {
       level: LogLevel.INFO,
-      format: ':remote-addr - :method :status HTTP/:http-version :url - [:response-time ms/:content-length B] ":referrer" ":user-agent"'
+      format: (req, res, format) => {
+        if (config.get('env.serverIP') === getIP(req)) { // exclude SSR requests
+          return '';
+        }
+        return format(':remote-addr - :method :status HTTP/:http-version :url - ' +
+          '[:response-time ms/:content-length B] ":referrer" ":user-agent"');
+      }
     }));
 
     await app.listen(config.get('app.port'), config.get('app.host'), () => sysLogger.info(transformLogData({

@@ -2,8 +2,7 @@ import { HttpResponseEntity } from '../common/http-response.interface';
 import { HttpStatus } from '@nestjs/common';
 
 export interface CustomExceptionLog {
-  msg?: string;
-  stack?: any;
+  message?: string;
   data?: any;
 }
 

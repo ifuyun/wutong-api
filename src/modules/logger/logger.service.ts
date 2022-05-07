@@ -70,7 +70,7 @@ export class LoggerService {
   updateContext() {
     const today = moment().format('YYYY-MM-DD');
     if (today !== this.logDay) {
-      for (let label in LogCategory) {
+      for (const label in LogCategory) {
         if (LogCategory.hasOwnProperty(label)) {
           this[label].addContext('logDay', LogCategory[label] + '/' + today);
         }
@@ -88,8 +88,8 @@ export class LoggerService {
     } else {
       logStr += logData.message ? `[Msg] ${logData.message}` : '';
       logStr += logData.data ? (logStr ? '\n' : '') + `[Data] ${JSON.stringify(logData.data)}` : '';
+      logStr += logData.visitorInfo ? (logStr ? '\n' : '') + `[User] ${logData.visitorInfo}` : '';
       logStr += logData.stack ? (logStr ? '\n' : '') + `[Stack] ${logData.stack}` : '';
-      logStr += logData.ipAndAgent ? (logStr ? '\n' : '') + `[User] ${logData.ipAndAgent}` : '';
     }
 
     return [logStr];

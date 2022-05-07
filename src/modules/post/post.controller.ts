@@ -34,7 +34,6 @@ import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
-import { UnknownException } from '../../exceptions/unknown.exception';
 import { RolesGuard } from '../../guards/roles.guard';
 import { filterHtmlTag, format, getFileExt, getUuid, truncateString } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';

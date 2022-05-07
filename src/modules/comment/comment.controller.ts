@@ -19,7 +19,7 @@ import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IdParams } from '../../decorators/id-params.decorator';
-import { Ip } from '../../decorators/ip.decorator';
+import { IP } from '../../decorators/ip.decorator';
 import { IsAdmin } from '../../decorators/is-admin.decorator';
 import { Roles } from '../../decorators/roles.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
@@ -118,7 +118,7 @@ export class CommentController {
     @Body(new TrimPipe()) commentDto: CommentDto,
     @AuthUser() user,
     @IsAdmin() isAdmin: boolean,
-    @Ip() ip: string,
+    @IP() ip: string,
     @UserAgent() agent: string,
     @Session() session: any
   ) {

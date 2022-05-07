@@ -40,9 +40,11 @@ export class DbConfigService implements SequelizeOptionsFactory {
 
   createSequelizeOptions(): SequelizeModuleOptions {
     if (this.configService.get('env.isDev')) {
-      this.dbConfig.logging = (sql) => {
-        this.logger.dbLogger.trace(sql);
+      this.dbConfig.logging = (sql, timing) => {
+        this.logger.dbLogger.trace(timing, sql);
       };
+    } else {
+      this.dbConfig.logging = false;
     }
     return this.dbConfig;
   }

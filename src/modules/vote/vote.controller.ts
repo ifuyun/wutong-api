@@ -2,7 +2,7 @@ import { Body, Controller, Header, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { VoteType } from '../../common/common.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
-import { Ip } from '../../decorators/ip.decorator';
+import { IP } from '../../decorators/ip.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
 import { VoteDto } from '../../dtos/vote.dto';
 import { TrimPipe } from '../../pipes/trim.pipe';
@@ -24,7 +24,7 @@ export class VoteController {
     @Req() req: Request,
     @Body(new TrimPipe()) voteDto: VoteDto,
     @AuthUser() user,
-    @Ip() ip: string,
+    @IP() ip: string,
     @UserAgent() agent: string
   ) {
     user = user || {};
