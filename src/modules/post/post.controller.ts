@@ -348,9 +348,6 @@ export class PostController {
       postContent: postDto.postContent,
       postExcerpt: xss.sanitize(postDto.postExcerpt),
       postName: postDto.postName,
-      postGuid: postDto.postName
-        ? postDto.postType === PostType.PAGE ? '/' + postDto.postName : '/post/' + postDto.postName
-        : `/post/${newPostId}`,
       postAuthor: user.userId,
       postStatus: postDto.postStatus,
       postPassword: postDto.postStatus === PostStatus.PASSWORD ? postDto.postPassword : '',
@@ -378,9 +375,14 @@ export class PostController {
     ) {
       throw new BadRequestException(Message.POST_CATEGORY_IS_NULL);
     }
-    const isPostGuidExist = await this.postService.checkPostsExistByGuid(postData.postGuid, postData.postId);
-    if (isPostGuidExist) {
-      throw new BadRequestException(Message.POST_GUID_IS_EXIST, ResponseCode.POST_GUID_CONFLICT);
+    if (postDto.postType !== PostType.ATTACHMENT) {
+      postData.postGuid = postDto.postName
+        ? postDto.postType === PostType.PAGE ? '/' + postDto.postName : '/post/' + postDto.postName
+        : `/post/${newPostId}`;
+      const isPostGuidExist = await this.postService.checkPostsExistByGuid(postData.postGuid, postData.postId);
+      if (isPostGuidExist) {
+        throw new BadRequestException(Message.POST_GUID_IS_EXIST, ResponseCode.POST_GUID_CONFLICT);
+      }
     }
 
     if (postDto.postId && postDto.updateModified === 1) {

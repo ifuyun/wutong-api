@@ -2,6 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import { ConfigService } from '@nestjs/config';
 import { HttpResponseEntity } from '../common/http-response.interface';
 import { Message } from '../common/message.enum';
+import { ResponseCode } from '../common/response-code.enum';
 import { CustomException } from '../exceptions/custom.exception';
 import { CustomExceptionResponse } from '../exceptions/exception.interface';
 import { getIPAndUserAgent } from '../helpers/request-parser';
@@ -40,7 +41,8 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
             message: errLog.message || errRes.data.message,
             data: errLog.data || errRes.data.data,
             visitorInfo,
-            stack: ![HttpStatus.NOT_FOUND].includes(resStatus) && exception.stack
+            stack: [ResponseCode.INTERNAL_SERVER_ERROR, ResponseCode.UNKNOWN_ERROR].includes(resData.code) &&
+              exception.stack
           });
         }
       }
@@ -52,7 +54,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
         code: resStatus,
         message: msg
       };
-      const stack = ![HttpStatus.NOT_FOUND].includes(resStatus) && exception.stack;
+      const stack = [HttpStatus.INTERNAL_SERVER_ERROR].includes(resStatus) && exception.stack;
       if (isDev) {
         console.error(stack);
       } else {

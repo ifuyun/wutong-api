@@ -313,10 +313,14 @@ export class PostService {
         }
       });
     }
+    const excludeAttrs = ['postPassword', 'postParent', 'postMimeType'];
+    if (!fromAdmin) {
+      excludeAttrs.push('postCreated');
+    }
     const queryOpt: FindOptions = {
       where,
       attributes: {
-        exclude: ['postCreated', 'postPassword', 'postParent', 'postMimeType']
+        exclude: excludeAttrs
       },
       include: [{
         model: UserModel,
@@ -344,8 +348,10 @@ export class PostService {
       const posts = await this.postModel.findAll(queryOpt);
       posts.forEach(
         (post) => {
-          post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
-          !fromAdmin && (post.postContent = '');
+          if (!fromAdmin) {
+            post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
+            post.postContent = '';
+          }
         }
       );
 

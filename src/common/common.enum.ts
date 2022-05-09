@@ -10,9 +10,7 @@ export enum LogLevel {
 export enum LogCategory {
   accessLogger = 'access',
   sysLogger = 'system',
-  dbLogger = 'db',
-  uploadLogger = 'upload',
-  threadLogger = 'thread'
+  dbLogger = 'db'
 }
 
 export enum Role {

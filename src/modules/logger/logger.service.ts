@@ -10,8 +10,6 @@ export class LoggerService {
   accessLogger: Logger;
   sysLogger: Logger;
   dbLogger: Logger;
-  uploadLogger: Logger;
-  threadLogger: Logger;
   private logger: Logger;
 
   logDay: string = moment().format('YYYY-MM-DD');

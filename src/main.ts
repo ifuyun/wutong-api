@@ -26,7 +26,7 @@ async function bootstrap() {
   const logger = app.select(AppModule).get(LoggerService, { strict: true });
   const config = app.select(AppModule).get(ConfigService, { strict: true });
   const isCluster = config.get('env.isCluster');
-  const { accessLogger, threadLogger, sysLogger, transformLogData } = logger;
+  const { accessLogger, sysLogger, transformLogData } = logger;
   /* cluster模式必须在app实例化之后，否则将缺少master进程，导致log4js报错，因此无法通过ClusterService.clusterize方式调用 */
   if ((cluster as any).isPrimary && isCluster) {
     const workerSize = Math.max(cpus().length, 2);
@@ -35,7 +35,7 @@ async function bootstrap() {
     }
 
     (cluster as any).on('exit', (worker, code, signal) => {
-      threadLogger.warn(transformLogData({
+      sysLogger.error(transformLogData({
         message: `Worker ${worker.process.pid} exit.`,
         data: {
           code,
@@ -43,7 +43,7 @@ async function bootstrap() {
         }
       })[0]);
       process.nextTick(() => {
-        threadLogger.info(transformLogData({
+        sysLogger.info(transformLogData({
           message: 'New process is forking...'
         })[0]);
         (cluster as any).fork();
