@@ -308,9 +308,8 @@ export class PostController {
     }
     if (!fromAdmin) {
       await this.postService.increasePostView(postId);
+      post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
     }
-
-    post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
 
     const postMeta: Record<string, string> = {};
     post.postMeta.forEach((meta) => {
