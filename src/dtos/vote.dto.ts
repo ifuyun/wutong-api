@@ -1,6 +1,6 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IsNotEmpty } from 'class-validator';
-import { VoteType } from '../common/common.enum';
+import { VoteType, VoteValue } from '../common/common.enum';
 import { Message } from '../common/message.enum';
 import { format } from '../helpers/helper';
 import { IsId } from '../validators/is-id.validator';
@@ -16,15 +16,22 @@ export class BasicVoteDto {
   objectId: string;
 
   @IsIncludedIn(
-    { ranges: [VoteType.LIKE, VoteType.DISLIKE] },
+    { ranges: [VoteValue.LIKE, VoteValue.DISLIKE] },
     { message: format(Message.PARAM_INVALID, '$constraint1') }
   )
   @IsNotEmpty({ message: Message.UNSUPPORTED_OPERATION })
-  type?: string;
+  value?: VoteValue;
+
+  @IsIncludedIn(
+    { ranges: [VoteType.POST, VoteType.COMMENT] },
+    { message: format(Message.PARAM_INVALID, '$constraint1') }
+  )
+  @IsNotEmpty({ message: Message.UNSUPPORTED_OPERATION })
+  type?: VoteType;
 }
 
 export class AdditionalVoteDto {
-  voteResult?: number;
+  voteResult: number;
   userId: string;
   userIp: string;
   userAgent: string;

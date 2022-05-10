@@ -3,6 +3,7 @@ import { AuthModule } from '../auth/auth.module';
 import { CommentModule } from '../comment/comment.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
+import { PostModule } from '../post/post.module';
 import { VoteController } from './vote.controller';
 import { VoteService } from './vote.service';
 
@@ -10,8 +11,9 @@ import { VoteService } from './vote.service';
   imports: [
     DatabaseModule,
     LoggerModule,
+    AuthModule,
     CommentModule,
-    AuthModule
+    PostModule
   ],
   controllers: [VoteController],
   providers: [VoteService],
