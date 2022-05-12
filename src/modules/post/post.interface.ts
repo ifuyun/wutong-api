@@ -17,11 +17,11 @@ export interface PostListVo {
 }
 
 export interface PostQueryParam {
+  postType?: PostType[];
   page: number;
   pageSize?: number;
   isAdmin: boolean;
   fromAdmin?: boolean;
-  postType?: PostType;
   keyword?: string;
   subTaxonomyIds?: string[];
   tag?: string;
@@ -29,12 +29,13 @@ export interface PostQueryParam {
   month?: string;
   status?: PostStatus[];
   commentFlag?: CommentFlag[];
+  original?: string[];
   author?: string;
   orders?: Order;
 }
 
 export interface PostArchivesQueryParam {
-  postType: PostType;
+  postType: PostType[];
   status?: PostStatus[];
   showCount: boolean;
   limit: number;

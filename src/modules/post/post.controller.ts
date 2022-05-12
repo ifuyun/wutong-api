@@ -15,6 +15,7 @@ import { Request } from 'express';
 import * as formidable from 'formidable';
 import { File } from 'formidable';
 import * as fs from 'fs';
+import { difference } from 'lodash';
 import * as mkdirp from 'mkdirp';
 import * as moment from 'moment';
 import * as path from 'path';
@@ -75,13 +76,14 @@ export class PostController {
     @Query('status', new TrimPipe()) status: PostStatus | PostStatus[],
     @Query('commentFlag', new TrimPipe()) commentFlag: CommentFlag | CommentFlag[],
     @Query('keyword', new TrimPipe()) keyword: string,
+    @Query('original', new TrimPipe()) original: string | string[],
     @Query('orders', new TrimPipe()) orders: string[],
-    @Query('type', new TrimPipe()) postType: PostType,
+    @Query('type', new TrimPipe()) postType: PostType | 'all',
     @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
   ) {
     postType = postType || PostType.POST;
-    if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType)) {
+    if (!Object.keys(PostType).map((key) => PostType[key]).includes(postType) && postType !== 'all') {
       throw new BadRequestException(format(Message.PARAM_INVALID, 'type'));
     }
     if (!isAdmin && postType !== PostType.POST) {
@@ -91,7 +93,8 @@ export class PostController {
     const param: PostQueryParam = {
       page,
       pageSize,
-      postType,
+      // todo: status, quote, note
+      postType: postType === 'all' ? [PostType.POST, PostType.PAGE, PostType.ATTACHMENT] : [postType],
       tag,
       year,
       month: month ? month < 10 ? '0' + month : month.toString() : '',
@@ -119,6 +122,16 @@ export class PostController {
           }
         });
         param.commentFlag = commentFlag;
+        param.postType = difference(param.postType, [PostType.ATTACHMENT]);
+      }
+      if (original) {
+        original = typeof original === 'string' ? [original] : original;
+        original.forEach((v) => {
+          if (!['0', '1'].includes(v)) {
+            throw new BadRequestException(format(Message.PARAM_INVALID, 'original'));
+          }
+        });
+        param.original = original;
       }
     }
     let crumbs: BreadcrumbEntity[] = [];
@@ -162,20 +175,23 @@ export class PostController {
   @Get('archives')
   @Header('Content-Type', 'application/json')
   async getArchives(
-    @Query('postType', new TrimPipe()) postType: PostType,
+    @Query('postType', new TrimPipe()) postType: PostType | 'all',
     @Query('showCount', new ParseIntPipe(1)) showCount: number,
     @Query('limit', new ParseIntPipe(10)) limit: number,
     @Query('status', new TrimPipe()) status: PostStatus | PostStatus[],
     @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
   ) {
-    if (postType && ![PostType.POST, PostType.PAGE, PostType.ATTACHMENT].includes(postType)) {
+    postType = postType || PostType.POST;
+    if (![PostType.POST, PostType.PAGE, PostType.ATTACHMENT, 'all'].includes(postType)) {
       throw new BadRequestException(format(Message.PARAM_INVALID, 'postType'));
     }
-    postType = postType || PostType.POST;
     const fromAdmin = isAdmin && fa === '1';
+    if (!fromAdmin && postType !== PostType.POST) {
+      throw new UnauthorizedException();
+    }
     const params: PostArchivesQueryParam = {
-      postType,
+      postType: postType === 'all' ? [PostType.POST, PostType.PAGE, PostType.ATTACHMENT] : [postType],
       showCount: !!showCount,
       limit,
       isAdmin,

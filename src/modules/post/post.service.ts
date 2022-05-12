@@ -158,9 +158,7 @@ export class PostService {
         postStatus: {
           [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
         },
-        postType: {
-          [Op.eq]: postType
-        }
+        postType: postType
       },
       include: [{
         model: TaxonomyModel,
@@ -209,6 +207,7 @@ export class PostService {
 
   async getPosts(param: PostQueryParam): Promise<PostListVo> {
     const {
+      postType,
       isAdmin,
       keyword,
       fromAdmin,
@@ -218,18 +217,16 @@ export class PostService {
       month,
       status,
       commentFlag,
+      original,
       author,
       orders
     } = param;
     const pageSize = param.pageSize || 10;
-    const postType = param.postType || PostType.POST;
     const where = {
       postStatus: {
         [Op.in]: [PostStatus.PUBLISH, PostStatus.PASSWORD]
       },
-      postType: {
-        [Op.eq]: postType
-      }
+      postType: postType
     };
     if (fromAdmin) {
       if (status && status.length > 0) {
@@ -269,9 +266,10 @@ export class PostService {
       ];
     }
     if (author) {
-      where['postAuthor'] = {
-        [Op.eq]: author
-      };
+      where['postAuthor'] = author;
+    }
+    if (original) {
+      where['postOriginal'] = original;
     }
     const includeOpt: IncludeOptions[] = [];
     const includeTmp = {
@@ -288,7 +286,7 @@ export class PostService {
       },
       required: !!tag
     };
-    if (postType === PostType.POST) {
+    if (postType.includes(PostType.POST)) {
       includeOpt.push(includeTmp);
     }
     if (tag) {
@@ -296,7 +294,7 @@ export class PostService {
         includeOpt.push(includeTmp);
       }
       includeOpt[0].where['taxonomyType'] = {
-        [Op.in]: postType === PostType.POST ? [TaxonomyType.POST, TaxonomyType.TAG] : [TaxonomyType.TAG]
+        [Op.in]: postType.includes(PostType.POST) ? [TaxonomyType.POST, TaxonomyType.TAG] : [TaxonomyType.TAG]
       };
       includeOpt[0].where['taxonomySlug'] = {
         [Op.eq]: tag
