@@ -1,4 +1,15 @@
-import { BelongsTo, Column, CreatedAt, DataType, ForeignKey, Model, PrimaryKey, Sequelize, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Sequelize,
+  Table
+} from 'sequelize-typescript';
+import { VoteType } from '../common/common.enum';
 import { CommentModel } from './comment.model';
 import { PostModel } from './post.model';
 
@@ -30,6 +41,14 @@ export class VoteModel extends Model {
 
   @BelongsTo(() => PostModel)
   post: PostModel;
+
+  @Column({
+    field: 'object_type',
+    type: DataType.ENUM('post', 'comment'),
+    allowNull: false,
+    defaultValue: 'post'
+  })
+  objectType: VoteType;
 
   @Column({
     field: 'vote_count',

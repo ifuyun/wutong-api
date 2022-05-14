@@ -92,31 +92,45 @@ export class CommentService {
     });
   }
 
+  async getCommentsByIds(commentIds: string[]): Promise<CommentModel[]> {
+    return this.commentModel.findAll({
+      where: {
+        commentId: commentIds
+      },
+      include: [{
+        model: PostModel,
+        attributes: ['postId', 'postGuid', 'postTitle']
+      }],
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '评论查询失败',
+        data: { commentIds },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
+  }
+
   async getComments(param: CommentQueryParam): Promise<CommentListVo> {
     const { fromAdmin, postId, keyword, status, orders } = param;
     const pageSize = param.pageSize || 10;
-    const where = {
-      commentStatus: {
-        [Op.in]: [CommentStatus.NORMAL]
-      }
-    };
+    const where = {};
     if (postId) {
       where['postId'] = postId;
     }
     const limitOpt: FindOptions = {};
     if (fromAdmin) {
       if (status && status.length > 0) {
-        where['commentStatus'] = {
-          [Op.in]: status
-        };
-      } else {
-        delete where['commentStatus'];
+        where['commentStatus'] = status;
       }
       if (keyword) {
         where['commentContent'] = {
           [Op.like]: `%${keyword}%`
         };
       }
+    }
+    if (!where['commentStatus']) {
+      where['commentStatus'] = CommentStatus.NORMAL;
     }
     try {
       const total = await this.commentModel.count({ where });
@@ -202,6 +216,7 @@ export class CommentService {
   }
 
   async getRecentComments(limit?: number): Promise<CommentModel[]> {
+    // todo: replace with getComments
     return this.commentModel.findAll({
       where: {
         commentStatus: [CommentStatus.NORMAL, CommentStatus.PENDING]

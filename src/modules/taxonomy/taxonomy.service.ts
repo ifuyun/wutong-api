@@ -77,9 +77,8 @@ export class TaxonomyService {
   }
 
   async getTaxonomies(param: TaxonomyQueryParam): Promise<TaxonomyList> {
-    param.page = param.page || 1;
     const { type, status, keyword, orders } = param;
-    const pageSize = param.pageSize === 0 ? 0 : param.pageSize || 10;
+    const pageSize = param.pageSize === 0 ? 0 : (param.pageSize || 10);
     const where = {
       taxonomyType: type
     };
@@ -118,9 +117,7 @@ export class TaxonomyService {
       const taxonomies = await this.taxonomyModel.findAll(queryOpt);
 
       return {
-        taxonomies,
-        page: page || 1,
-        total: total || taxonomies.length
+        taxonomies, page, total
       };
     } catch (e) {
       this.logger.error({
@@ -311,9 +308,6 @@ export class TaxonomyService {
       taxonomySlug: {
         [Op.eq]: slug
       },
-      taxonomyStatus: {
-        [Op.eq]: TaxonomyStatus.PUBLISH
-      },
       taxonomyType: {
         [Op.eq]: type
       }
@@ -448,7 +442,7 @@ export class TaxonomyService {
         taxonomyStatus: TaxonomyStatus.TRASH
       };
       if (type === TaxonomyType.TAG) {
-        updateValue.object_count = 0;
+        updateValue.objectCount = 0;
       }
       await this.taxonomyModel.update(updateValue, {
         where: {

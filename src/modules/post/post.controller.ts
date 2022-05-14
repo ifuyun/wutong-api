@@ -325,6 +325,7 @@ export class PostController {
     if (!fromAdmin) {
       await this.postService.increasePostView(postId);
       post.postExcerpt = post.postExcerpt || truncateString(filterHtmlTag(post.postContent), POST_EXCERPT_LENGTH);
+      post.postViewCount += 1;
     }
 
     const postMeta: Record<string, string> = {};

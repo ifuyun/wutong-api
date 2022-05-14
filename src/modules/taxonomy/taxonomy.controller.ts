@@ -176,7 +176,7 @@ export class TaxonomyController {
     @Body(new TrimPipe()) removeDto: TaxonomyRemoveDto
   ) {
     const { taxonomyType, taxonomyIds } = removeDto;
-    const taxonomies = (await this.taxonomyService.getTaxonomiesByIds(taxonomyIds, true));
+    const taxonomies = await this.taxonomyService.getTaxonomiesByIds(taxonomyIds, true);
     if (taxonomies.length > 0) {
       throw new BadRequestException(
         format(Message.TAXONOMY_REQUIRED_CAN_NOT_BE_DELETED, taxonomies.map((item) => item.taxonomyName).join(', '))

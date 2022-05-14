@@ -374,9 +374,7 @@ export class PostService {
 
   async getPostById(postId: string, isAdmin?: boolean): Promise<PostModel> {
     let where: WhereOptions = {
-      postId: {
-        [Op.eq]: postId
-      }
+      postId: postId
     };
     if (!isAdmin) {
       where.postStatus = {
@@ -418,6 +416,26 @@ export class PostService {
       this.logger.error({
         message: e.message || '文章查询失败',
         data: { postId, isAdmin },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
+  }
+
+  async getPostsByIds(postIds: string[]): Promise<PostModel[]> {
+    return this.postModel.findAll({
+      where: {
+        postId: postIds
+      },
+      include: [{
+        model: PostMetaModel,
+        as: 'postMeta',
+        attributes: ['metaKey', 'metaValue']
+      }]
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '文章查询失败',
+        data: { postIds },
         stack: e.stack
       });
       throw new DbQueryErrorException();
@@ -674,6 +692,17 @@ export class PostService {
           objectId: data.newPostId,
           taxonomyId: taxonomyId
         }, {
+          transaction: t
+        });
+      }
+      if (latestTags.length > 0) {
+        await this.taxonomyModel.update({
+          taxonomyStatus: TaxonomyStatus.PUBLISH
+        }, {
+          where: {
+            taxonomyId: latestTags,
+            taxonomyStatus: TaxonomyStatus.TRASH
+          },
           transaction: t
         });
       }

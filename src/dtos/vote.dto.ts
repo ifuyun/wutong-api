@@ -31,6 +31,7 @@ export class BasicVoteDto {
 }
 
 export class AdditionalVoteDto {
+  objectType: VoteType;
   voteResult: number;
   userId: string;
   userIp: string;

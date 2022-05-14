@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { FindOptions, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { VoteType } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
@@ -11,6 +12,7 @@ import { CommentModel } from '../../models/comment.model';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { VoteModel } from '../../models/vote.model';
 import { LoggerService } from '../logger/logger.service';
+import { VoteList, VoteQueryParam } from './vote.interface';
 
 @Injectable()
 export class VoteService {
@@ -73,5 +75,56 @@ export class VoteService {
       });
       throw new DbQueryErrorException(Message.DB_QUERY_ERROR, ResponseCode.VOTE_FAILURE);
     });
+  }
+
+  async getVotes(param: VoteQueryParam): Promise<VoteList> {
+    const { type, ip, keyword, orders } = param;
+    const pageSize = param.pageSize || 10;
+    const where = {
+    };
+    if (type) {
+      where['objectType'] = type;
+    }
+    if (ip) {
+      where['userIp'] = ip;
+    }
+    if (keyword) {
+      where[Op.or] = [{
+        userIp: {
+          [Op.like]: `%${keyword}%`
+        }
+      }, {
+        userAgent: {
+          [Op.like]: `%${keyword}%`
+        }
+      }];
+    }
+    const queryOpt: FindOptions = {
+      where,
+      order: orders || [['voteCreated', 'desc']],
+      subQuery: false
+    };
+    try {
+      let total: number;
+      let page: number;
+      if (pageSize !== 0) {
+        total = await this.voteModel.count({ where });
+        page = Math.max(Math.min(param.page, Math.ceil(total / pageSize)), 1);
+        queryOpt.limit = pageSize;
+        queryOpt.offset = pageSize * (page - 1);
+      }
+      const votes = await this.voteModel.findAll(queryOpt);
+
+      return {
+        votes, page, total
+      };
+    } catch (e) {
+      this.logger.error({
+        message: e.message || '投票查询失败',
+        data: param,
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    }
   }
 }

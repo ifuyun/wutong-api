@@ -2,7 +2,7 @@ import { Order, OrderItem } from 'sequelize';
 import { Message } from '../common/message.enum';
 import { BadRequestException } from '../exceptions/bad-request.exception';
 
-export function getQueryOrders(sortFields: Record<string, number>, orders: string | string[]) {
+export function getQueryOrders(sortFields: Record<string, number>, orders: string | string[]): Order | null {
   orders = orders && (typeof orders === 'string' ? [orders] : orders) || [];
 
   const SORT_KEYS = Object.keys(sortFields);
@@ -18,5 +18,5 @@ export function getQueryOrders(sortFields: Record<string, number>, orders: strin
   });
   sortBy.sort((i, j) => sortFields[i[0]] - sortFields[j[0]]);
 
-  return sortBy;
+  return sortBy.length > 0 ? sortBy : null;
 }
