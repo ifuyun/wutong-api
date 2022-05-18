@@ -12,7 +12,6 @@ export class PostMetaService {
     private readonly postMetaModel: typeof PostMetaModel,
     private readonly logger: LoggerService
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
   }
 
   getPostMetaByPostIds(postIds: string[]): Promise<PostMetaModel[]> {

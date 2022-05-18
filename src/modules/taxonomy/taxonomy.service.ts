@@ -27,7 +27,6 @@ export class TaxonomyService {
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
   }
 
   generateTaxonomyTree(taxonomyData: TaxonomyModel[]): TaxonomyNode[] {

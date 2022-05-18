@@ -29,7 +29,6 @@ export class LinkService {
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
   }
 
   async getLinksByTaxonomy(taxonomyId: string, visible?: LinkScope | LinkScope[]): Promise<LinkModel[]> {
@@ -71,7 +70,9 @@ export class LinkService {
   async getFriendLinks(visible: LinkScope | LinkScope[]): Promise<LinkModel[]> {
     const friendOption = await this.optionService.getOptionByKey('friend_link_category');
     if (!friendOption.optionValue) {
-      throw new InternalServerErrorException(format(Message.OPTION_VALUE_MISSED, 'friend_link_category'));
+      throw new InternalServerErrorException(
+        format(Message.OPTION_VALUE_MISSED, 'friend_link_category'), ResponseCode.OPTIONS_MISSED
+      );
     }
     return this.getLinksByTaxonomy(friendOption.optionValue, visible);
   }

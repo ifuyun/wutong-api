@@ -10,9 +10,9 @@ export class LoggerService {
   accessLogger: Logger;
   sysLogger: Logger;
   dbLogger: Logger;
-  private logger: Logger;
 
-  logDay: string = moment().format('YYYY-MM-DD');
+  private logger: Logger;
+  private logDay = moment().format('YYYY-MM-DD');
 
   constructor(private readonly configService: ConfigService) {
     let appenders = {};
@@ -22,7 +22,7 @@ export class LoggerService {
         level: configService.get('app.logLevel')
       }
     };
-    for (let label in LogCategory) {
+    for (const label in LogCategory) {
       if (LogCategory.hasOwnProperty(label)) {
         const category = LogCategory[label];
         appenders[category] = {
@@ -48,21 +48,14 @@ export class LoggerService {
       categories
     });
 
-    for (let label in LogCategory) {
+    for (const label in LogCategory) {
       if (LogCategory.hasOwnProperty(label)) {
         const category = LogCategory[label];
         this[label] = getLogger(category);
         this[label].addContext('logDay', category + '/' + this.logDay);
       }
     }
-  }
-
-  setLogger(logger: Logger) {
-    this.logger = logger;
-  }
-
-  getLogger(): Logger {
-    return this.logger;
+    this.logger = this.sysLogger; // by default
   }
 
   updateContext() {

@@ -1,15 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import * as moment from 'moment';
 import { FindOptions, Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentFlag, CommentStatus } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
+import { ResponseCode } from '../../common/response-code.enum';
 import { CommentDto } from '../../dtos/comment.dto';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
-import { getUuid } from '../../helpers/helper';
+import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
+import { format, getUuid } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
+import { EmailService } from '../common/email.service';
 import { LoggerService } from '../logger/logger.service';
+import { OptionEntity } from '../option/option.interface';
+import { OptionService } from '../option/option.service';
 import { CommentListVo, CommentQueryParam } from './comment.interface';
 
 @Injectable()
@@ -19,16 +25,19 @@ export class CommentService {
     private readonly commentModel: typeof CommentModel,
     @InjectModel(PostModel)
     private readonly postModel: typeof PostModel,
+    private readonly optionService: OptionService,
+    private readonly emailService: EmailService,
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
   }
 
-  async saveComment(commentDto: CommentDto): Promise<boolean> {
+  async saveComment(commentDto: CommentDto): Promise<string> {
     return this.sequelize.transaction(async (t) => {
+      let commentId: string;
       if (!commentDto.commentId) {
-        commentDto.commentId = getUuid();
-        await this.commentModel.create({ ...commentDto }, {
+        commentId = getUuid();
+        await this.commentModel.create({ ...commentDto, commentId }, {
           transaction: t
         });
         const post = await this.postModel.findByPk(commentDto.postId);
@@ -66,7 +75,8 @@ export class CommentService {
           transaction: t
         });
       }
-    }).then(() => true).catch((e) => {
+      return commentId || commentDto.commentId;
+    }).then((commentId) => commentId).catch((e) => {
       this.logger.error({
         message: e.message || '评论保存失败',
         data: commentDto,
@@ -100,7 +110,7 @@ export class CommentService {
       include: [{
         model: PostModel,
         attributes: ['postId', 'postGuid', 'postTitle']
-      }],
+      }]
     }).catch((e) => {
       this.logger.error({
         message: e.message || '评论查询失败',
@@ -236,5 +246,65 @@ export class CommentService {
       });
       throw new DbQueryErrorException();
     });
+  }
+
+  async sendNotice(param: { commentId: string, parentId: string, isNew: boolean, post: PostModel, fromAdmin: boolean }) {
+    const { commentId, parentId, isNew, post, fromAdmin } = param;
+    const options = await this.optionService.getOptionByKeys(['admin_email', 'site_url']);
+    if (!options['admin_email'] || !options['site_url']) {
+      throw new InternalServerErrorException(
+        format(Message.OPTION_VALUE_MISSED, ['admin_email', 'site_url'].filter((item) => !options[item]).join(',')),
+        ResponseCode.OPTIONS_MISSED
+      );
+    }
+    if (isNew && !fromAdmin) {
+      await this.emailService.sendEmail({
+        to: options['admin_email'],
+        subject: '您有一条新评论',
+        ...await this.getEmailContent({
+          commentId, post, options, type: 'new'
+        })
+      });
+    }
+    if (parentId) {
+      const parentComment = await this.getCommentById(parentId);
+      await this.emailService.sendEmail({
+        to: parentComment.commentAuthorEmail,
+        subject: '您的评论有新的回复',
+        ...await this.getEmailContent({
+          commentId, post, options, type: 'reply'
+        })
+      });
+    }
+  }
+
+  private async getEmailContent(
+    param: { commentId: string, post: PostModel, options: OptionEntity, type: 'new' | 'reply' }
+  ) {
+    const { commentId, post, options, type } = param;
+    const comment = await this.getCommentById(commentId);
+    let texts: string[] = [];
+    if (type === 'reply') {
+      texts = [
+        `您在《${post.postTitle}》上的评论有新的回复。`,
+        `回复者：${comment.commentAuthor}`,
+        `回复内容：${comment.commentContent}`
+      ];
+    } else {
+      texts = [
+        `评论文章: ${post.postTitle}`,
+        `评论时间: ${moment(comment.commentCreated).format('YYYY-MM-DD HH:mm:ss')}`,
+        `评论者: ${comment.commentAuthor}`,
+        `评论内容: ${comment.commentContent}`,
+        `评论状态: ${comment.commentStatus}`
+      ];
+    }
+    const html = texts.map((text) => `<p>${text}</p>`).join('');
+    const link = `<a href="${options['site_url']}${post.postGuid}" target="_blank">立即回复</a>`;
+
+    return {
+      text: texts.join('\n'),
+      html: [html, '<br/>', link].join('\n')
+    };
   }
 }

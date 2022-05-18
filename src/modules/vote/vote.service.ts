@@ -26,7 +26,6 @@ export class VoteService {
     private readonly logger: LoggerService,
     private readonly sequelize: Sequelize
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
   }
 
   async saveVote(voteDto: VoteDto, type: VoteType): Promise<boolean> {

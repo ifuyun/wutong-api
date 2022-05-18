@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { CaptchaModule } from '../captcha/captcha.module';
+import { CommonModule } from '../common/common.module';
 import { DatabaseModule } from '../database/database.module';
 import { LoggerModule } from '../logger/logger.module';
 import { OptionModule } from '../option/option.module';
@@ -11,11 +12,12 @@ import { CommentService } from './comment.service';
 @Module({
   imports: [
     DatabaseModule,
-    forwardRef(() => PostModule),
+    LoggerModule,
+    CommonModule,
     OptionModule,
-    CaptchaModule,
     AuthModule,
-    LoggerModule
+    forwardRef(() => PostModule),
+    CaptchaModule
   ],
   controllers: [
     CommentController

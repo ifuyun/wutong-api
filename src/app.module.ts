@@ -10,6 +10,7 @@ import { ServeFileMiddleware } from './middlewares/serve-file.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { CaptchaModule } from './modules/captcha/captcha.module';
 import { CommentModule } from './modules/comment/comment.module';
+import { CommonModule } from './modules/common/common.module';
 import { LinkModule } from './modules/link/link.module';
 import { LoggerService } from './modules/logger/logger.service';
 import { OptionModule } from './modules/option/option.module';
@@ -31,6 +32,7 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
     }),
     AsyncValidatorModule,
     AuthModule,
+    CommonModule,
     PostModule,
     UserModule,
     CommentModule,

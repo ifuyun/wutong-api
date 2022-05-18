@@ -1,8 +1,11 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { Message } from '../common/message.enum';
+import { ResponseCode } from '../common/response-code.enum';
+import { InternalServerErrorException } from '../exceptions/internal-server-error.exception';
 import { NotFoundException } from '../exceptions/not-found.exception';
 import { CustomExceptionResponse } from '../exceptions/exception.interface';
+import { format } from '../helpers/helper';
 import { AuthService } from '../modules/auth/auth.service';
 import { LoggerService } from '../modules/logger/logger.service';
 import { OptionService } from '../modules/option/option.service';
@@ -16,7 +19,6 @@ export class ServeFileMiddleware implements NestMiddleware {
     private readonly authService: AuthService,
     private readonly logger: LoggerService,
   ) {
-    logger.setLogger(logger.sysLogger);
   }
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -31,6 +33,15 @@ export class ServeFileMiddleware implements NestMiddleware {
       return next(new NotFoundException(Message.FILE_NOT_FOUND));
     }
     const options = await this.optionService.getOptionByKeys(['upload_path', 'upload_url_prefix']);
+    if (!options['upload_path'] || !options['upload_url_prefix']) {
+      throw new InternalServerErrorException(
+        format(
+          Message.OPTION_VALUE_MISSED,
+          ['upload_path', 'upload_url_prefix'].filter((item) => !options[item]).join(',')
+        ),
+        ResponseCode.OPTIONS_MISSED
+      );
+    }
     const fileOptions = {
       root: options['upload_path'],
       maxAge: '1y'

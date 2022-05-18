@@ -68,7 +68,7 @@ export function getUuid() {
   const idLen = 16;
   const hex = 16;
   const timeBased = 1324806901760;// 2011-12-25 17:55:01
-  const timeStamp = new Date().getTime() - timeBased;
+  const timeStamp = Date.now() - timeBased;
   const uuid = timeStamp.toString(hex);
   let tmpStr = '';
 

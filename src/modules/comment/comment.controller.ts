@@ -123,6 +123,7 @@ export class CommentController {
     @Session() session: any
   ) {
     user = user || {};
+    let isNew = true;
     let commentData: CommentDto = {
       postId: commentDto.postId,
       commentId: commentDto.commentId,
@@ -141,6 +142,7 @@ export class CommentController {
         userId: user.userId || ''
       };
     } else {
+      isNew = false;
       if (isAdmin && commentDto.commentStatus) {
         commentData.commentStatus = commentDto.commentStatus;
       }
@@ -161,7 +163,15 @@ export class CommentController {
       commentData.commentStatus = CommentStatus.NORMAL;
     }
 
-    await this.commentService.saveComment(commentData);
+    const commentId = await this.commentService.saveComment(commentData);
+    await this.commentService.sendNotice({
+      commentId,
+      parentId: commentData.commentParent,
+      isNew,
+      post,
+      fromAdmin: isAdmin && commentDto.fa
+    });
+
     this.captchaService.removeCaptcha(req.session);
 
     return getSuccessResponse({

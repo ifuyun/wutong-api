@@ -44,7 +44,6 @@ import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CommentService } from '../comment/comment.service';
-import { LoggerService } from '../logger/logger.service';
 import { OptionService } from '../option/option.service';
 import { TaxonomyService } from '../taxonomy/taxonomy.service';
 import { WatermarkService } from '../util/watermark.service';
@@ -58,10 +57,8 @@ export class PostController {
     private readonly taxonomyService: TaxonomyService,
     private readonly commentService: CommentService,
     private readonly optionService: OptionService,
-    private readonly watermarkService: WatermarkService,
-    private readonly logger: LoggerService
+    private readonly watermarkService: WatermarkService
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
   }
 
   @Get()
@@ -454,26 +451,20 @@ export class PostController {
     const now = moment();
     const curYear = now.format('YYYY');
     const curMonth = now.format('MM');
-    const options = await this.optionService.getOptionByKeys([
-      'upload_path',
-      'upload_max_file_limit',
-      'upload_max_file_size',
-      'watermark_font_path',
-      'upload_url_prefix',
-      'site_name',
-      'site_domain'
-    ]);
-    const maxFileLimit = Number(options['upload_max_file_limit']);
-    const maxFileSize = Number(options['upload_max_file_size']);
-    if (!maxFileLimit || !maxFileSize || !options['watermark_font_path']) {
+    const keys = [
+      'upload_path', 'upload_max_file_limit', 'upload_max_file_size',
+      'watermark_font_path', 'upload_url_prefix', 'site_name', 'site_domain'
+    ];
+    const options = await this.optionService.getOptionByKeys(keys);
+    const nullKeys = keys.filter((key) => !options[key]);
+    if (nullKeys.length > 0) {
       throw new InternalServerErrorException(
-        format(
-          Message.OPTION_VALUE_MISSED,
-          ['upload_max_file_limit', 'upload_max_file_size', 'watermark_font_path']
-            .filter((item) => !options[item]).join(',')
-        )
+        format(Message.OPTION_VALUE_MISSED, nullKeys.join(',')), ResponseCode.OPTIONS_MISSED
       );
     }
+
+    const maxFileLimit = Number(options['upload_max_file_limit']);
+    const maxFileSize = Number(options['upload_max_file_size']);
     const uploadPath = path.join(options['upload_path'], curYear, curMonth);
     mkdirp.sync(uploadPath);
 

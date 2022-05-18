@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Header, Post, Query, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { CommentStatus, VoteType, VoteValue } from '../../common/common.enum';
+import { VoteType, VoteValue } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
 import { AuthUser } from '../../decorators/auth-user.decorator';
 import { IP } from '../../decorators/ip.decorator';

@@ -51,6 +51,7 @@ export class AdditionalCommentDto {
   commentIp?: string;
   commentAgent?: string;
   userId?: string;
+  fa?: boolean;
 }
 
 export class CommentDto extends IntersectionType(BasicCommentDto, AdditionalCommentDto) {

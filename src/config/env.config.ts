@@ -1,5 +1,5 @@
 /**
- * 返回环境信息
+ * 环境信息
  * @version 1.0.0
  * @since 1.0.0
  */
@@ -11,7 +11,6 @@ const ENV_CONFIG = () => ({
   isDev: environment === 'development',
   isProd: environment === 'production',
   isCluster: process.env.IS_CLUSTER?.toLowerCase().trim() === 'true',
-  isApiMode: true,
   serverIP: process.env.SERVER_IP.trim()
 });
 

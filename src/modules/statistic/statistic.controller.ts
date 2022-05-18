@@ -16,7 +16,6 @@ export class StatisticController {
     private readonly taxonomyService: TaxonomyService,
     private readonly logger: LoggerService
   ) {
-    this.logger.setLogger(this.logger.sysLogger);
   }
 
   @Get()

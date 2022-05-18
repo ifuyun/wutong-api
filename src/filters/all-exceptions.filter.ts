@@ -14,7 +14,6 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     private readonly configService: ConfigService,
     private readonly logger: LoggerService
   ) {
-    logger.setLogger(logger.sysLogger);
   }
 
   catch(exception: T, host: ArgumentsHost) {
