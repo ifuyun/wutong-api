@@ -15,6 +15,7 @@ import { TaxonomyModel } from '../../models/taxonomy.model';
 import { UserMetaModel } from '../../models/user-meta.model';
 import { UserModel } from '../../models/user.model';
 import { VPostViewAverageModel } from '../../models/v-post-view-average.model';
+import { VoteMetaModel } from '../../models/vote-meta.model';
 import { VoteModel } from '../../models/vote.model';
 import { LoggerModule } from '../logger/logger.module';
 import { LoggerService } from '../logger/logger.service';
@@ -42,6 +43,7 @@ import { DbConfigService } from './db-config.service';
       UserModel,
       UserMetaModel,
       VoteModel,
+      VoteMetaModel,
       VPostViewAverageModel
     ])
   ],

@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import APP_CONFIG from './config/app.config';
 import AUTH_CONFIG from './config/auth.config';
 import ENV_CONFIG from './config/env.config';
@@ -30,6 +31,11 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
       // todo: validationSchema
       load: [ENV_CONFIG, REDIS_CONFIG, APP_CONFIG, AUTH_CONFIG]
     }),
+    ThrottlerModule.forRoot({
+      ttl: 60, // 1 minutes
+      limit: 60, // 60 limit
+      ignoreUserAgents: [/googlebot/gi, /bingbot/gi, /baidubot/gi]
+    }),
     AsyncValidatorModule,
     AuthModule,
     CommonModule,
@@ -48,6 +54,10 @@ import { AsyncValidatorModule } from './validators/async/async-validator.module'
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
     },
     ConfigService,
     LoggerService

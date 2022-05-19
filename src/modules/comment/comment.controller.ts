@@ -11,6 +11,7 @@ import {
   UseGuards,
   UseInterceptors
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
 import { CommentFlag, CommentStatus, Role } from '../../common/common.enum';
@@ -111,6 +112,7 @@ export class CommentController {
     return getSuccessResponse();
   }
 
+  @Throttle(20, 60)
   @Post()
   @Header('Content-Type', 'application/json')
   async saveComment(

@@ -284,27 +284,32 @@ export class CommentService {
     const { commentId, post, options, type } = param;
     const comment = await this.getCommentById(commentId);
     let texts: string[] = [];
+    let postText = '';
+    let postLink = '';
     if (type === 'reply') {
+      postText = `您在《${post.postTitle}》上的评论有新的回复。`;
+      postLink = `您在<a href="${options['site_url']}${post.postGuid}" target="_blank">《${post.postTitle}》</a>上的评论有新的回复。`;
       texts = [
-        `您在《${post.postTitle}》上的评论有新的回复。`,
         `回复者：${comment.commentAuthor}`,
         `回复内容：${comment.commentContent}`
       ];
     } else {
+      postText = `评论文章: ${post.postTitle}`;
+      postLink = `评论文章: <a href="${options['site_url']}${post.postGuid}" target="_blank">${post.postTitle}</a>`;
       texts = [
-        `评论文章: ${post.postTitle}`,
         `评论时间: ${moment(comment.commentCreated).format('YYYY-MM-DD HH:mm:ss')}`,
         `评论者: ${comment.commentAuthor}`,
         `评论内容: ${comment.commentContent}`,
         `评论状态: ${comment.commentStatus}`
       ];
     }
-    const html = texts.map((text) => `<p>${text}</p>`).join('');
-    const link = `<a href="${options['site_url']}${post.postGuid}" target="_blank">立即回复</a>`;
+    const html = [postLink].concat(texts).map((text) => `<p>${text}</p>`).join('');
+    texts.unshift(postText);
+    const detailLink = `<a href="${options['site_url']}${post.postGuid}" target="_blank">立即回复 ${comment.commentAuthor}</a>`;
 
     return {
       text: texts.join('\n'),
-      html: [html, '<br/>', link].join('\n')
+      html: [html, '<br/>', detailLink].join('\n')
     };
   }
 }

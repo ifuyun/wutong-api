@@ -3,6 +3,8 @@ import { IsNotEmpty } from 'class-validator';
 import { VoteType, VoteValue } from '../common/common.enum';
 import { Message } from '../common/message.enum';
 import { format } from '../helpers/helper';
+import { IPLocation } from '../modules/common/ip.interface';
+import { Guest } from '../modules/user/user.interface';
 import { IsId } from '../validators/is-id.validator';
 import { IsIncludedIn } from '../validators/is-included-in.validator';
 
@@ -33,8 +35,10 @@ export class BasicVoteDto {
 export class AdditionalVoteDto {
   objectType: VoteType;
   voteResult: number;
+  user: Guest | null;
   userId: string;
   userIp: string;
+  userLocation?: IPLocation | null;
   userAgent: string;
   voteCreated?: Date;
 }

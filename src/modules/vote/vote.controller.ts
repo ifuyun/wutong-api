@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, Post, Query, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { VoteType, VoteValue } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
@@ -7,12 +8,13 @@ import { IP } from '../../decorators/ip.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
 import { VoteDto } from '../../dtos/vote.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { format } from '../../helpers/helper';
+import { format, getUuid } from '../../helpers/helper';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CommentService } from '../comment/comment.service';
+import { IpService } from '../common/ip.service';
 import { PostMetaService } from '../post/post-meta.service';
 import { PostService } from '../post/post.service';
 import { VoteEntity, VoteQueryParam } from './vote.interface';
@@ -24,10 +26,12 @@ export class VoteController {
     private readonly voteService: VoteService,
     private readonly commentService: CommentService,
     private readonly postMetaService: PostMetaService,
-    private readonly postService: PostService
+    private readonly postService: PostService,
+    private readonly ipService: IpService
   ) {
   }
 
+  @Throttle(20, 60)
   @Post()
   @Header('Content-Type', 'application/json')
   async saveVote(
@@ -39,18 +43,25 @@ export class VoteController {
   ) {
     user = user || {};
     const voteData: VoteDto = {
+      voteId: getUuid(),
       objectId: voteDto.objectId,
       objectType: voteDto.type,
       voteResult: voteDto.value === VoteValue.LIKE ? 1 : -1,
+      user: voteDto.user,
       userId: user.userId || '',
       userIp: ip,
-      userAgent: agent
+      userLocation: await this.ipService.queryLocation(ip),
+      userAgent: agent,
+      voteCreated: new Date()
     };
     await this.voteService.saveVote(voteData, voteDto.type);
     let voteCount = 0;
     if (voteDto.type === VoteType.COMMENT) {
-      voteCount = (await this.commentService.getCommentById(voteData.objectId)).commentVote;
+      const comment = await this.commentService.getCommentById(voteData.objectId);
+      await this.voteService.sendNotice(voteData, comment);
+      voteCount = comment.commentVote;
     } else {
+      await this.voteService.sendNotice(voteData);
       const postVote = await this.postMetaService.getPostMetaByPostId(voteData.objectId, 'post_vote');
       voteCount = Number(postVote[0]?.metaValue) || 0;
     }

@@ -4,6 +4,7 @@ import {
   CreatedAt,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
   Sequelize,
@@ -12,6 +13,7 @@ import {
 import { VoteType } from '../common/common.enum';
 import { CommentModel } from './comment.model';
 import { PostModel } from './post.model';
+import { VoteMetaModel } from './vote-meta.model';
 
 @Table({
   tableName: 'votes',
@@ -26,6 +28,9 @@ export class VoteModel extends Model {
     allowNull: false
   })
   voteId: string;
+
+  @HasMany(() => VoteMetaModel)
+  voteMeta: VoteMetaModel[];
 
   @ForeignKey(() => CommentModel)
   @ForeignKey(() => PostModel)
