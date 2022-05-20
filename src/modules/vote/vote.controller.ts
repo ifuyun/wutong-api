@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Header, Post, Query, Req } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { VoteType, VoteValue } from '../../common/common.enum';
@@ -27,6 +28,7 @@ export class VoteController {
     private readonly commentService: CommentService,
     private readonly postMetaService: PostMetaService,
     private readonly postService: PostService,
+    private readonly configService: ConfigService,
     private readonly ipService: IpService
   ) {
   }
@@ -50,7 +52,7 @@ export class VoteController {
       user: voteDto.user,
       userId: user.userId || '',
       userIp: ip,
-      userLocation: await this.ipService.queryLocation(ip),
+      userLocation: this.configService.get('env.isProd') ? await this.ipService.queryLocation(ip) : null,
       userAgent: agent,
       voteCreated: new Date()
     };

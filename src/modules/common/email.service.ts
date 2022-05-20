@@ -23,6 +23,9 @@ export class EmailService {
   }
 
   public async sendEmail(emailOptions: EmailOptions, prefix: string | boolean = true): Promise<boolean> {
+    if (this.configService.get('env.isDev')) { // ignore in development
+      return true;
+    }
     if (typeof prefix === 'boolean' && prefix) { // default prefix
       prefix = this.configService.get('app.emailSubjectPrefix');
     }
