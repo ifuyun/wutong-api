@@ -9,13 +9,14 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { VoteDto } from '../../dtos/vote.dto';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
-import { format, getUuid } from '../../helpers/helper';
+import { format, generateId } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
 import { VoteMetaModel } from '../../models/vote-meta.model';
 import { VoteModel } from '../../models/vote.model';
 import { EmailService } from '../common/email.service';
+import { IPLocation } from '../common/ip.interface';
 import { LoggerService } from '../logger/logger.service';
 import { OptionEntity } from '../option/option.interface';
 import { OptionService } from '../option/option.service';
@@ -41,18 +42,18 @@ export class VoteService {
   ) {
   }
 
-  async saveVote(voteDto: VoteDto, type: VoteType): Promise<boolean> {
+  async saveVote(voteDto: VoteDto, type: VoteType, userLocation: IPLocation | null): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
       if (type === VoteType.COMMENT) {
         if (voteDto.voteResult > 0) {
-          await this.commentModel.increment({ commentVote: 1 }, {
+          await this.commentModel.increment({ commentLikes: 1 }, {
             where: {
               commentId: voteDto.objectId
             },
             transaction: t
           });
         } else {
-          await this.commentModel.decrement({ commentVote: 1 }, {
+          await this.commentModel.increment({ commentDislikes: 1 }, {
             where: {
               commentId: voteDto.objectId
             },
@@ -68,7 +69,7 @@ export class VoteService {
         });
         let voteCount = Number(postVote?.metaValue) || 0;
         voteCount = voteDto.voteResult > 0 ? voteCount + 1 : voteCount - 1;
-        const metaId = postVote?.metaId || getUuid();
+        const metaId = postVote?.metaId || generateId();
         await this.postMetaModel.upsert({
           metaId: metaId,
           postId: voteDto.objectId,
@@ -80,18 +81,18 @@ export class VoteService {
       await this.voteModel.create({ ...voteDto }, { transaction: t });
       if (voteDto.user && !voteDto.userId) {
         await this.voteMetaModel.create({
-          metaId: getUuid(),
+          metaId: generateId(),
           voteId: voteDto.voteId,
           metaKey: 'user_info',
           metaValue: JSON.stringify(voteDto.user)
         }, { transaction: t });
       }
-      if (voteDto.userLocation) {
+      if (userLocation) {
         await this.voteMetaModel.create({
-          metaId: getUuid(),
+          metaId: generateId(),
           voteId: voteDto.voteId,
           metaKey: 'user_location',
-          metaValue: JSON.stringify(voteDto.userLocation)
+          metaValue: JSON.stringify(userLocation)
         }, { transaction: t });
       }
     }).then(() => true).catch((e) => {
@@ -154,7 +155,7 @@ export class VoteService {
     }
   }
 
-  async sendNotice(voteData: VoteDto, comment?: CommentModel) {
+  async sendNotice(voteData: VoteDto, userLocation: IPLocation | null, comment?: CommentModel) {
     const options = await this.optionService.getOptionByKeys(['admin_email', 'site_url']);
     if (!options['admin_email'] || !options['site_url']) {
       throw new InternalServerErrorException(
@@ -168,13 +169,13 @@ export class VoteService {
         to: options['admin_email'],
         subject: `文章《${post.postTitle}》有新的点赞`,
         ...await this.getEmailContent({
-          voteData, post, comment, options
+          voteData, post, comment, options, userLocation
         })
       });
     } else {
       const post = await this.postService.getPostById(comment.postId);
       const content = await this.getEmailContent({
-        voteData, post, comment, options
+        voteData, post, comment, options, userLocation
       });
       await this.emailService.sendEmail({
         to: options['admin_email'],
@@ -182,24 +183,26 @@ export class VoteService {
         ...content
       });
       await this.emailService.sendEmail({
-        to: comment.commentAuthorEmail,
+        to: comment.authorEmail,
         subject: `您在文章《${post.postTitle}》上的评论有新的投票`,
         ...content
       });
     }
   }
 
-  getEmailContent(
-    param: { voteData: VoteDto, post: PostModel, comment: CommentModel, options: OptionEntity }
-  ) {
-    const {voteData, post, comment, options} = param;
+  getEmailContent(param: {
+    voteData: VoteDto,
+    post: PostModel,
+    comment: CommentModel,
+    options: OptionEntity,
+    userLocation: IPLocation | null
+  }) {
+    const { voteData, post, comment, options, userLocation } = param;
     let texts: string[] = [];
     if (voteData.objectType === VoteType.COMMENT) {
       texts.push(`评论: ${comment.commentContent}`);
     }
-    let from = voteData.userLocation ? [
-      voteData.userLocation.country, voteData.userLocation.region, voteData.userLocation.city
-    ].join(' · ') : '未知地区';
+    let from = userLocation ? [userLocation.country, userLocation.region, userLocation.city].join(' · ') : '未知地区';
     if (voteData.user && voteData.user.name) {
       from += ` 的 ${voteData.user.name}`;
     }

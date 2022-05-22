@@ -38,7 +38,6 @@ export class AdditionalVoteDto {
   user: Guest | null;
   userId: string;
   userIp: string;
-  userLocation?: IPLocation | null;
   userAgent: string;
   voteCreated?: Date;
 }

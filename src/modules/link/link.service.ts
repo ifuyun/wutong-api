@@ -8,7 +8,7 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { LinkDto } from '../../dtos/link.dto';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
-import { format, getUuid } from '../../helpers/helper';
+import { format, generateId } from '../../helpers/helper';
 import { LinkListVo, LinkQueryParam } from './link.interface';
 import { LinkModel } from '../../models/link.model';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
@@ -166,7 +166,7 @@ export class LinkService {
   async saveLink(linkDto: LinkDto): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
       if (!linkDto.linkId) {
-        linkDto.linkId = getUuid();
+        linkDto.linkId = generateId();
         await this.linkModel.create({ ...linkDto }, { transaction: t });
         await this.taxonomyModel.increment({ count: 1 }, {
           where: {

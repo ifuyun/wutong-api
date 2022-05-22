@@ -10,7 +10,7 @@ import { Message } from '../../common/message.enum';
 import { ResponseCode } from '../../common/response-code.enum';
 import { PostDto, PostFileDto } from '../../dtos/post.dto';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
-import { filterHtmlTag, getUuid, truncateString } from '../../helpers/helper';
+import { filterHtmlTag, generateId, truncateString } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
 import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
@@ -672,7 +672,7 @@ export class PostService {
       }
       for (const tag of data.postTags) {
         const result = await this.taxonomyService.checkTaxonomySlugExist(tag, TaxonomyType.TAG);
-        let taxonomyId = getUuid();
+        let taxonomyId = generateId();
         if (result.isExist) {
           taxonomyId = result.taxonomy.taxonomyId;
           latestTags.push(taxonomyId);

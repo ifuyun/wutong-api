@@ -25,12 +25,16 @@ export class BasicCommentDto {
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
   commentParent?: string;
 
-  @IsNotEmpty({ message: '昵称不能为空' })
-  commentAuthor?: string;
+  @IsCommentExist({ message: '回复的评论不存在' })
+  @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
+  commentTop?: string;
 
-  @IsEmail({ allow_display_name: false }, { message: 'Email输入不正确' })
-  @IsNotEmpty({ message: 'Email不能为空' })
-  commentAuthorEmail?: string;
+  @IsNotEmpty({ message: '昵称不能为空' })
+  authorName?: string;
+
+  @IsEmail({ allow_display_name: false }, { message: '邮箱输入不正确' })
+  @IsNotEmpty({ message: '邮箱不能为空' })
+  authorEmail?: string;
 
   @MaxLength(COMMENT_LENGTH, { message: '评论内容最大长度为$constraint1个字符' })
   @IsRequired({ message: '评论内容不能为空' })
@@ -48,8 +52,9 @@ export class BasicCommentDto {
 
 export class AdditionalCommentDto {
   captchaCode?: string;
-  commentIp?: string;
-  commentAgent?: string;
+  authorEmailHash?: string;
+  authorIp?: string;
+  authorUserAgent?: string;
   userId?: string;
   fa?: boolean;
 }

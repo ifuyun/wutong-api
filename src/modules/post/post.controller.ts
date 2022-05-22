@@ -36,7 +36,7 @@ import { InternalServerErrorException } from '../../exceptions/internal-server-e
 import { NotFoundException } from '../../exceptions/not-found.exception';
 import { UnauthorizedException } from '../../exceptions/unauthorized.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { filterHtmlTag, format, getFileExt, getUuid, truncateString } from '../../helpers/helper';
+import { filterHtmlTag, format, getFileExt, generateId, truncateString } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
@@ -354,7 +354,7 @@ export class PostController {
     @Body(new TrimPipe()) postDto: PostDto,
     @AuthUser() user
   ) {
-    const newPostId = postDto.postId || getUuid();
+    const newPostId = postDto.postId || generateId();
     const postData: PostDto = {
       postId: postDto.postId,
       postTitle: xss.sanitize(postDto.postTitle),
@@ -410,7 +410,7 @@ export class PostController {
       metaValue.push(['post_author', postDto.postAuthor]);
     }
     const metaData = metaValue.map((item) => ({
-      metaId: getUuid(),
+      metaId: generateId(),
       postId: newPostId,
       metaKey: item[0],
       metaValue: item[1]
@@ -487,7 +487,7 @@ export class PostController {
         fileList.forEach((file) => {
           const originalName = file.originalFilename;
           const fileExt = getFileExt(originalName);
-          const id = getUuid();
+          const id = generateId();
           const fileName = id + fileExt;
           const filePath = path.join(uploadPath, fileName);
           fs.renameSync(file.filepath, filePath);

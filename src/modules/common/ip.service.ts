@@ -14,7 +14,7 @@ export class IpService {
 
   async queryLocationFromAPI1(ip: string): Promise<IPLocation> {
     try {
-      const data = (await lastValueFrom(this.httpService.get(`http://ip-api.com/json/${ip}?lang=zh-CN`))).data;
+      const data = (await lastValueFrom(this.httpService.get(`http://ip-api.com/json/${ip}`))).data;
       if (data.status !== 'success') {
         this.logger.warn({
           message: `[IP Query] from ip-api.com failed: ${data.message}`,
@@ -33,7 +33,8 @@ export class IpService {
         zipCode: data.zip,
         latitude: data.lat,
         longitude: data.lon,
-        ISP: data.isp
+        ISP: data.isp,
+        org: data.org
       };
     } catch (e) {
       const message = e.message || 'unknown error';
@@ -57,16 +58,17 @@ export class IpService {
       }
       return {
         IP: ip,
-        country: data.country,
-        countryCode: data.countryCode,
-        region: data.regionName,
-        regionCode: data.region,
+        country: data.country_name,
+        countryCode: data.country_code,
+        region: data.region,
+        regionCode: data.region_code,
         city: data.city,
-        district: data.district,
-        zipCode: data.zip,
-        latitude: data.lat,
-        longitude: data.lon,
-        ISP: data.isp
+        district: '',
+        zipCode: data.postal,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        ISP: data.org,
+        org: data.org
       };
     } catch (e) {
       const message = e.message || 'unknown error';

@@ -11,7 +11,7 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { TaxonomyDto } from '../../dtos/taxonomy.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
-import { format, getUuid } from '../../helpers/helper';
+import { format, generateId } from '../../helpers/helper';
 import { TaxonomyRelationshipModel } from '../../models/taxonomy-relationship.model';
 import { TaxonomyModel } from '../../models/taxonomy.model';
 import { LoggerService } from '../logger/logger.service';
@@ -354,7 +354,7 @@ export class TaxonomyService {
 
   async saveTaxonomy(taxonomyDto: TaxonomyDto): Promise<boolean> {
     if (!taxonomyDto.taxonomyId) {
-      taxonomyDto.taxonomyId = getUuid();
+      taxonomyDto.taxonomyId = generateId();
       return this.taxonomyModel.create({ ...taxonomyDto }).then((taxonomy) => Promise.resolve(true));
     }
     return this.sequelize.transaction(async (t) => {

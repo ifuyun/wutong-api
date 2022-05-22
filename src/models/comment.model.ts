@@ -46,41 +46,49 @@ export class CommentModel extends Model {
   @Column({
     type: DataType.TEXT,
     allowNull: false,
-    field: 'comment_author'
+    field: 'author_name'
   })
-  commentAuthor: string;
+  authorName: string;
 
   @Column({
     type: DataType.STRING(100),
     allowNull: false,
     defaultValue: '',
-    field: 'comment_author_email'
+    field: 'author_email'
   })
-  commentAuthorEmail: string;
+  authorEmail: string;
+
+  @Column({
+    type: DataType.STRING(64),
+    allowNull: false,
+    defaultValue: '',
+    field: 'author_email_hash'
+  })
+  authorEmailHash: string;
 
   @Column({
     type: DataType.STRING(200),
     allowNull: false,
     defaultValue: '',
-    field: 'comment_author_link'
+    field: 'author_link'
   })
-  commentAuthorLink: string;
+  authorLink: string;
 
   @Column({
     type: DataType.STRING(100),
     allowNull: false,
     defaultValue: '',
-    field: 'comment_ip'
+    field: 'author_ip'
   })
-  commentIp: string;
+  authorIp: string;
 
   @Column({
     type: DataType.STRING(255),
     allowNull: false,
     defaultValue: '',
-    field: 'comment_agent'
+    field: 'author_user_agent'
   })
-  commentAgent: string;
+  authorUserAgent: string;
 
   @Column({
     field: 'comment_status',
@@ -107,15 +115,34 @@ export class CommentModel extends Model {
   commentParent: string;
 
   @Column({
+    type: DataType.CHAR(16),
+    allowNull: false,
+    defaultValue: '',
+    field: 'comment_top'
+  })
+  commentTop: string;
+
+  @Column({
     type: DataType.INTEGER({
       length: 10,
       unsigned: true
     }),
     allowNull: false,
     defaultValue: 0,
-    field: 'comment_vote'
+    field: 'comment_likes'
   })
-  commentVote: number;
+  commentLikes: number;
+
+  @Column({
+    type: DataType.INTEGER({
+      length: 10,
+      unsigned: true
+    }),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'comment_dislikes'
+  })
+  commentDislikes: number;
 
   @CreatedAt
   @Column({

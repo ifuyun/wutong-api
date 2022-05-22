@@ -9,7 +9,7 @@ import { IP } from '../../decorators/ip.decorator';
 import { UserAgent } from '../../decorators/user-agent.decorator';
 import { VoteDto } from '../../dtos/vote.dto';
 import { BadRequestException } from '../../exceptions/bad-request.exception';
-import { format, getUuid } from '../../helpers/helper';
+import { format, generateId } from '../../helpers/helper';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
@@ -45,32 +45,34 @@ export class VoteController {
   ) {
     user = user || {};
     const voteData: VoteDto = {
-      voteId: getUuid(),
+      voteId: generateId(),
       objectId: voteDto.objectId,
       objectType: voteDto.type,
       voteResult: voteDto.value === VoteValue.LIKE ? 1 : -1,
       user: voteDto.user,
       userId: user.userId || '',
       userIp: ip,
-      userLocation: this.configService.get('env.isProd') ? await this.ipService.queryLocation(ip) : null,
       userAgent: agent,
       voteCreated: new Date()
     };
-    await this.voteService.saveVote(voteData, voteDto.type);
-    let voteCount = 0;
+    const userLocation = this.configService.get('env.isProd') ? await this.ipService.queryLocation(ip) : null;
+    await this.voteService.saveVote(voteData, voteDto.type, userLocation);
+    const response = {
+      likes: 0,
+      dislikes: 0
+    };
     if (voteDto.type === VoteType.COMMENT) {
       const comment = await this.commentService.getCommentById(voteData.objectId);
-      await this.voteService.sendNotice(voteData, comment);
-      voteCount = comment.commentVote;
+      await this.voteService.sendNotice(voteData, userLocation, comment);
+      response.likes = comment.commentLikes;
+      response.dislikes = comment.commentDislikes;
     } else {
-      await this.voteService.sendNotice(voteData);
+      await this.voteService.sendNotice(voteData, userLocation);
       const postVote = await this.postMetaService.getPostMetaByPostId(voteData.objectId, 'post_vote');
-      voteCount = Number(postVote[0]?.metaValue) || 0;
+      response.likes = Number(postVote[0]?.metaValue) || 0;
     }
 
-    return getSuccessResponse({
-      vote: voteCount
-    });
+    return getSuccessResponse(response);
   }
 
   @Get()

@@ -63,20 +63,20 @@ export function getMd5(value: string) {
  * @version 1.0.0
  * @since 1.0.0
  */
-export function getUuid() {
+export function generateId() {
   // 1e12 + 0x4ba0000000
   const idLen = 16;
   const hex = 16;
   const timeBased = 1324806901760;// 2011-12-25 17:55:01
   const timeStamp = Date.now() - timeBased;
-  const uuid = timeStamp.toString(hex);
-  let tmpStr = '';
+  const id = timeStamp.toString(hex);
+  let randomStr = '';
 
-  for (let idx = 0; idx < idLen - uuid.length; idx += 1) {
-    tmpStr += Math.floor(Math.random() * hex).toString(hex);
+  for (let idx = 0; idx < idLen - id.length; idx += 1) {
+    randomStr += Math.floor(Math.random() * hex).toString(hex);
   }
 
-  return uuid + tmpStr;
+  return id + randomStr;
 }
 
 export function getFileExt(fileName: string): string {

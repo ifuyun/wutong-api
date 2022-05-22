@@ -10,4 +10,5 @@ export interface IPLocation {
   latitude: number;
   longitude: number;
   ISP: string;
+  org: string;
 }

@@ -11,6 +11,7 @@ import {
   UseGuards,
   UseInterceptors
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import * as xss from 'sanitizer';
@@ -29,13 +30,14 @@ import { BadRequestException } from '../../exceptions/bad-request.exception';
 import { CustomException } from '../../exceptions/custom.exception';
 import { ForbiddenException } from '../../exceptions/forbidden.exception';
 import { RolesGuard } from '../../guards/roles.guard';
-import { format } from '../../helpers/helper';
+import { format, getMd5, generateId } from '../../helpers/helper';
 import { CheckIdInterceptor } from '../../interceptors/check-id.interceptor';
 import { ParseIntPipe } from '../../pipes/parse-int.pipe';
 import { TrimPipe } from '../../pipes/trim.pipe';
 import { getQueryOrders } from '../../transformers/query-orders.transformers';
 import { getSuccessResponse } from '../../transformers/response.transformers';
 import { CaptchaService } from '../captcha/captcha.service';
+import { IpService } from '../common/ip.service';
 import { PostService } from '../post/post.service';
 import { CommentAuditParam, CommentQueryParam } from './comment.interface';
 import { CommentService } from './comment.service';
@@ -45,7 +47,9 @@ export class CommentController {
   constructor(
     private readonly commentService: CommentService,
     private readonly postService: PostService,
-    private readonly captchaService: CaptchaService
+    private readonly captchaService: CaptchaService,
+    private readonly configService: ConfigService,
+    private readonly ipService: IpService
   ) {
   }
 
@@ -86,7 +90,7 @@ export class CommentController {
     }
     if (fromAdmin && orders.length > 0) {
       param.orders = getQueryOrders({
-        commentVote: 1,
+        commentLikes: 1,
         commentCreated: 2
       }, orders);
     }
@@ -134,13 +138,17 @@ export class CommentController {
       captchaCode: commentDto.captchaCode || ''
     };
     if (!commentDto.commentId) {
+      const commentId = generateId();
       commentData = {
         ...commentData,
-        commentAuthor: xss.sanitize(commentDto.commentAuthor || '') || user.userNiceName || '',
-        commentAuthorEmail: xss.sanitize(commentDto.commentAuthorEmail || '') || user.userEmail || '',
+        commentId,
+        commentTop: commentDto.commentTop || commentId,
+        authorName: xss.sanitize(commentDto.authorName),
+        authorEmail: commentDto.authorEmail,
+        authorEmailHash: getMd5(commentDto.authorEmail.toLowerCase()),
         commentStatus: isAdmin ? CommentStatus.NORMAL : CommentStatus.PENDING,
-        commentIp: ip,
-        commentAgent: agent,
+        authorIp: ip,
+        authorUserAgent: agent,
         userId: user.userId || ''
       };
     } else {
@@ -165,9 +173,10 @@ export class CommentController {
       commentData.commentStatus = CommentStatus.NORMAL;
     }
 
-    const commentId = await this.commentService.saveComment(commentData);
+    const userLocation = this.configService.get('env.isProd') ? await this.ipService.queryLocation(ip) : null;
+    await this.commentService.saveComment(commentData, isNew, userLocation);
     await this.commentService.sendNotice({
-      commentId,
+      commentId: commentData.commentId,
       parentId: commentData.commentParent,
       isNew,
       post,

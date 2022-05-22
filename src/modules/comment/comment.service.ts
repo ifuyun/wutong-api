@@ -9,10 +9,12 @@ import { ResponseCode } from '../../common/response-code.enum';
 import { CommentDto } from '../../dtos/comment.dto';
 import { DbQueryErrorException } from '../../exceptions/db-query-error.exception';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
-import { format, getUuid } from '../../helpers/helper';
+import { format, generateId } from '../../helpers/helper';
+import { CommentMetaModel } from '../../models/comment-meta.model';
 import { CommentModel } from '../../models/comment.model';
 import { PostModel } from '../../models/post.model';
 import { EmailService } from '../common/email.service';
+import { IPLocation } from '../common/ip.interface';
 import { LoggerService } from '../logger/logger.service';
 import { OptionEntity } from '../option/option.interface';
 import { OptionService } from '../option/option.service';
@@ -23,6 +25,8 @@ export class CommentService {
   constructor(
     @InjectModel(CommentModel)
     private readonly commentModel: typeof CommentModel,
+    @InjectModel(CommentMetaModel)
+    private readonly commentMetaModel: typeof CommentMetaModel,
     @InjectModel(PostModel)
     private readonly postModel: typeof PostModel,
     private readonly optionService: OptionService,
@@ -32,12 +36,10 @@ export class CommentService {
   ) {
   }
 
-  async saveComment(commentDto: CommentDto): Promise<string> {
+  async saveComment(commentDto: CommentDto, isNew: boolean, userLocation: IPLocation | null): Promise<boolean> {
     return this.sequelize.transaction(async (t) => {
-      let commentId: string;
-      if (!commentDto.commentId) {
-        commentId = getUuid();
-        await this.commentModel.create({ ...commentDto, commentId }, {
+      if (isNew) {
+        await this.commentModel.create({ ...commentDto }, {
           transaction: t
         });
         const post = await this.postModel.findByPk(commentDto.postId);
@@ -48,6 +50,14 @@ export class CommentService {
             },
             transaction: t
           });
+        }
+        if (userLocation) {
+          await this.commentMetaModel.create({
+            metaId: generateId(),
+            commentId: commentDto.commentId,
+            metaKey: 'user_location',
+            metaValue: JSON.stringify(userLocation)
+          }, { transaction: t });
         }
       } else {
         const comment = await this.commentModel.findByPk(commentDto.commentId);
@@ -75,8 +85,7 @@ export class CommentService {
           transaction: t
         });
       }
-      return commentId || commentDto.commentId;
-    }).then((commentId) => commentId).catch((e) => {
+    }).then(() => true).catch((e) => {
       this.logger.error({
         message: e.message || '评论保存失败',
         data: commentDto,
@@ -139,7 +148,7 @@ export class CommentService {
         };
       }
     }
-    if (!where['commentStatus']) {
+    if (!where['commentStatus'] && !fromAdmin) {
       where['commentStatus'] = CommentStatus.NORMAL;
     }
     try {
@@ -150,11 +159,21 @@ export class CommentService {
         limitOpt['limit'] = pageSize;
         limitOpt['offset'] = pageSize * (page - 1);
       }
+      let excluded: string[] = [];
+      if (!fromAdmin) {
+        excluded = ['authorEmail', 'authorIp', 'authorUserAgent', 'commentStatus', 'userId', 'commentModified'];
+      }
       const comments = await this.commentModel.findAll({
+        attributes: {
+          exclude: excluded
+        },
         where,
         include: [{
           model: PostModel,
           attributes: ['postId', 'postGuid', 'postTitle']
+        }, {
+          model: CommentMetaModel,
+          attributes: ['commentId', 'metaKey', 'metaValue']
         }],
         order: orders || [['commentCreated', 'desc']],
         subQuery: false,
@@ -269,7 +288,7 @@ export class CommentService {
     if (parentId) {
       const parentComment = await this.getCommentById(parentId);
       await this.emailService.sendEmail({
-        to: parentComment.commentAuthorEmail,
+        to: parentComment.authorEmail,
         subject: '您的评论有新的回复',
         ...await this.getEmailContent({
           commentId, post, options, type: 'reply'
@@ -290,7 +309,7 @@ export class CommentService {
       postText = `您在《${post.postTitle}》上的评论有新的回复。`;
       postLink = `您在<a href="${options['site_url']}${post.postGuid}" target="_blank">《${post.postTitle}》</a>上的评论有新的回复。`;
       texts = [
-        `回复者：${comment.commentAuthor}`,
+        `回复者：${comment.authorName}`,
         `回复内容：${comment.commentContent}`
       ];
     } else {
@@ -298,14 +317,14 @@ export class CommentService {
       postLink = `评论文章: <a href="${options['site_url']}${post.postGuid}" target="_blank">${post.postTitle}</a>`;
       texts = [
         `评论时间: ${moment(comment.commentCreated).format('YYYY-MM-DD HH:mm:ss')}`,
-        `评论者: ${comment.commentAuthor}`,
+        `评论者: ${comment.authorName}`,
         `评论内容: ${comment.commentContent}`,
         `评论状态: ${comment.commentStatus}`
       ];
     }
     const html = [postLink].concat(texts).map((text) => `<p>${text}</p>`).join('');
     texts.unshift(postText);
-    const detailLink = `<a href="${options['site_url']}${post.postGuid}" target="_blank">立即回复 ${comment.commentAuthor}</a>`;
+    const detailLink = `<a href="${options['site_url']}${post.postGuid}" target="_blank">立即回复 ${comment.authorName}</a>`;
 
     return {
       text: texts.join('\n'),
