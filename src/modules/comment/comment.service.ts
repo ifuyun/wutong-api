@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as moment from 'moment';
-import { FindOptions, Op } from 'sequelize';
+import { FindOptions, Op, Order } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentFlag, CommentStatus } from '../../common/common.enum';
 import { Message } from '../../common/message.enum';
@@ -18,7 +18,7 @@ import { IPLocation } from '../common/ip.interface';
 import { LoggerService } from '../logger/logger.service';
 import { OptionEntity } from '../option/option.interface';
 import { OptionService } from '../option/option.service';
-import { CommentListVo, CommentQueryParam } from './comment.interface';
+import { CommentList, CommentQueryParam } from './comment.interface';
 
 @Injectable()
 export class CommentService {
@@ -130,7 +130,7 @@ export class CommentService {
     });
   }
 
-  async getComments(param: CommentQueryParam): Promise<CommentListVo> {
+  async getComments(param: CommentQueryParam): Promise<CommentList> {
     const { fromAdmin, postId, keyword, status, orders } = param;
     const pageSize = param.pageSize || 10;
     const where = {};
@@ -147,6 +147,16 @@ export class CommentService {
           [Op.like]: `%${keyword}%`
         };
       }
+    } else {
+      where[Op.or] = [{
+        commentParent: {
+          [Op.is]: null
+        }
+      }, {
+        commentParent: {
+          [Op.eq]: ''
+        }
+      }];
     }
     if (!where['commentStatus'] && !fromAdmin) {
       where['commentStatus'] = CommentStatus.NORMAL;
@@ -179,9 +189,14 @@ export class CommentService {
         subQuery: false,
         ...limitOpt
       });
+      const children = fromAdmin ? [] : await this.getChildComments(comments, orders);
+      const commentList = comments.map((comment) => ({
+        ...comment.get({ plain: true }),
+        children: children.filter((item) => item.commentTop === comment.commentId)
+      }));
 
       return {
-        comments, page, total
+        comments: commentList, page, total
       };
     } catch (e) {
       this.logger.error({
@@ -191,6 +206,45 @@ export class CommentService {
       });
       throw new DbQueryErrorException();
     }
+  }
+
+  async getChildComments(parents: CommentModel[], orders: Order): Promise<CommentModel[]> {
+    const parentIds: string[] = parents.map((item) => item.commentId);
+    return this.commentModel.findAll({
+      attributes: {
+        exclude: ['authorEmail', 'authorIp', 'authorUserAgent', 'commentStatus', 'userId', 'commentModified']
+      },
+      where: {
+        commentTop: {
+          [Op.in]: parentIds
+        },
+        [Op.and]: [{
+          commentParent: {
+            [Op.not]: null
+          }
+        }, {
+          commentParent: {
+            [Op.ne]: ''
+          }
+        }]
+      },
+      include: [{
+        model: PostModel,
+        attributes: ['postId', 'postGuid', 'postTitle']
+      }, {
+        model: CommentMetaModel,
+        attributes: ['commentId', 'metaKey', 'metaValue']
+      }],
+      order: orders || [['commentCreated', 'asc']],
+      subQuery: false
+    }).catch((e) => {
+      this.logger.error({
+        message: e.message || '子评论查询失败',
+        data: { parents },
+        stack: e.stack
+      });
+      throw new DbQueryErrorException();
+    });
   }
 
   async auditComment(commentIds: string[], status: CommentStatus): Promise<boolean> {

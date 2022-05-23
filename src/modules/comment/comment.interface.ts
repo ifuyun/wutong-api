@@ -2,8 +2,12 @@ import { Order } from 'sequelize';
 import { CommentStatus } from '../../common/common.enum';
 import { CommentModel } from '../../models/comment.model';
 
-export interface CommentListVo {
-  comments: CommentModel[];
+export interface CommentEntity extends CommentModel {
+  children: CommentEntity[];
+}
+
+export interface CommentList {
+  comments: CommentEntity[];
   page: number;
   total: number;
 }
