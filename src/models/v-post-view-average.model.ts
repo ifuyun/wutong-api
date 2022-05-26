@@ -1,4 +1,5 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { PostStatus, PostType } from '../common/common.enum';
 
 @Table({
   tableName: 'v_post_views_average',
@@ -21,11 +22,19 @@ export class VPostViewAverageModel extends Model {
 
   @Column({
     field: 'post_status',
-    type: DataType.ENUM('publish', 'private', 'pending', 'draft', 'auto-draft', 'inherit', 'trash'),
+    type: DataType.ENUM('publish', 'password', 'private', 'pending', 'draft', 'auto-draft', 'inherit', 'trash'),
     allowNull: false,
     defaultValue: 'publish'
   })
-  postStatus: string;
+  postStatus: PostStatus;
+
+  @Column({
+    field: 'post_type',
+    type: DataType.ENUM('post', 'page', 'revision', 'attachment', 'status', 'quote', 'note', 'image', 'video', 'audio'),
+    allowNull: false,
+    defaultValue: 'post'
+  })
+  postType: PostType;
 
   @Column({
     field: 'post_guid',
@@ -34,14 +43,6 @@ export class VPostViewAverageModel extends Model {
     defaultValue: ''
   })
   postGuid: string;
-
-  @Column({
-    field: 'post_type',
-    type: DataType.ENUM('post', 'page'),
-    allowNull: false,
-    defaultValue: 'post'
-  })
-  postType: string;
 
   @Column({
     field: 'post_created',
@@ -54,15 +55,16 @@ export class VPostViewAverageModel extends Model {
   @Column({
     field: 'days',
     type: DataType.INTEGER({
-      length: 7,
-      unsigned: true
-    })
+      length: 11
+    }).UNSIGNED
   })
   days: number;
 
   @Column({
     field: 'views',
-    type: DataType.BIGINT,
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })

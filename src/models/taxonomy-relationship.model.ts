@@ -40,9 +40,8 @@ export class TaxonomyRelationshipModel extends Model {
   @Column({
     field: 'term_order',
     type: DataType.INTEGER({
-      length: 11,
-      unsigned: true
-    }),
+      length: 11
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })

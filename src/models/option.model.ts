@@ -32,9 +32,8 @@ export class OptionModel extends Model {
   @Column({
     field: 'autoload',
     type: DataType.INTEGER({
-      length: 1,
-      unsigned: true
-    }),
+      length: 1
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 1
   })

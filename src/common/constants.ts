@@ -13,7 +13,8 @@ export const POST_SOURCE_LENGTH = 100;
 export const POST_AUTHOR_LENGTH = 50;
 export const POST_PASSWORD_LENGTH = 20;
 
-export const COMMENT_LENGTH = 800;
+export const COMMENT_CONTENT_LENGTH = 800;
+export const COMMENT_AUTHOR_NAME_LENGTH = 10;
 
 export const TAXONOMY_NAME_LENGTH = 20;
 export const TAXONOMY_SLUG_LENGTH = 50;

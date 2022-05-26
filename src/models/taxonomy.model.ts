@@ -1,4 +1,16 @@
-import { BelongsToMany, Column, CreatedAt, DataType, HasMany, Model, PrimaryKey, Sequelize, Table, Unique, UpdatedAt } from 'sequelize-typescript';
+import {
+  BelongsToMany,
+  Column,
+  CreatedAt,
+  DataType,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Sequelize,
+  Table,
+  Unique,
+  UpdatedAt
+} from 'sequelize-typescript';
 import { TaxonomyStatus, TaxonomyType } from '../common/common.enum';
 import { TaxonomyRelationshipModel } from './taxonomy-relationship.model';
 import { PostModel } from './post.model';
@@ -77,9 +89,8 @@ export class TaxonomyModel extends Model {
   @Column({
     field: 'taxonomy_order',
     type: DataType.INTEGER({
-      length: 11,
-      unsigned: true
-    }),
+      length: 11
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })
@@ -95,7 +106,9 @@ export class TaxonomyModel extends Model {
 
   @Column({
     field: 'taxonomy_is_required',
-    type: DataType.TINYINT,
+    type: DataType.TINYINT({
+      length: 1
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })
@@ -121,7 +134,9 @@ export class TaxonomyModel extends Model {
 
   @Column({
     field: 'object_count',
-    type: DataType.BIGINT,
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })

@@ -21,7 +21,7 @@ export class LinkModel extends Model {
 
   @Column({
     field: 'link_name',
-    type: DataType.STRING(255),
+    type: DataType.STRING(100),
     allowNull: false,
     defaultValue: ''
   })
@@ -29,7 +29,7 @@ export class LinkModel extends Model {
 
   @Column({
     field: 'link_url',
-    type: DataType.STRING(255),
+    type: DataType.STRING(200),
     allowNull: false,
     defaultValue: ''
   })
@@ -37,7 +37,7 @@ export class LinkModel extends Model {
 
   @Column({
     field: 'link_description',
-    type: DataType.STRING(255),
+    type: DataType.STRING(200),
     allowNull: false,
     defaultValue: ''
   })
@@ -45,7 +45,7 @@ export class LinkModel extends Model {
 
   @Column({
     field: 'link_image',
-    type: DataType.STRING(255),
+    type: DataType.STRING(200),
     allowNull: false,
     defaultValue: ''
   })
@@ -78,16 +78,15 @@ export class LinkModel extends Model {
   @Column({
     field: 'link_rating',
     type: DataType.INTEGER({
-      length: 11,
-      unsigned: true
-    }),
+      length: 11
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })
   linkRating: number;
 
   @Column({
-    type: DataType.STRING(255),
+    type: DataType.STRING(200),
     allowNull: false,
     defaultValue: '',
     field: 'link_rss'

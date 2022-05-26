@@ -1,7 +1,7 @@
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IsEmail, IsNotEmpty, MaxLength } from 'class-validator';
 import { CommentStatus } from '../common/common.enum';
-import { COMMENT_LENGTH } from '../common/constants';
+import { COMMENT_AUTHOR_NAME_LENGTH, COMMENT_CONTENT_LENGTH } from '../common/constants';
 import { Message } from '../common/message.enum';
 import { format } from '../helpers/helper';
 import { IsCommentExist } from '../validators/async/is-comment-exist.validator';
@@ -29,6 +29,7 @@ export class BasicCommentDto {
   @IsId({ message: format(Message.PARAM_INVALID, '$constraint1') })
   commentTop?: string;
 
+  @MaxLength(COMMENT_AUTHOR_NAME_LENGTH, { message: '昵称最大长度为$constraint1个字符' })
   @IsNotEmpty({ message: '昵称不能为空' })
   authorName?: string;
 
@@ -36,7 +37,7 @@ export class BasicCommentDto {
   @IsNotEmpty({ message: '邮箱不能为空' })
   authorEmail?: string;
 
-  @MaxLength(COMMENT_LENGTH, { message: '评论内容最大长度为$constraint1个字符' })
+  @MaxLength(COMMENT_CONTENT_LENGTH, { message: '评论内容最大长度为$constraint1个字符' })
   @IsRequired({ message: '评论内容不能为空' })
   commentContent: string;
 

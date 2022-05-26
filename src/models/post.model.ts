@@ -65,7 +65,7 @@ export class PostModel extends Model {
 
   @Column({
     field: 'post_content',
-    type: DataType.TEXT,
+    type: DataType.TEXT('long'),
     allowNull: false
   })
   postContent: string;
@@ -88,9 +88,8 @@ export class PostModel extends Model {
   @Column({
     field: 'post_original',
     type: DataType.TINYINT({
-      length: 1,
-      unsigned: true
-    }),
+      length: 1
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 1
   })
@@ -106,7 +105,7 @@ export class PostModel extends Model {
 
   @Column({
     field: 'post_password',
-    type: DataType.STRING(20),
+    type: DataType.STRING(255),
     allowNull: false,
     defaultValue: ''
   })
@@ -183,7 +182,9 @@ export class PostModel extends Model {
 
   @Column({
     field: 'comment_count',
-    type: DataType.BIGINT,
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })
@@ -191,7 +192,9 @@ export class PostModel extends Model {
 
   @Column({
     field: 'post_view_count',
-    type: DataType.BIGINT,
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0
   })

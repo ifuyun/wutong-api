@@ -24,7 +24,7 @@ export class UserModel extends Model {
 
   @Column({
     field: 'user_login',
-    type: DataType.CHAR(16),
+    type: DataType.STRING(60),
     allowNull: false,
     defaultValue: ''
   })
@@ -32,7 +32,7 @@ export class UserModel extends Model {
 
   @Column({
     field: 'user_pass',
-    type: DataType.STRING(64),
+    type: DataType.STRING(255),
     allowNull: false,
     defaultValue: ''
   })
@@ -81,9 +81,8 @@ export class UserModel extends Model {
 
   @Column({
     type: DataType.INTEGER({
-      length: 11,
-      unsigned: true
-    }),
+      length: 11
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0,
     field: 'user_status'
@@ -92,7 +91,7 @@ export class UserModel extends Model {
 
   @Column({
     field: 'user_activation_key',
-    type: DataType.STRING(60),
+    type: DataType.STRING(64),
     allowNull: false,
     defaultValue: ''
   })

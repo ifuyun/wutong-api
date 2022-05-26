@@ -57,9 +57,8 @@ export class VoteModel extends Model {
 
   @Column({
     field: 'vote_count',
-    type: DataType.INTEGER({
-      length: 1,
-      unsigned: true
+    type: DataType.TINYINT({
+      length: 2
     }),
     allowNull: false,
     defaultValue: 0
@@ -84,7 +83,7 @@ export class VoteModel extends Model {
 
   @Column({
     field: 'user_ip',
-    type: DataType.STRING(100),
+    type: DataType.STRING(60),
     allowNull: false,
     defaultValue: ''
   })

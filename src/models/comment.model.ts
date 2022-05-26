@@ -1,4 +1,16 @@
-import { BelongsTo, Column, CreatedAt, DataType, ForeignKey, HasMany, Model, PrimaryKey, Sequelize, Table, UpdatedAt } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Sequelize,
+  Table,
+  UpdatedAt
+} from 'sequelize-typescript';
 import { CommentStatus } from '../common/common.enum';
 import { PostModel } from './post.model';
 import { CommentMetaModel } from './comment-meta.model';
@@ -44,7 +56,7 @@ export class CommentModel extends Model {
   commentContent: string;
 
   @Column({
-    type: DataType.TEXT,
+    type: DataType.STRING(100),
     allowNull: false,
     field: 'author_name'
   })
@@ -75,7 +87,7 @@ export class CommentModel extends Model {
   authorLink: string;
 
   @Column({
-    type: DataType.STRING(100),
+    type: DataType.STRING(60),
     allowNull: false,
     defaultValue: '',
     field: 'author_ip'
@@ -123,10 +135,9 @@ export class CommentModel extends Model {
   commentTop: string;
 
   @Column({
-    type: DataType.INTEGER({
-      length: 10,
-      unsigned: true
-    }),
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0,
     field: 'comment_likes'
@@ -134,10 +145,9 @@ export class CommentModel extends Model {
   commentLikes: number;
 
   @Column({
-    type: DataType.INTEGER({
-      length: 10,
-      unsigned: true
-    }),
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
     allowNull: false,
     defaultValue: 0,
     field: 'comment_dislikes'

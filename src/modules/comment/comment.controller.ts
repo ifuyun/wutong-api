@@ -129,6 +129,7 @@ export class CommentController {
     @Session() session: any
   ) {
     user = user || {};
+    const fromAdmin = isAdmin && commentDto.fa;
     let isNew = true;
     let commentData: CommentDto = {
       postId: commentDto.postId,
@@ -157,8 +158,8 @@ export class CommentController {
         commentData.commentStatus = commentDto.commentStatus;
       }
     }
-    // 不是管理员，或，不是在后台修改、回复评论时
-    const shouldCheckCaptcha = !isAdmin || !commentData.commentId && !commentData.commentParent;
+    // 不是在后台修改、回复评论时
+    const shouldCheckCaptcha = !fromAdmin;
     if (shouldCheckCaptcha && !commentData.captchaCode) {
       throw new CustomException('请输入验证码', HttpStatus.BAD_REQUEST, ResponseCode.CAPTCHA_INPUT_ERROR);
     }
@@ -180,7 +181,7 @@ export class CommentController {
       parentId: commentData.commentParent,
       isNew,
       post,
-      fromAdmin: isAdmin && commentDto.fa
+      fromAdmin
     });
 
     this.captchaService.removeCaptcha(req.session);

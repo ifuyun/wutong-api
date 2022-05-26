@@ -62,7 +62,7 @@ export class BookModel extends Model {
 
   @Column({
     field: 'book_price',
-    type: DataType.DECIMAL,
+    type: DataType.DECIMAL(10, 2),
     allowNull: false
   })
   bookPrice: number;
@@ -70,9 +70,8 @@ export class BookModel extends Model {
   @Column({
     field: 'book_quantity',
     type: DataType.INTEGER({
-      length: 10,
-      unsigned: true
-    }),
+      length: 11
+    }).UNSIGNED,
     allowNull: false
   })
   bookQuantity: number;
