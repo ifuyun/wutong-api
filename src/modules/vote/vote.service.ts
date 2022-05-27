@@ -11,7 +11,6 @@ import { DbQueryErrorException } from '../../exceptions/db-query-error.exception
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
 import { format, generateId } from '../../helpers/helper';
 import { CommentModel } from '../../models/comment.model';
-import { PostMetaModel } from '../../models/post-meta.model';
 import { PostModel } from '../../models/post.model';
 import { VoteMetaModel } from '../../models/vote-meta.model';
 import { VoteModel } from '../../models/vote.model';
@@ -32,8 +31,8 @@ export class VoteService {
     private readonly voteMetaModel: typeof VoteMetaModel,
     @InjectModel(CommentModel)
     private readonly commentModel: typeof CommentModel,
-    @InjectModel(PostMetaModel)
-    private readonly postMetaModel: typeof PostMetaModel,
+    @InjectModel(PostModel)
+    private readonly postModel: typeof PostModel,
     private readonly postService: PostService,
     private readonly optionService: OptionService,
     private readonly emailService: EmailService,
@@ -61,21 +60,12 @@ export class VoteService {
           });
         }
       } else {
-        const postVote = await this.postMetaModel.findOne({
+        await this.postModel.increment({ postLikes: 1 }, {
           where: {
-            postId: voteDto.objectId,
-            metaKey: 'post_vote'
-          }
+            postId: voteDto.objectId
+          },
+          transaction: t
         });
-        let voteCount = Number(postVote?.metaValue) || 0;
-        voteCount = voteDto.voteResult > 0 ? voteCount + 1 : voteCount - 1;
-        const metaId = postVote?.metaId || generateId();
-        await this.postMetaModel.upsert({
-          metaId: metaId,
-          postId: voteDto.objectId,
-          metaKey: 'post_vote',
-          metaValue: voteCount
-        }, { transaction: t });
       }
 
       await this.voteModel.create({ ...voteDto }, { transaction: t });
@@ -155,7 +145,7 @@ export class VoteService {
     }
   }
 
-  async sendNotice(voteData: VoteDto, userLocation: IPLocation | null, comment?: CommentModel) {
+  async sendNotice(voteData: VoteDto, userLocation: IPLocation | null, post: PostModel, comment?: CommentModel) {
     const options = await this.optionService.getOptionByKeys(['admin_email', 'site_url']);
     if (!options['admin_email'] || !options['site_url']) {
       throw new InternalServerErrorException(
@@ -163,20 +153,16 @@ export class VoteService {
         ResponseCode.OPTIONS_MISSED
       );
     }
+    const content = await this.getEmailContent({
+      voteData, post, comment, options, userLocation
+    });
     if (voteData.objectType === VoteType.POST) {
-      const post = await this.postService.getPostById(voteData.objectId);
       await this.emailService.sendEmail({
         to: options['admin_email'],
         subject: `文章《${post.postTitle}》有新的点赞`,
-        ...await this.getEmailContent({
-          voteData, post, comment, options, userLocation
-        })
+        ...content
       });
     } else {
-      const post = await this.postService.getPostById(comment.postId);
-      const content = await this.getEmailContent({
-        voteData, post, comment, options, userLocation
-      });
       await this.emailService.sendEmail({
         to: options['admin_email'],
         subject: `文章《${post.postTitle}》的评论有新的投票`,

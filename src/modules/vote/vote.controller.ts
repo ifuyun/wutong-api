@@ -63,13 +63,14 @@ export class VoteController {
     };
     if (voteDto.type === VoteType.COMMENT) {
       const comment = await this.commentService.getCommentById(voteData.objectId);
-      await this.voteService.sendNotice(voteData, userLocation, comment);
+      const post = await this.postService.getPostById(comment.postId);
+      await this.voteService.sendNotice(voteData, userLocation, post, comment);
       response.likes = comment.commentLikes;
       response.dislikes = comment.commentDislikes;
     } else {
-      await this.voteService.sendNotice(voteData, userLocation);
-      const postVote = await this.postMetaService.getPostMetaByPostId(voteData.objectId, 'post_vote');
-      response.likes = Number(postVote[0]?.metaValue) || 0;
+      const post = await this.postService.getPostById(voteData.objectId);
+      await this.voteService.sendNotice(voteData, userLocation, post);
+      response.likes = post.postLikes;
     }
 
     return getSuccessResponse(response);

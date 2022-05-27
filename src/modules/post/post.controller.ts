@@ -74,7 +74,7 @@ export class PostController {
     @Query('commentFlag', new TrimPipe()) commentFlag: CommentFlag | CommentFlag[],
     @Query('keyword', new TrimPipe()) keyword: string,
     @Query('original', new TrimPipe()) original: string | string[],
-    @Query('orders', new TrimPipe()) orders: string[],
+    @Query('orders', new TrimPipe()) orders: string | string[],
     @Query('type', new TrimPipe()) postType: PostType | 'all',
     @Query('fa', new TrimPipe()) fa: string,
     @IsAdmin() isAdmin: boolean
@@ -156,12 +156,20 @@ export class PostController {
     }
     if (fromAdmin && orders.length > 0) {
       /* 管理员，且，从后台访问，且，传递了排序参数 */
+      if (typeof orders === 'string') {
+        orders = [orders];
+      }
+      if (postType === 'all') {
+        orders.push('postType,asc');
+      }
       param.orders = getQueryOrders({
         postViewCount: 1,
-        commentCount: 2,
-        postDate: 3,
-        postCreated: 4,
-        postModified: 5
+        postLikes: 2,
+        commentCount: 3,
+        postDate: 4,
+        postCreated: 5,
+        postModified: 6,
+        postType: 7
       }, orders);
     }
 

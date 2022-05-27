@@ -199,4 +199,14 @@ export class PostModel extends Model {
     defaultValue: 0
   })
   postViewCount: number;
+
+  @Column({
+    field: 'post_likes',
+    type: DataType.BIGINT({
+      length: 20
+    }).UNSIGNED,
+    allowNull: false,
+    defaultValue: 0
+  })
+  postLikes: number;
 }
